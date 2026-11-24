@@ -1,0 +1,938 @@
+/* =====================================================================
+   pulso — estilos.css
+   Medio de noticias cortas para gente joven.
+   Idea visual: cada noticia es una "tarjeta de color" con el nombre de su
+   sección en letra gigante perfilada. Alrededor, todo es sobrio: grafito,
+   tinta, líneas finas, etiquetas pequeñas y superficies de cristal.
+   ===================================================================== */
+
+/* ---------- 1. Colores y medidas (cámbialos aquí y cambia toda la web) ---------- */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#ffffff, #1c1d21);      /* fondo */
+  --sup: light-dark(#f1f1ee, #27282d);     /* superficies: tarjetas, bandas */
+  --sup-2: light-dark(#e7e7e2, #313238);   /* superficie más marcada (hover, pestañas) */
+  --linea: light-dark(#e2e2dd, #393a40);   /* bordes finos */
+  --tinta: light-dark(#141414, #f3f3f0);   /* texto principal */
+  --suave: light-dark(#5a5b61, #a9aab0);   /* texto secundario */
+  --marca: #ffd400;                        /* amarillo pulso */
+  --oscuro: #141414;                       /* tinta sobre los colores de sección (igual de día y de noche) */
+
+  /* Cristal: superficie translúcida + desenfoque de lo que pasa por detrás */
+  --cristal: light-dark(rgb(255 255 255 / 0.72), rgb(28 29 33 / 0.7));
+  --cristal-borde: light-dark(rgb(20 20 20 / 0.08), rgb(255 255 255 / 0.09));
+  --cristal-brillo: inset 0 1px 0 light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.06));
+  --desenfoque: blur(20px) saturate(1.6);
+
+  --ancho: 1240px;                         /* ancho máximo del contenido */
+  --lado: 16px;                            /* margen lateral mínimo */
+  --r-s: 6px;                              /* radio pequeño: etiquetas */
+  --r-m: 12px;                             /* radio medio: bloques */
+  --r-l: 20px;                             /* radio grande: tarjetas */
+  --ancha: 118%;                           /* anchura de los titulares (Archivo expandida) */
+  --muelle: cubic-bezier(.3, 1.35, .5, 1); /* curva con un pequeño rebote */
+  --salida: cubic-bezier(.2, .8, .2, 1);   /* curva suave de llegada */
+  --nativa: cubic-bezier(.32, .72, 0, 1);  /* la de los paneles de iOS: arranca rápido y frena largo */
+  --cierre: cubic-bezier(.4, 0, .9, .3);   /* salida: acelera hacia fuera */
+  --cab: 112px;                            /* alto de la cabecera (app.js lo mide de verdad) */
+}
+
+/* Un color por sección. Son tonos claros para que la tinta oscura se lea siempre.
+   El 29N va en amarillo de marca: evitamos rojo, azul, verde y morado por asociarse a partidos. */
+[data-cat=elecciones] { --c: #ffd400; }
+[data-cat=espana]     { --c: #ffb08a; }
+[data-cat=mundo]      { --c: #94d9ff; }
+[data-cat=economia]   { --c: #c8ef95; }
+[data-cat=tecnologia] { --c: #d3c4ff; }
+[data-cat=clima]      { --c: #86e8d2; }
+/* Verifica (#ffa8bb) queda reservada para más adelante */
+[data-cat=cultura]    { --c: #ffd59a; }
+[data-cat=deportes]   { --c: #b9ecff; }
+
+/* ---------- 2. Base ---------- */
+* { box-sizing: border-box; min-width: 0; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--tinta);
+  font: 16px/1.55 "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;   /* la página no se desplaza: se desplaza <main>, por debajo de la cabecera */
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
+a { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; }
+h1, h2, h3, p, ul, ol { margin: 0; }
+img { max-width: 100%; display: block; }
+q { quotes: "«" "»"; }
+
+/* Etiqueta de sección: pequeña, rectangular, en el color de la sección */
+.etq { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
+.etq b { background: var(--c, var(--marca)); color: var(--oscuro); padding: 3px 8px; border-radius: var(--r-s); font-weight: 750; line-height: 1.3; }
+.hora { color: var(--suave); font-weight: 550; font-variant-numeric: tabular-nums; }
+
+/* Punto "en directo" que late (amarillo de marca) */
+.vivo { width: 8px; height: 8px; border-radius: 50%; background: var(--marca); flex: none; box-shadow: 0 0 0 0 rgb(255 212 0 / 0.6); animation: vivo 2s infinite; }
+@keyframes vivo { 70% { box-shadow: 0 0 0 8px rgb(255 212 0 / 0); } 100% { box-shadow: 0 0 0 0 rgb(255 212 0 / 0); } }
+
+/* ---------- 3. Cabecera de cristal ---------- */
+.top {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 5;
+  padding-top: env(safe-area-inset-top);
+  background: var(--cristal);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  border-bottom: 1px solid var(--cristal-borde);
+  box-shadow: var(--cristal-brillo);
+  transition: box-shadow 0.3s;
+}
+.top { view-transition-name: cabecera; }
+.top.con-sombra { box-shadow: var(--cristal-brillo), 0 10px 30px -18px rgb(0 0 0 / 0.45); }
+.top-fila, .chips {
+  width: min(100% - 2 * var(--lado) - env(safe-area-inset-left) - env(safe-area-inset-right), var(--ancho));
+  margin: 0 auto;
+}
+.top-fila { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 8px; min-height: 58px; }
+
+/* Botón de menú: dos rayas que se cruzan al abrir */
+.btn-menu { width: 44px; height: 44px; margin-left: -10px; border: 0; background: none; border-radius: 50%; cursor: pointer; display: grid; place-content: center; gap: 6px; }
+.btn-menu span { display: block; width: 20px; height: 2px; border-radius: 2px; background: currentColor; transition: transform 0.3s var(--muelle); }
+.btn-menu span + span { width: 14px; }
+.btn-menu:hover span + span { transform: scaleX(1.43); transform-origin: left; }
+.btn-menu:hover { background: var(--sup); }
+
+/* Logo letra a letra. El plegado y la ola los mueve app.js (propiedad "translate") */
+.logo {
+  position: relative;
+  font-weight: 900;
+  font-stretch: 125%;
+  font-size: 28px;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: baseline;
+  padding: 8px 6px 8px 0;
+}
+/* Cada letra se encoge hacia su esquina inferior izquierda; el recorte lateral evita que
+   una letra que se pliega asome por encima de la siguiente */
+.logo .lt { display: inline-block; white-space: nowrap; transform-origin: 0 85%; clip-path: inset(-40% -0.12em -40% -0.12em); }
+.latido {
+  display: inline-block;
+  width: 0.28em;
+  height: 0.28em;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: var(--marca);
+  animation: latido 1.8s ease-in-out infinite;
+}
+@keyframes latido {
+  0%, 40%, 100% { transform: scale(1); }
+  10% { transform: scale(1.45); }
+  22% { transform: scale(1.15); }
+}
+/* Plegado: un poco de aire entre la p y el punto (la p lleva espaciado negativo) */
+.latido { transition: margin-left 0.35s var(--muelle); }
+.logo.plegado .latido { margin-left: 0.14em; }
+/* "Saludo" al pasar el ratón: las letras saltan en ola y el punto da un latido fuerte */
+.logo.saluda .lt { animation: salto 0.5s var(--muelle); }
+.logo.saluda .lt:nth-child(2) { animation-delay: 0.04s; }
+.logo.saluda .lt:nth-child(3) { animation-delay: 0.08s; }
+.logo.saluda .lt:nth-child(4) { animation-delay: 0.12s; }
+.logo.saluda .lt:nth-child(5) { animation-delay: 0.16s; }
+.logo.late .latido { animation: latido-fuerte 0.7s var(--muelle); }
+@keyframes salto { 40% { transform: translateY(-7px); } }
+@keyframes latido-fuerte { 30% { transform: scale(1.6); } 60% { transform: scale(0.9); } }
+
+/* Centro de la cabecera: fecha + cuenta atrás */
+.top-centro { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.top-fecha { font-size: 14.5px; color: var(--suave); font-weight: 550; }
+.top-fecha::first-letter { text-transform: uppercase; }
+.cuenta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--marca);
+  color: var(--oscuro);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cuenta strong { font-weight: 850; font-stretch: 112%; }
+.cuenta:empty { visibility: hidden; }   /* mientras cargan los datos */
+
+/* Interruptor Flash / Lista: una pastilla que se desliza de un lado a otro */
+.modo { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: var(--sup); border-radius: 999px; padding: 3px; }
+.modo::before {
+  content: "";
+  position: absolute;
+  inset: 3px auto 3px 3px;
+  width: calc(50% - 3px);
+  border-radius: 999px;
+  background: var(--tinta);
+  transition: translate 0.45s var(--muelle);
+}
+.modo[data-modo=lista]::before { translate: 100% 0; }
+.modo button {
+  position: relative;
+  border: 0;
+  background: none;
+  color: var(--suave);
+  font-size: 14.5px;
+  font-weight: 650;
+  min-height: 38px;
+  padding: 0 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+.modo button[aria-pressed=true] { color: var(--bg); }
+
+/* Barra de secciones.
+   Cada sección lleva su cuadradito de color. Detrás de la elegida se desliza una pastilla suave,
+   teñida del color de esa sección (el mismo de sus tapas y cabeceras): así la barra forma parte
+   del sistema de color de toda la web. Con muchas secciones se desplaza de lado. */
+.chips {
+  --fi: 0px;   /* difuminado izquierdo (lo pone app.js si hay secciones ocultas a ese lado) */
+  --fd: 0px;   /* difuminado derecho */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 0 10px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--fi), #000 calc(100% - var(--fd)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--fi), #000 calc(100% - var(--fd)), transparent);
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--suave);
+  cursor: pointer;
+}
+.chip[data-cat]::before { content: ""; width: 9px; height: 9px; border-radius: 3px; background: var(--c); transition: transform 0.45s var(--muelle); }
+.chip svg { width: 17px; height: 17px; flex: none; }
+.chip .vivo { width: 7px; height: 7px; }
+@media (hover: hover) {
+  .chip:hover { color: var(--tinta); }
+  .chip[data-cat]:hover::before { transform: rotate(45deg); }
+}
+/* Elegida: solo cambia a tinta y algo más de peso; el cuadradito gira a rombo */
+.chip[aria-pressed=true] { color: var(--tinta); font-weight: 700; }
+.chip[data-cat][aria-pressed=true]::before { transform: rotate(45deg) scale(1.1); }
+/* Guardadas va aparte, al final de la barra: es tu espacio, no una sección */
+.chip-guardadas { margin-left: auto; }
+.chip-guardadas::after { content: ""; position: absolute; left: -2px; top: 12px; bottom: 12px; width: 1px; background: var(--linea); }
+/* La pastilla que se desliza (app.js le da posición, ancho y color).
+   Es un tinte suave: gris en Portada y Guardadas, el color de la sección mezclado con el fondo en el resto */
+.indicador {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  height: 44px;
+  width: 80px;
+  border-radius: 999px;
+  background: var(--sup);
+  transition: transform 0.55s var(--muelle), width 0.55s var(--muelle), background-color 0.35s;
+  pointer-events: none;
+}
+.indicador.con-color { --mezcla: 34%; background: color-mix(in srgb, var(--c) var(--mezcla), var(--bg)); }
+/* Sobre el fondo oscuro, el tinte se nota más: lo rebajamos */
+@media (prefers-color-scheme: dark) { :root:not([data-tema=claro]) .indicador.con-color { --mezcla: 20%; } }
+:root[data-tema=oscuro] .indicador.con-color { --mezcla: 20%; }
+
+/* ---------- 4. Zona principal: se desplaza por debajo de la cabecera de cristal ---------- */
+main { height: 100%; overflow-y: auto; overscroll-behavior: contain; outline: none; padding-top: var(--cab); }
+.vacio-txt { padding: 40px var(--lado); color: var(--suave); }
+
+/* Esqueleto de carga: la forma de la página, con un brillo que la recorre, mientras llegan las noticias */
+.esqueleto { width: min(100% - 2 * var(--lado), var(--ancho)); margin: 0 auto; padding: 20px 0; display: grid; gap: 22px; }
+.esq { border-radius: var(--r-l); background: var(--sup); position: relative; overflow: hidden; }
+.esq::after { content: ""; position: absolute; inset: 0; translate: -100% 0; background: linear-gradient(90deg, transparent, light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.06)), transparent); animation: brillo 1.3s ease-in-out infinite; }
+.esq-cinta { height: 44px; border-radius: var(--r-m); }
+.esq-dia { height: 210px; }
+.esq-fila { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 18px; }
+.esq-tarjeta { height: 300px; }
+@keyframes brillo { to { translate: 100% 0; } }
+
+/* Primera carga: la página entra en una sola secuencia escalonada */
+main.entrada .lista > * { animation: sube-txt 0.6s var(--nativa) backwards; }
+main.entrada .lista > :nth-child(2) { animation-delay: 0.06s; }
+main.entrada .lista > :nth-child(3) { animation-delay: 0.12s; }
+main.entrada .lista > :nth-child(n+4) { animation-delay: 0.18s; }
+main.entrada .slide:first-child .carta { animation: sube-txt 0.6s var(--nativa) backwards; }
+
+/* Cambio de momento del día (Mañana / Tarde / Noche): los puntos entran en cascada */
+.momentos.aparece h2, .momentos.aparece li { animation: sube-txt 0.4s var(--nativa) backwards; }
+.momentos.aparece li:nth-child(1) { animation-delay: 0.04s; }
+.momentos.aparece li:nth-child(2) { animation-delay: 0.08s; }
+.momentos.aparece li:nth-child(3) { animation-delay: 0.12s; }
+
+/* ---------- 5. Botones ---------- */
+.btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  background: none;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn.lleno { background: var(--oscuro); color: #fff; border-color: var(--oscuro); }
+.btn.icono { width: 44px; padding: 0; justify-content: center; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn[aria-pressed=true] svg { fill: currentColor; }
+.btn.pop svg { animation: pop-guardar 0.5s var(--muelle); }
+@keyframes pop-guardar { 40% { transform: scale(1.45) rotate(-8deg); } }
+.acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- 6. Modo Flash ---------- */
+main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
+.slide {
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: grid;
+  justify-items: center;
+  padding: 10px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+
+/* La tarjeta flash: un campo de color a pantalla completa */
+.carta {
+  width: min(100%, 620px);
+  height: 100%;
+  border-radius: var(--r-l);
+  background: var(--c, var(--sup));
+  color: var(--oscuro);
+  padding: clamp(18px, 3.2vw, 32px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 14px;
+  overflow: hidden auto;   /* si un texto no cabe en un móvil muy bajo, se desplaza dentro */
+  scrollbar-width: none;
+}
+.carta .cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13.5px; font-weight: 650; }
+.carta .etq b { background: var(--oscuro); color: var(--c); }
+.carta .hora { color: inherit; opacity: 0.72; }
+.cont { font-variant-numeric: tabular-nums; opacity: 0.72; white-space: nowrap; }
+
+/* Hueco flexible entre la cabecera y el titular: la palabra gigante lo llena */
+.hueco { overflow: hidden; display: flex; align-items: flex-end; min-height: 0; }
+/* La sección en letra gigante y perfilada: la "imagen" de cada noticia, sin fotos de nadie.
+   app.js calcula su tamaño para que quepa ENTERA (ver encajarPalabras). */
+.gigante {
+  display: inline-block;
+  flex: none;            /* que el contenedor no la estreche: así app.js mide su ancho real */
+  white-space: nowrap;
+  font-weight: 900;
+  font-stretch: 125%;
+  font-size: 96px;
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--oscuro);
+  margin-left: -0.03em;
+  padding-right: 0.04em;
+}
+.gigante.oculta { visibility: hidden; }
+
+.foto { align-self: stretch; margin: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 6px; }
+.foto img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-m); }
+.foto figcaption { font-size: 13px; opacity: 0.8; }
+
+.carta h2 { font-weight: 850; font-stretch: var(--ancha); font-size: clamp(26px, min(4.4svh, 8.2vw), 42px); line-height: 1.04; letter-spacing: -0.03em; text-wrap: balance; }
+.puntos { padding: 0; list-style: none; display: grid; gap: 8px; margin-top: 14px; }
+.puntos li { padding-left: 20px; position: relative; font-size: 16.5px; line-height: 1.42; }
+.puntos li::before { content: ""; position: absolute; left: 1px; top: 0.5em; width: 8px; height: 8px; border-radius: 2px; background: currentColor; }
+.porque { margin-top: 14px; padding: 12px 14px; border-radius: var(--r-m); background: rgb(255 255 255 / 0.45); font-size: 15.5px; line-height: 1.45; }
+.porque b { font-weight: 750; }
+.fuentes { font-size: 13.5px; line-height: 1.4; }
+.fuentes a { font-weight: 650; text-underline-offset: 3px; }
+.carta .acciones { margin-top: 10px; }
+/* Botones de icono de la tarjeta: cristal claro sobre el color */
+.carta .btn.icono { border-color: transparent; background: rgb(255 255 255 / 0.4); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.carta .btn.icono:hover { background: rgb(255 255 255 / 0.65); }
+
+/* Portada y final del modo Flash: superficie neutra */
+.carta.portada, .carta.final { background: var(--sup); color: var(--tinta); }
+.carta.portada { grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 16px; }
+.saludo { display: grid; gap: 6px; }
+.saludo h1 { font-weight: 850; font-stretch: var(--ancha); font-size: clamp(30px, 8.4vw, 44px); line-height: 1; letter-spacing: -0.035em; }
+.saludo h1::first-letter, .dia h1::first-letter { text-transform: uppercase; }
+.saludo p { color: var(--suave); }
+
+/* Cuenta atrás (amarillo de marca). Es un botón: lleva a la sección del 29N */
+.dia-num, .menu-29n {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  background: var(--marca);
+  color: var(--oscuro);
+  border-radius: var(--r-m);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.3s var(--muelle);
+}
+@media (hover: hover) { .dia-num:hover, .menu-29n:hover { transform: translateY(-2px) rotate(-0.4deg); } }
+.dia-num b, .menu-29n b { font-weight: 900; font-stretch: 125%; font-size: 52px; line-height: 0.85; letter-spacing: -0.05em; display: inline-block; }
+.dia-num span, .menu-29n span { font-size: 14.5px; font-weight: 550; line-height: 1.3; }
+.dia-num span strong, .menu-29n span strong { display: block; font-size: 18px; font-weight: 800; font-stretch: 110%; }
+
+.pista { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--suave); font-size: 15px; }
+.pista svg { width: 22px; height: 22px; flex: none; }
+
+/* Momentos del día: pestañas Mañana / Tarde / Noche + resumen que salta a cada noticia */
+.momentos { display: grid; gap: 10px; align-content: start; }
+.momentos-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px 12px; flex-wrap: wrap; }
+.momentos h2 { font-size: 20px; font-weight: 800; font-stretch: 112%; letter-spacing: -0.02em; }
+.tabs { display: flex; gap: 2px; background: var(--sup-2); border-radius: 999px; padding: 3px; }
+.tabs button { border: 0; background: none; min-height: 38px; padding: 0 13px; border-radius: 999px; font-size: 14px; font-weight: 650; color: var(--suave); cursor: pointer; }
+.tabs button[aria-selected=true] { background: var(--tinta); color: var(--bg); }
+.momentos ul { list-style: none; padding: 0; }
+.momentos li button {
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  border: 0;
+  border-top: 1px solid var(--linea);
+  background: none;
+  padding: 11px 0;
+  font-size: 15.5px;
+  line-height: 1.38;
+  font-weight: 550;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  transition: padding 0.3s var(--muelle), color 0.2s;
+}
+.momentos li button::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--c, var(--marca)); transform: translateY(-1px); }
+@media (hover: hover) { .momentos li button:hover { padding-left: 6px; color: var(--suave); } }
+
+.carta.final { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.final h2 { font-size: clamp(32px, 5.4svh, 48px); font-weight: 850; font-stretch: var(--ancha); letter-spacing: -0.035em; line-height: 1; }
+.final .resumen { font-size: 16.5px; }
+.final .btn { color: var(--tinta); }
+.final .como { font-size: 14px; line-height: 1.45; color: var(--suave); }
+.final .como b { color: var(--tinta); }
+
+/* Tarjetas que no caben: app.js les pone estas clases (ver ajustarCartas) */
+.carta.apretada .porque { display: none; }
+.carta.muy-apretada { gap: 10px; padding-block: 16px; }
+.carta.muy-apretada .acciones { margin-top: 4px; }
+.carta.muy-apretada h2 { font-size: clamp(22px, min(3.8svh, 7vw), 32px); }
+.carta.muy-apretada .puntos { gap: 5px; margin-top: 10px; }
+.carta.muy-apretada .puntos li { font-size: 15px; line-height: 1.35; }
+
+/* Barra de progreso del modo Flash, pegada bajo la cabecera */
+.progreso { position: sticky; top: 0; height: 0; z-index: 2; }
+.progreso i { position: absolute; left: 0; top: 0; height: 3px; width: 100%; background: var(--marca); transform-origin: left; transform: scaleX(var(--p, 0)); transition: transform 0.35s var(--salida); }
+
+/* ---------- 7. Modo Lista ---------- */
+.lista {
+  width: min(100% - 2 * var(--lado), var(--ancho));
+  margin: 0 auto;
+  padding: 20px 0 max(40px, env(safe-area-inset-bottom));
+  display: grid;
+  gap: 24px;
+}
+
+/* Cinta de "Última hora": titulares que pasan de lado (se para al pasar el ratón) */
+.cinta { display: flex; align-items: center; gap: 14px; border-block: 1px solid var(--linea); min-height: 48px; }
+.cinta-titulo { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; font-stretch: 110%; white-space: nowrap; flex: none; }
+.cinta-pista { overflow: hidden; flex: 1; -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 92%, transparent); }
+.cinta-mov { display: flex; width: max-content; animation: cinta 55s linear infinite; }
+.cinta:hover .cinta-mov, .cinta:focus-within .cinta-mov { animation-play-state: paused; }
+.cinta-grupo { display: flex; gap: 32px; padding-right: 32px; }
+.cinta a { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.cinta a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.cinta a i { width: 8px; height: 8px; border-radius: 2px; background: var(--c); flex: none; }
+@keyframes cinta { to { transform: translateX(-50%); } }
+
+/* Banda del día: a la izquierda la fecha y la cuenta atrás, a la derecha los momentos */
+.dia { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); background: var(--sup); border-radius: var(--r-l); }
+.dia > div { padding: 24px 26px; display: grid; gap: 16px; align-content: start; }
+.dia > div + div { border-left: 1px solid var(--linea); }
+.dia-izq { grid-template-rows: auto auto 1fr; }
+.dia-izq .dia-num { align-self: end; }
+.dia h1 { font-weight: 850; font-stretch: var(--ancha); font-size: clamp(32px, 3.4vw, 46px); line-height: 1; letter-spacing: -0.035em; }
+.dia .lema { color: var(--suave); font-size: 16px; max-width: 34ch; margin-top: -6px; }
+
+/* Apertura: la noticia principal (con sumario) + la columna "Lo último" */
+.apertura { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 18px; align-items: start; }
+.apertura .destacada { grid-column: auto; }
+
+/* Bloque de sección: cabecera con línea gruesa en su color, pieza principal y titulares en lista */
+.bloque { display: grid; gap: 18px; padding-top: 8px; }
+.bloque-cab { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid var(--c, var(--tinta)); padding-bottom: 8px; }
+.bloque-cab h2 { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 850; font-stretch: var(--ancha); letter-spacing: -0.025em; }
+.bloque-cab h2 i { width: 12px; height: 12px; border-radius: 3px; background: var(--c, var(--tinta)); }
+.bloque-extra { font-size: 13.5px; font-weight: 750; background: var(--c); color: var(--oscuro); padding: 3px 9px; border-radius: 999px; }
+.ver-todo {
+  margin-left: auto;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.ver-todo span { font-size: 12.5px; background: var(--sup-2); padding: 1px 8px; border-radius: 999px; }
+.ver-todo:hover { text-decoration: underline; text-underline-offset: 4px; }
+.bloque-cuerpo { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
+.bloque-cuerpo.solo { grid-template-columns: minmax(0, 1fr); }
+
+/* Ítems de solo texto, separados por líneas finas */
+.items { display: grid; }
+.item { position: relative; display: grid; gap: 5px; padding: 14px 0; border-top: 1px solid var(--linea); }
+.items > .item:first-child { border-top: 0; padding-top: 0; }
+.item-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--suave); font-weight: 600; }
+.item-meta b { display: inline-flex; align-items: center; gap: 6px; color: var(--tinta); font-weight: 750; }
+.item-meta b::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+.item h3 { font-size: 19px; font-weight: 800; font-stretch: 108%; line-height: 1.18; letter-spacing: -0.015em; text-wrap: balance; }
+.item h3 a { text-decoration: none; }
+.item h3 a::after { content: ""; position: absolute; inset: 0; }
+.item:hover h3 { text-decoration: underline; text-decoration-thickness: 2px; text-decoration-color: var(--c); text-underline-offset: 4px; }
+.item-entr { font-size: 15px; line-height: 1.45; max-height: 2.9em; color: var(--suave); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Breves: ítems en columnas */
+.rejilla-items { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); column-gap: 28px; }
+.rejilla-items > .item { border-top: 1px solid var(--linea); padding-top: 14px; }
+
+/* Cabecera de una sección elegida */
+.seccion-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; border-bottom: 3px solid var(--c, var(--tinta)); padding: 8px 0 12px; }
+.seccion-cab h1 { font-size: clamp(40px, 7vw, 72px); font-weight: 900; font-stretch: 125%; letter-spacing: -0.045em; line-height: 0.95; }
+.seccion-cab p { color: var(--suave); font-weight: 600; }
+
+/* Sumario: los puntos clave de la apertura */
+.sumario { list-style: none; padding: 0; display: grid; gap: 8px; border-top: 1px solid var(--linea); padding-top: 12px; }
+.sumario li { position: relative; padding-left: 18px; font-size: 15.5px; line-height: 1.42; }
+.sumario li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+
+.rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 18px; }
+
+/* Tarjeta de la Lista */
+.tarjeta {
+  position: relative;
+  isolation: isolate;
+  background: var(--sup);
+  border-radius: var(--r-l);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  transition: transform 0.4s var(--muelle), background-color 0.2s, box-shadow 0.3s;
+}
+@media (hover: hover) { .tarjeta:hover { transform: translateY(-4px); box-shadow: 0 18px 40px -24px rgb(0 0 0 / 0.5); } }
+/* Brillo que sigue al ratón (app.js mueve --mx y --my) */
+.tarjeta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;          /* por debajo del texto: el brillo nunca resta contraste */
+  pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0), light-dark(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.08)), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+@media (hover: hover) { .tarjeta:hover::before { opacity: 1; } }
+/* Tapa de color con la palabra gigante */
+.tapa { background: var(--c); color: var(--oscuro); height: 124px; padding: 16px 18px 0; display: grid; overflow: hidden; }
+.tapa .marco { overflow: hidden; display: flex; align-items: flex-end; min-height: 0; }
+.tapa .gigante { -webkit-text-stroke-width: 1.5px; transition: translate 0.6s var(--muelle); }
+@media (hover: hover) { .tarjeta:hover .gigante { translate: 4% 0; } }
+.tapa img { width: calc(100% + 36px); margin: -16px -18px 0; height: calc(100% + 16px); object-fit: cover; }
+
+.txt { padding: 16px 20px 20px; display: grid; gap: 10px; align-content: start; }
+.tarjeta h3 { font-size: 21px; font-weight: 800; font-stretch: 110%; line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance; }
+.tarjeta h3 a { text-decoration: none; }
+/* El enlace del titular cubre toda la tarjeta: se puede tocar en cualquier parte */
+.tarjeta h3 a::after { content: ""; position: absolute; inset: 0; z-index: 2; }
+.tarjeta .entr { color: var(--suave); font-size: 15.5px; line-height: 1.45; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; color: var(--suave); margin-top: 2px; }
+.meta span { display: inline-flex; align-items: center; gap: 5px; }
+.meta svg { width: 15px; height: 15px; }
+
+/* La destacada ocupa 2 columnas y va en horizontal: tapa a la izquierda, texto a la derecha */
+.destacada { grid-column: span 2; grid-template-rows: none; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
+.destacada .tapa { height: auto; min-height: 320px; padding: 20px 22px 0; }
+.destacada .txt { padding: 26px 28px; align-content: center; gap: 14px; }
+.destacada h3 { font-size: clamp(26px, 2.6vw, 36px); line-height: 1.05; font-stretch: var(--ancha); letter-spacing: -0.03em; }
+.destacada .entr { font-size: 17px; color: var(--tinta); }
+
+/* "Lo último": columna tipo teletipo junto a la destacada */
+.rio { border: 1px solid var(--linea); border-radius: var(--r-l); padding: 18px 20px 8px; display: grid; align-content: start; gap: 6px; }
+.rio h2 { display: flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 850; font-stretch: 112%; letter-spacing: -0.02em; padding-bottom: 6px; }
+.rio ol { list-style: none; padding: 0; }
+.rio li { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 10px; padding: 11px 0; border-top: 1px solid var(--linea); position: relative; }
+.rio time { font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--suave); padding-top: 1px; }
+.rio a { text-decoration: none; font-size: 15.5px; font-weight: 650; line-height: 1.32; }
+.rio a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.rio .mini { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--suave); margin-bottom: 2px; }
+.rio .mini::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--c); }
+
+.publi { grid-column: 1 / -1; min-height: 90px; border: 1px dashed var(--linea); border-radius: var(--r-m); display: grid; place-items: center; padding: 16px; text-align: center; font-size: 13.5px; color: var(--suave); }
+.publi a { font-weight: 650; }
+
+.pie { border-top: 3px solid var(--tinta); padding-top: 26px; margin-top: 12px; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 5fr); gap: 28px; font-size: 15px; color: var(--suave); }
+.pie h2 { font-size: 15px; font-weight: 800; color: var(--tinta); margin-bottom: 10px; }
+.pie p { max-width: 68ch; }
+.pie p + p { margin-top: 8px; }
+.pie-marca { display: grid; gap: 10px; align-content: start; }
+.pie-secciones ul { list-style: none; padding: 0; display: grid; }
+.pie-secciones button { border: 0; background: none; padding: 6px 0; min-height: 36px; font-size: 15px; font-weight: 600; color: var(--tinta); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.pie-secciones button::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--c); }
+.pie-secciones button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.pie-base { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; border-top: 1px solid var(--linea); padding-top: 16px; font-size: 13.5px; }
+.legal { display: flex; flex-wrap: wrap; gap: 18px; }
+.dia .lema span { display: block; font-size: 14px; font-weight: 650; color: var(--tinta); margin-top: 4px; }
+.logo-pie { font-weight: 900; font-stretch: 125%; font-size: 24px; letter-spacing: -0.045em; color: var(--tinta); line-height: 1; display: flex; align-items: baseline; }
+.redes { display: flex; gap: 16px; }
+.redes a { font-weight: 650; }
+
+/* ---------- 8. Menú lateral de cristal ---------- */
+.menu {
+  position: fixed;
+  inset: 0 auto 0 0;
+  margin: 0;
+  width: min(380px, 88vw);   /* en el móvil queda un borde para ver que la página sigue detrás */
+  height: 100%;
+  max-height: none;
+  max-width: none;
+  border: 0;
+  border-right: 1px solid var(--cristal-borde);
+  border-radius: 0 var(--r-l) var(--r-l) 0;
+  padding: max(14px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: var(--cristal);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--cristal-brillo), 20px 0 60px -30px rgb(0 0 0 / 0.5);
+  color: var(--tinta);
+  overflow-y: auto;
+}
+.menu { touch-action: pan-y; overscroll-behavior: contain; transition: translate 0.4s var(--nativa); }
+.menu[open] { animation: menu-entra 0.55s var(--nativa); }
+.menu.saliendo { animation: menu-sale 0.3s var(--cierre) forwards; }
+.menu::backdrop { background: rgb(0 0 0 / 0.4); }   /* sin desenfoque: con el del panel basta y va más fluido */
+.menu[open]::backdrop { animation: aparece-fondo 0.45s ease-out; }
+.menu.saliendo::backdrop { animation: desvanece 0.3s ease-in forwards; }
+@keyframes menu-entra { from { translate: -100% 0; } }
+@keyframes menu-sale { to { translate: -100% 0; } }
+@keyframes aparece-fondo { from { opacity: 0; } }
+#menu-cuerpo { display: grid; gap: 22px; }
+.menu-cab { display: flex; justify-content: space-between; align-items: center; }
+.menu .cerrar { background: var(--sup); color: var(--tinta); }
+.menu-secciones { list-style: none; padding: 0; display: grid; gap: 2px; }
+.menu-secciones button {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: none;
+  padding: 0 12px;
+  border-radius: var(--r-m);
+  font-size: 18px;
+  font-weight: 750;
+  font-stretch: 110%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, padding 0.3s var(--muelle);
+}
+@media (hover: hover) { .menu-secciones button:hover { background: var(--sup); padding-left: 18px; } }
+.menu-secciones button[aria-pressed=true] { background: var(--sup-2); }
+.menu-secciones i { width: 10px; height: 10px; border-radius: 3px; background: var(--c, var(--tinta)); flex: none; }
+.menu-secciones span { margin-left: auto; font-size: 13.5px; font-weight: 650; color: var(--suave); font-stretch: 100%; }
+/* Animación de entrada en cascada de las secciones */
+.menu[open] .menu-secciones li { animation: sube-txt 0.45s var(--salida) backwards; }
+.menu[open] .menu-secciones li:nth-child(2) { animation-delay: 0.03s; }
+.menu[open] .menu-secciones li:nth-child(3) { animation-delay: 0.06s; }
+.menu[open] .menu-secciones li:nth-child(4) { animation-delay: 0.09s; }
+.menu[open] .menu-secciones li:nth-child(5) { animation-delay: 0.12s; }
+.menu[open] .menu-secciones li:nth-child(6) { animation-delay: 0.15s; }
+.menu[open] .menu-secciones li:nth-child(n+7) { animation-delay: 0.18s; }
+.menu-modo { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 650; }
+.menu-como { font-size: 14px; line-height: 1.5; color: var(--suave); }
+.menu-como b { color: var(--tinta); }
+
+/* ---------- 9. Ficha (dialog) ---------- */
+#ficha {
+  border: 0;
+  padding: 0;
+  width: min(680px, 100% - 32px);
+  max-width: none;
+  max-height: min(90svh, 920px);
+  border-radius: var(--r-l);
+  background: var(--bg);
+  color: var(--tinta);
+  overflow: auto;
+}
+#ficha::backdrop { background: rgb(0 0 0 / 0.55); }
+#ficha { transition: translate 0.4s var(--nativa); }
+#ficha[open] { animation: sube 0.5s var(--nativa); }
+#ficha[open]::backdrop { animation: aparece-fondo 0.4s ease-out; }
+#ficha.saliendo { animation: baja 0.25s var(--cierre) forwards; }
+#ficha.saliendo::backdrop { animation: desvanece 0.25s ease-in forwards; }
+@keyframes baja { to { transform: translateY(40px); opacity: 0; } }
+@keyframes desvanece { to { opacity: 0; } }
+@keyframes sube { from { transform: translateY(48px); opacity: 0; } }
+@keyframes sube-hoja { from { transform: translateY(100%); } }
+@keyframes baja-hoja { to { transform: translateY(100%); } }
+.f-tapa { background: var(--c); color: var(--oscuro); padding: 12px 12px 12px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 1; }
+.f-tapa .etq b { background: var(--oscuro); color: var(--c); }
+.f-tapa .hora { color: inherit; opacity: 0.72; }
+.cerrar { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--oscuro); color: var(--c); cursor: pointer; display: grid; place-items: center; flex: none; transition: transform 0.3s var(--muelle); }
+.cerrar:hover { transform: rotate(90deg); }
+.cerrar svg { width: 18px; height: 18px; }
+/* Panel abierto con el dedo o el ratón: sin anillo en la X hasta que se use el teclado */
+.sin-anillo .cerrar:focus-visible { outline: none; }
+.f-txt { padding: 24px 26px max(28px, env(safe-area-inset-bottom)); display: grid; gap: 16px; }
+.f-txt h2 { font-size: clamp(28px, 5vw, 38px); font-weight: 850; font-stretch: var(--ancha); line-height: 1.04; letter-spacing: -0.03em; text-wrap: balance; }
+.entradilla { font-size: 18px; line-height: 1.45; }
+.f-txt .puntos { margin-top: 0; }
+.f-txt .porque { background: var(--sup); margin-top: 0; }
+.f-txt h3 { font-size: 17px; font-weight: 800; font-stretch: 110%; margin-top: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--tinta); }
+.titulares, .lista-fuentes { list-style: none; padding: 0; display: grid; }
+.titulares li { padding: 12px 0; border-bottom: 1px solid var(--linea); display: grid; gap: 4px; }
+.medio { font-size: 13.5px; font-weight: 700; color: var(--suave); }
+.titulares q { font-size: 17px; line-height: 1.35; font-weight: 550; }
+.titulares a, .lista-fuentes a { font-size: 14.5px; font-weight: 650; text-underline-offset: 3px; }
+.lista-fuentes li { padding: 11px 0; border-bottom: 1px solid var(--linea); }
+.firma { font-size: 14px; color: var(--suave); }
+.f-txt .btn { color: var(--tinta); }
+.f-txt .item h3 { border: 0; margin: 0; padding: 0; font-size: 18px; }
+
+/* ---------- 10. Aviso flotante de cristal ---------- */
+.aviso {
+  position: fixed;
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  translate: -50% 20px;
+  background: color-mix(in srgb, var(--tinta) 88%, transparent);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  color: var(--bg);
+  border-radius: 999px;
+  padding: 10px 10px 10px 20px;
+  font-weight: 600;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, translate 0.45s var(--muelle);
+  z-index: 10;
+  max-width: calc(100% - 32px);
+}
+.aviso:empty { padding: 0; }
+.aviso.ver { opacity: 1; translate: -50% 0; pointer-events: auto; }
+.aviso button { min-height: 36px; border: 0; border-radius: 999px; padding: 0 14px; background: var(--marca); color: var(--oscuro); font-weight: 700; cursor: pointer; }
+.aviso span { padding-right: 10px; white-space: nowrap; }
+
+/* ---------- 11. Animación ----------
+   Regla: el contenido SIEMPRE se ve aunque la animación no ocurra.
+   Las animaciones solo "llegan" al estado final; nunca esconden nada de partida. */
+
+/* Al encajar una tarjeta Flash: la palabra gigante entra deslizando y el texto sube en cascada */
+.activa .gigante { animation: entra-lado 0.8s var(--salida); }
+.activa h2, .activa .puntos li, .activa .porque, .activa .acciones, .activa .momentos { animation: sube-txt 0.5s var(--salida) backwards; }
+.activa h2 { animation-delay: 0.06s; }
+.activa .puntos li:nth-child(1) { animation-delay: 0.12s; }
+.activa .puntos li:nth-child(2) { animation-delay: 0.17s; }
+.activa .puntos li:nth-child(3) { animation-delay: 0.22s; }
+.activa .porque { animation-delay: 0.28s; }
+.activa .acciones { animation-delay: 0.32s; }
+.activa .momentos { animation-delay: 0.1s; }
+.activa .dia-num b { animation: pop 0.6s var(--muelle) 0.1s backwards; }
+@keyframes entra-lado { from { transform: translateX(30%); opacity: 0; } }
+@keyframes sube-txt { from { transform: translateY(16px); opacity: 0; } }
+@keyframes pop { from { transform: scale(0.4); opacity: 0; } }
+
+/* La flecha de la portada invita a deslizar */
+.pista svg { animation: rebote 1.6s ease-in-out infinite; }
+@keyframes rebote { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+
+/* Respuesta al tocar: lo pulsable "se hunde" un poco */
+.btn, .tabs button, .aviso button, .cuenta { transition: transform 0.15s, background-color 0.2s, color 0.2s, border-color 0.2s; }
+.chip { transition: transform 0.15s, color 0.3s; }
+.btn:active, .chip:active, .modo button:active, .tabs button:active, .cerrar:active, .aviso button:active, .cuenta:active, .dia-num:active, .btn-menu:active { transform: scale(0.94); }
+
+/* Cambio de sección o de modo: fundido suave (View Transitions, en los navegadores que lo tienen) */
+::view-transition-old(root) { animation: vt-sale 0.16s ease-in both; }
+::view-transition-new(root) { animation: vt-entra 0.42s var(--nativa) both; }
+@keyframes vt-sale { to { opacity: 0; } }
+@keyframes vt-entra { from { opacity: 0; transform: translateY(16px); } }
+/* La cabecera y la barra no se funden al cambiar de sección: la pastilla se ve deslizarse en directo */
+.chips { view-transition-name: secciones; }
+::view-transition-old(cabecera), ::view-transition-old(secciones) { display: none; }
+::view-transition-new(cabecera), ::view-transition-new(secciones) { animation: none; }
+
+/* ---------- 12. Preferencias de lectura (las elige el lector en el menú) ---------- */
+/* Tema: "auto" sigue al sistema; "claro" fuerza la versión en blanco; "oscuro" la de grafito */
+:root[data-tema=claro] { color-scheme: light; }
+:root[data-tema=oscuro] { color-scheme: dark; }
+
+/* Tamaño de letra: multiplica los textos de lectura (no los botones ni la cabecera) */
+:root { --tx: 1; }
+:root[data-letra=grande] { --tx: 1.12; }
+:root[data-letra=enorme] { --tx: 1.25; }
+:root:not([data-letra=normal]) .puntos li { font-size: calc(16.5px * var(--tx)); }
+:root:not([data-letra=normal]) .porque { font-size: calc(15.5px * var(--tx)); }
+:root:not([data-letra=normal]) .entradilla { font-size: calc(18px * var(--tx)); }
+:root:not([data-letra=normal]) .sumario li,
+:root:not([data-letra=normal]) .tarjeta .entr,
+:root:not([data-letra=normal]) .rio a,
+:root:not([data-letra=normal]) .momentos li button { font-size: calc(15.5px * var(--tx)); }
+:root:not([data-letra=normal]) .destacada .entr { font-size: calc(17px * var(--tx)); }
+:root:not([data-letra=normal]) .item-entr { font-size: calc(15px * var(--tx)); }
+:root:not([data-letra=normal]) .item h3 { font-size: calc(19px * var(--tx)); }
+:root:not([data-letra=normal]) .tarjeta h3 { font-size: calc(21px * var(--tx)); }
+:root:not([data-letra=normal]) .titulares q { font-size: calc(17px * var(--tx)); }
+:root:not([data-letra=normal]) .fuentes,
+:root:not([data-letra=normal]) .firma,
+:root:not([data-letra=normal]) .lista-fuentes a { font-size: calc(14px * var(--tx)); }
+
+/* Enlace "Saltar al contenido": invisible hasta que llegas a él con el tabulador */
+.saltar { position: fixed; left: 12px; top: -80px; z-index: 20; background: var(--marca); color: var(--oscuro); font-weight: 750; padding: 12px 18px; border-radius: var(--r-m); text-decoration: none; }
+.saltar:focus { top: max(12px, env(safe-area-inset-top)); }
+/* Texto solo para lectores de pantalla */
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Atajos de la cabecera: buscar y lectura */
+.top-der { display: flex; align-items: center; gap: 4px; }
+.btn-top { width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; cursor: pointer; display: grid; place-items: center; transition: background-color 0.2s, transform 0.15s; }
+.btn-top:hover { background: var(--sup); }
+.btn-top:active { transform: scale(0.94); }
+.btn-top svg { width: 21px; height: 21px; }
+.btn-top span { font-weight: 850; font-size: 17px; font-stretch: 110%; letter-spacing: -0.02em; }
+
+/* Buscador del menú */
+.buscar input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--linea);
+  background: var(--bg);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 16px;   /* 16 px o más: así el iPhone no hace zoom al escribir */
+}
+.buscar input::placeholder { color: var(--suave); }
+.res-num { font-size: 13.5px; color: var(--suave); margin: 12px 4px 6px; }
+#resultados .items { padding-inline: 4px; }
+#resultados .item h3 { font-size: 16.5px; }
+
+/* Preferencias: botones segmentados */
+.lectura { display: grid; gap: 12px; border-top: 1px solid var(--linea); padding-top: 18px; }
+.lectura h2 { font-size: 15px; font-weight: 800; }
+.pref { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 600; }
+.seg { display: flex; gap: 2px; background: var(--sup-2); border-radius: 999px; padding: 3px; }
+.seg button { min-height: 40px; min-width: 44px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--suave); font-size: 14px; font-weight: 650; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.seg button[aria-pressed=true] { background: var(--tinta); color: var(--bg); }
+.a1, .a2, .a3 { font-weight: 850; line-height: 1; }
+.a1 { font-size: 13px; } .a2 { font-size: 16px; } .a3 { font-size: 20px; }
+
+/* Nota de corrección en la ficha */
+.correccion { border-left: 3px solid var(--marca); padding: 4px 0 4px 12px; font-size: 15px; }
+
+/* ---------- 13. Tamaños de pantalla ---------- */
+@media (max-width: 1000px) {
+  .top-fecha { display: none; }
+}
+@media (max-width: 760px) {
+  /* En el móvil la cabecera se queda en lo esencial: menú, logo y cuenta atrás.
+     Buscar, lectura y el modo Flash/Lista están en el menú lateral. */
+  .top-der { display: none; }
+  .top-fila { gap: 6px; min-height: 54px; }
+  .logo { font-size: 25px; }
+  /* En el móvil la cuenta atrás va a la derecha, en una sola línea */
+  .top-centro { justify-content: flex-end; }
+  .cuenta { font-size: 13px; padding: 6px 11px; }
+  .chip { padding: 0 13px; font-size: 14.5px; gap: 7px; }
+  .chip-guardadas { margin-left: 8px; }
+
+  .cinta-titulo { font-size: 13px; }
+  .dia { grid-template-columns: minmax(0, 1fr); }
+  .dia > div { padding: 20px; }
+  .dia > div + div { border-left: 0; border-top: 1px solid var(--linea); }
+  .destacada { grid-column: auto; grid-template-columns: none; grid-template-rows: auto 1fr; }
+  .destacada .tapa { min-height: 0; height: 160px; padding: 16px 18px 0; }
+  .destacada .txt { padding: 18px 20px 22px; }
+  .pie { grid-template-columns: minmax(0, 1fr); }
+  .apertura, .bloque-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .bloque-cab h2 { font-size: 21px; }
+  .bloque-extra { display: none; }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .apertura { grid-template-columns: minmax(0, 1fr); }
+  .apertura .destacada { grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); }
+  .pie { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .pie-como { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  /* En el móvil la ficha es una hoja que sube desde abajo */
+  #ficha { width: 100%; margin: auto 0 0; max-height: 92svh; border-radius: var(--r-l) var(--r-l) 0 0; }
+  #ficha[open] { animation-name: sube-hoja; }
+  #ficha.saliendo { animation-name: baja-hoja; }
+  .f-tapa { touch-action: none; padding-top: 18px; }
+  .f-tapa::before { content: ""; position: absolute; top: 7px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 4px; background: rgb(0 0 0 / 0.28); }
+  .f-txt { padding-inline: 18px; }
+}
+@media (max-width: 380px) {
+  .logo { font-size: 23px; }
+  .cuenta { font-size: 12.5px; padding-inline: 9px; }
+}
+/* Móviles con poca altura: la tarjeta se queda con lo esencial
+   y el "por qué te importa" se lee en la ficha */
+@media (max-height: 760px) {
+  .carta .porque { display: none; }
+  .carta h2 { font-size: clamp(24px, min(4.2svh, 7.8vw), 34px); }
+  .carta .puntos li { font-size: 15.5px; line-height: 1.38; }
+  .carta .puntos { gap: 6px; margin-top: 12px; }
+  .carta.portada { gap: 12px; }
+  .carta.portada .dia-num b { font-size: 44px; }
+  .saludo h1 { font-size: clamp(28px, 7.6vw, 36px); }
+}
+/* Móviles muy bajos: la portada Flash prescinde del lema */
+@media (max-height: 680px) {
+  .saludo p { display: none; }
+}
+/* Quien pide menos movimiento en su sistema, no lo tiene */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .cinta-pista { overflow-x: auto; }
+}

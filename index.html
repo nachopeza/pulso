@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover: en iPhone la web ocupa toda la pantalla; el CSS deja hueco al notch con env(safe-area-inset-*) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>pulso, noticias en corto</title>
+  <meta name="description" content="Las noticias del día, cortas y claras, con enlace a sus fuentes.">
+  <!-- Cómo se ve el enlace al compartirlo en Bluesky, X o WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="pulso">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:title" content="pulso, noticias en corto">
+  <meta property="og:description" content="Las noticias del día, cortas y claras, con enlace a sus fuentes.">
+  <meta name="twitter:card" content="summary">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1d21" media="(prefers-color-scheme: dark)">
+
+  <!-- Icono de la pestaña: una "p" con el punto amarillo -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23141414'/%3E%3Ctext x='5' y='23' font-family='Arial,sans-serif' font-weight='900' font-size='22' fill='%23fff'%3Ep%3C/text%3E%3Ccircle cx='24' cy='21' r='3.5' fill='%23ffd400'/%3E%3C/svg%3E">
+
+  <!-- Preferencias de lectura (tema y tamaño de letra): se aplican ANTES de pintar para que no haya parpadeo -->
+  <script>
+    try {
+      document.documentElement.dataset.tema = localStorage.getItem('pulso-tema') || 'auto';
+      document.documentElement.dataset.letra = localStorage.getItem('pulso-letra') || 'normal';
+    } catch (e) { /* sin localStorage: valores por defecto */ }
+  </script>
+
+  <!-- Tipografía: Archivo, una sola familia con eje de anchura (estrecha ↔ expandida) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <!-- Para quien navega con teclado o lector de pantalla: salta directo a las noticias -->
+  <a class="saltar" href="#main" data-saltar>Saltar al contenido</a>
+
+  <!-- Cabecera fija de cristal: menú, logo, fecha y cuenta atrás, modo de lectura y secciones -->
+  <header class="top" id="top">
+    <div class="top-fila">
+      <button type="button" class="btn-menu" id="btn-menu" aria-label="Abrir el menú" aria-haspopup="dialog">
+        <span></span><span></span>
+      </button>
+
+      <!-- El logo va letra a letra: al bajar, "pulso" se pliega en "p" (lo anima app.js) -->
+      <a class="logo" id="logo" href="#" aria-label="pulso, ir al inicio">
+        <span class="lt" aria-hidden="true">p</span><span class="lt" aria-hidden="true">u</span><span class="lt" aria-hidden="true">l</span><span class="lt" aria-hidden="true">s</span><span class="lt" aria-hidden="true">o</span><span class="latido" aria-hidden="true"></span>
+      </a>
+
+      <div class="top-centro">
+        <p class="top-fecha" id="top-fecha"></p>
+        <button type="button" class="cuenta" id="cuenta" data-filtro="elecciones"></button>
+      </div>
+
+      <div class="top-der">
+        <!-- Atajos (solo en pantallas anchas; en el móvil están dentro del menú) -->
+        <button type="button" class="btn-top" data-abrir-menu="buscar" aria-label="Buscar noticias">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        </button>
+        <button type="button" class="btn-top" data-abrir-menu="lectura" aria-label="Tema y tamaño de letra">
+          <span aria-hidden="true">Aa</span>
+        </button>
+        <div class="modo" id="modo" role="group" aria-label="Cómo quieres leer">
+          <button type="button" id="btn-flash" aria-pressed="true">Flash</button>
+          <button type="button" id="btn-lista" aria-pressed="false">Lista</button>
+        </div>
+      </div>
+    </div>
+    <nav class="chips" id="chips" aria-label="Secciones"></nav>
+  </header>
+
+  <!-- Aquí app.js pinta las noticias (modo Flash o modo Lista) -->
+  <main id="main" tabindex="-1">
+    <!-- Esqueleto mientras cargan las noticias (app.js lo sustituye) -->
+    <div class="esqueleto" aria-hidden="true">
+      <div class="esq esq-cinta"></div>
+      <div class="esq esq-dia"></div>
+      <div class="esq-fila"><div class="esq esq-tarjeta"></div><div class="esq esq-tarjeta"></div><div class="esq esq-tarjeta"></div></div>
+    </div>
+    <p class="oculto" role="status">Cargando las noticias…</p>
+  </main>
+
+  <!-- Menú lateral de cristal -->
+  <dialog id="menu" class="menu" aria-label="Menú">
+    <div id="menu-cuerpo"></div>
+  </dialog>
+
+  <!-- Ficha completa de una noticia. Se abre como hoja desde abajo en el móvil -->
+  <dialog id="ficha" aria-labelledby="ficha-titulo">
+    <div id="ficha-cuerpo"></div>
+  </dialog>
+
+  <!-- Avisos breves: "Enlace copiado", "Guardada", "Hay noticias nuevas" -->
+  <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,574 @@
+{
+  "actualizado": "2026-11-24T19:15:00+01:00",
+  "anuncio": null,
+  "momentos": {
+    "manana": {
+      "titulo": "Para empezar el día",
+      "puntos": [
+        {
+          "texto": "El impuesto a la banca seguirá en 2027 y se destinará a vivienda.",
+          "id": "impuesto-banca-2027"
+        },
+        {
+          "texto": "Permiso por nacimiento de 20 semanas: qué cambia.",
+          "id": "permisos-nacimiento-20-semanas"
+        },
+        {
+          "texto": "Lluvia fuerte en Galicia y aviso por nieve en León.",
+          "id": "frente-atlantico-24n"
+        }
+      ]
+    },
+    "tarde": {
+      "titulo": "A media tarde",
+      "puntos": [
+        {
+          "texto": "Cinco días para el 29N: lo que dicen las encuestas.",
+          "id": "recta-final-29n"
+        },
+        {
+          "texto": "Canarias roza las 13.000 llegadas en noviembre.",
+          "id": "canarias-llegadas-noviembre"
+        },
+        {
+          "texto": "Seis de cada diez pisos en venta pasan de 250.000 euros.",
+          "id": "precio-vivienda-venta"
+        }
+      ]
+    },
+    "noche": {
+      "titulo": "Para cerrar el día",
+      "puntos": [
+        {
+          "texto": "Colau y García Albiol debaten sobre vivienda a las 23:00.",
+          "id": "agenda-campana-martes"
+        },
+        {
+          "texto": "El Madrid recibe al PSV en la Champions.",
+          "id": "real-madrid-psv"
+        },
+        {
+          "texto": "Diez años del acuerdo de paz en Colombia.",
+          "id": "colombia-diez-anos-paz"
+        }
+      ]
+    }
+  },
+  "noticias": [
+    {
+      "id": "recta-final-29n",
+      "categoria": "elecciones",
+      "momento": "tarde",
+      "fecha": "2026-11-24T13:40:00+01:00",
+      "destacado": true,
+      "ejemplo": false,
+      "titular": "Cinco días para el 29N: las encuestas no cuentan la misma historia",
+      "entradilla": "La mayoría de los sondeos dan mayoría absoluta a PP y Vox. El CIS dibuja lo contrario: el PSOE, casi diez puntos por delante del PP.",
+      "puntos": [
+        "Se eligen 350 diputados y 209 senadores. La mayoría absoluta en el Congreso está en 176 escaños.",
+        "La campaña empezó el 13 de noviembre y acaba el viernes 27 a medianoche. El sábado es jornada de reflexión.",
+        "Desde este martes ya no se pueden publicar encuestas: la ley lo prohíbe en los cinco días anteriores a la votación."
+      ],
+      "porque": "Las encuestas son una foto aproximada, no un resultado. Lo que decide es quién vota el domingo.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        },
+        {
+          "medio": "Wikipedia, elecciones generales de 2026",
+          "url": "https://es.wikipedia.org/wiki/Elecciones_generales_de_Espa%C3%B1a_de_2026"
+        },
+        {
+          "medio": "BOE, ley electoral (LOREG)",
+          "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "agenda-campana-martes",
+      "categoria": "elecciones",
+      "momento": "noche",
+      "fecha": "2026-11-24T12:10:00+01:00",
+      "ejemplo": false,
+      "titular": "Martes de campaña: mítines en cinco ciudades y un debate sobre vivienda",
+      "entradilla": "Los candidatos apuran la recta final. Por la noche, Ada Colau y Xavier García Albiol debaten cara a cara sobre vivienda.",
+      "puntos": [
+        "Pedro Sánchez (PSOE) estará en Huesca a las 16:00 y en Barcelona con Salvador Illa a las 19:00.",
+        "Alberto Núñez Feijóo (PP) cierra el día en Alicante a las 18:30. Junts hace su acto en Girona a las 20:00.",
+        "El debate entre Colau (Frente Amplio) y García Albiol (PP) se emite en La Sexta a las 23:00."
+      ],
+      "porque": "La vivienda es la principal preocupación en España, según recoge EFE. Es el tema del debate de esta noche.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        },
+        {
+          "medio": "EFE, previsión del día",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/23/hoy-sera-noticia-martes-24-de-noviembre/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "seguridad-29n",
+      "categoria": "elecciones",
+      "momento": "tarde",
+      "fecha": "2026-11-24T11:20:00+01:00",
+      "ejemplo": false,
+      "titular": "Más de 100.700 agentes vigilarán la jornada electoral",
+      "entradilla": "Interior prepara el mayor despliegue de seguridad hasta ahora para unas elecciones.",
+      "puntos": [
+        "Los colegios abren de 9:00 a 20:00 el domingo 29.",
+        "Para votar necesitas DNI, pasaporte o carné de conducir originales y con foto."
+      ],
+      "porque": "Si votas por primera vez, sabrás qué te vas a encontrar en el colegio.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        },
+        {
+          "medio": "Ministerio del Interior, Infoelectoral",
+          "url": "https://infoelectoral.interior.gob.es/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "Despliegue récord de efectivos de seguridad para el 29N, con más de 100.700 agentes",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "impuesto-banca-2027",
+      "categoria": "economia",
+      "momento": "manana",
+      "fecha": "2026-11-24T10:05:00+01:00",
+      "ejemplo": false,
+      "titular": "El impuesto a la banca seguirá en 2027 y lo recaudado irá a vivienda",
+      "entradilla": "El Consejo de Ministros aprueba la prórroga. El Gobierno calcula que recaudará 1.400 millones de euros.",
+      "puntos": [
+        "El dinero se destinará a vivienda protegida, ayudas a inquilinos y rehabilitación.",
+        "Sánchez lo había anunciado el sábado en un acto de campaña.",
+        "El mismo Consejo aprueba una rebaja del IRPF para autónomos de 465 millones y cambios en el IVA."
+      ],
+      "porque": "Si alquilas, parte de ese dinero se reparte en ayudas al alquiler.",
+      "fuentes": [
+        {
+          "medio": "EFE, previsión del día",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/23/hoy-sera-noticia-martes-24-de-noviembre/"
+        },
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "El Gobierno aprueba la prórroga del impuesto bancario hasta 2027",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "permisos-nacimiento-20-semanas",
+      "categoria": "espana",
+      "momento": "manana",
+      "fecha": "2026-11-24T10:40:00+01:00",
+      "ejemplo": false,
+      "titular": "El permiso por nacimiento pasará a 20 semanas",
+      "entradilla": "El Gobierno también amplía a diez días el permiso por la muerte de un padre, una madre o un hijo.",
+      "puntos": [
+        "El permiso de nacimiento y cuidado sube a 20 semanas.",
+        "El permiso por fallecimiento de padres o hijos pasa a diez días.",
+        "Lo ha anunciado el Gobierno este martes, a cinco días de las elecciones."
+      ],
+      "porque": "Son derechos de cualquier persona que trabaje, también si acabas de empezar.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "El Gobierno ampliará el permiso de nacimiento y cuidado a 20 semanas y el de fallecimiento de padres o hijos a diez días",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "ayudas-transporte-2027",
+      "categoria": "economia",
+      "momento": "manana",
+      "fecha": "2026-11-24T11:00:00+01:00",
+      "ejemplo": false,
+      "titular": "Los descuentos del transporte público se mantienen en 2027",
+      "entradilla": "El Gobierno prorroga un año más las ayudas al transporte con los mismos descuentos que ahora.",
+      "puntos": [
+        "Las rebajas en abonos y billetes siguen igual que este año.",
+        "La prórroga se aprueba junto a otras medidas fiscales del Consejo de Ministros."
+      ],
+      "porque": "Si vas a clase o al trabajo en bus, metro o tren, tu abono no sube por esto.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "El Gobierno prorroga las ayudas al transporte público en 2027 con los mismos descuentos",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "precio-vivienda-venta",
+      "categoria": "economia",
+      "momento": "tarde",
+      "fecha": "2026-11-24T15:30:00+01:00",
+      "ejemplo": false,
+      "titular": "Seis de cada diez pisos en venta ya pasan de 250.000 euros",
+      "entradilla": "Y uno de cada cuatro supera el medio millón. Las diferencias entre comunidades son enormes.",
+      "puntos": [
+        "Baleares y Madrid concentran la oferta más cara.",
+        "En Extremadura y Castilla-La Mancha, más de la mitad de las viviendas se ofrecen por menos de 150.000 euros.",
+        "La vivienda es la mayor preocupación de los españoles en esta campaña."
+      ],
+      "porque": "Explica por qué comprar una casa es tan difícil con un primer sueldo, sobre todo en las grandes ciudades.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "canarias-llegadas-noviembre",
+      "categoria": "espana",
+      "momento": "tarde",
+      "fecha": "2026-11-24T14:15:00+01:00",
+      "ejemplo": false,
+      "titular": "Canarias roza las 13.000 llegadas de migrantes en noviembre",
+      "entradilla": "El Gobierno y Canarias se reúnen por tercera semana seguida en la Comisión Interministerial de Inmigración.",
+      "puntos": [
+        "Este mes han llegado 12.967 personas en 130 embarcaciones, según el Gobierno canario.",
+        "El Hierro ha recibido 109 de esas embarcaciones.",
+        "Canarias reprocha a la mayoría de comunidades que no colaboren en la acogida de menores migrantes."
+      ],
+      "porque": "El reparto de menores entre comunidades es uno de los debates abiertos de la campaña.",
+      "fuentes": [
+        {
+          "medio": "EFE, previsión del día",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/23/hoy-sera-noticia-martes-24-de-noviembre/"
+        },
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "Canarias reprocha a la mayoría de comunidades que no colaboren en acoger menores migrantes",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "ratios-escuelas-infantiles",
+      "categoria": "espana",
+      "momento": "tarde",
+      "fecha": "2026-11-24T12:50:00+01:00",
+      "ejemplo": false,
+      "titular": "Escuelas infantiles: como máximo cuatro bebés por educadora",
+      "entradilla": "El Gobierno reduce a la mitad el número de niños por educadora. Se aplicará desde el curso 2027-2028.",
+      "puntos": [
+        "El tope será de 4 bebés menores de un año por educadora.",
+        "El cambio llega en un paquete de decretos que también baja las ratios en Infantil y en Bachillerato.",
+        "Las educadoras de Madrid están en huelga desde el 7 de abril."
+      ],
+      "porque": "Menos alumnos por aula significa más atención para cada uno, desde los 0 años hasta el Bachillerato.",
+      "fuentes": [
+        {
+          "medio": "EFE, previsión del día",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/23/hoy-sera-noticia-martes-24-de-noviembre/"
+        },
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "El Gobierno baja a la mitad el número de niños por educadora en escuelas infantiles",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "frente-atlantico-24n",
+      "categoria": "clima",
+      "momento": "manana",
+      "fecha": "2026-11-24T08:30:00+01:00",
+      "ejemplo": false,
+      "titular": "Un frente deja lluvia fuerte en Galicia y nieve en la montaña de León",
+      "entradilla": "El frente atlántico cruza la Península de oeste a este. El único aviso activo es amarillo, por nevadas.",
+      "puntos": [
+        "En Pontevedra se esperan 42,6 litros por metro cuadrado; en A Coruña, 26,4.",
+        "Aviso amarillo en la Cordillera Cantábrica de León: hasta 5 cm de nieve por encima de 1.200-1.400 metros.",
+        "Nieblas densas en la Meseta norte. Madrid no pasará de 9 °C."
+      ],
+      "porque": "Si viajas por el norte esta semana, revisa los avisos antes de salir.",
+      "fuentes": [
+        {
+          "medio": "Tutiempo.net",
+          "url": "https://www.tutiempo.net/noticias/frente-atlantico-en-espana-martes-24-noviembre-2026.html"
+        },
+        {
+          "medio": "AEMET, avisos",
+          "url": "https://www.aemet.es/es/eltiempo/prediccion/avisos"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "colombia-diez-anos-paz",
+      "categoria": "mundo",
+      "momento": "noche",
+      "fecha": "2026-11-24T09:15:00+01:00",
+      "ejemplo": false,
+      "titular": "Colombia cumple diez años del acuerdo de paz con las FARC",
+      "entradilla": "El 24 de noviembre de 2016 el Gobierno y la guerrilla firmaron el acuerdo final. Una década después, el balance divide al país.",
+      "puntos": [
+        "La guerrilla dejó las armas, pero la violencia sigue en varias regiones.",
+        "La Contraloría señala que las antiguas FARC no han entregado todos los bienes prometidos para reparar a las víctimas.",
+        "La ONU destaca que se han entregado más de 320.000 hectáreas a campesinos, mujeres rurales y víctimas."
+      ],
+      "porque": "Es uno de los procesos de paz más estudiados del mundo, y España tiene una gran comunidad colombiana.",
+      "fuentes": [
+        {
+          "medio": "Diario del Sur",
+          "url": "https://www.diariodelsur.com.co/noticias/una-decada-de-paz-agridulce-en-colombia"
+        },
+        {
+          "medio": "CIDOB",
+          "url": "https://www.cidob.org/publicaciones/implementacion-del-acuerdo-final-paz"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "Diario del Sur",
+          "titular": "Una década de paz agridulce en Colombia",
+          "url": "https://www.diariodelsur.com.co/noticias/una-decada-de-paz-agridulce-en-colombia"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "prado-mariana-de-austria",
+      "categoria": "cultura",
+      "momento": "tarde",
+      "fecha": "2026-11-24T12:30:00+01:00",
+      "ejemplo": false,
+      "titular": "El Prado presenta una exposición sobre Mariana de Austria",
+      "entradilla": "La muestra explica cómo el arte sirvió para dar autoridad a una de las figuras de la monarquía del siglo XVII.",
+      "puntos": [
+        "Mariana de Austria fue reina y gobernó como regente durante la minoría de edad de su hijo Carlos II.",
+        "La exposición analiza los retratos como herramienta de poder.",
+        "Hoy también: Paco Ibáñez, con 92 años, actúa en el Liceu con Serrat y Maria del Mar Bonet, entre otros."
+      ],
+      "porque": "Los retratos oficiales eran la propaganda de la época: entenderlos ayuda a leer las imágenes de hoy.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        },
+        {
+          "medio": "Museo del Prado",
+          "url": "https://www.museodelprado.es/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "real-madrid-psv",
+      "categoria": "deportes",
+      "momento": "noche",
+      "fecha": "2026-11-24T17:45:00+01:00",
+      "ejemplo": false,
+      "titular": "El Real Madrid recibe al PSV en la quinta jornada de la Champions",
+      "entradilla": "Partido de la fase de liga. Además, Gil Marín deja la vicepresidencia de LaLiga.",
+      "puntos": [
+        "Es la jornada 5 de la fase de liga de la Champions.",
+        "El PSV es el rival que eliminó al Madrid en una noche recordada como «la noche negra de Eindhoven».",
+        "Miguel Ángel Gil Marín dimite como vicepresidente de LaLiga tras seis años junto a Javier Tebas."
+      ],
+      "porque": "Cada punto cuenta para meterse entre los ocho primeros y evitar la eliminatoria previa.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+        },
+        {
+          "medio": "UEFA Champions League",
+          "url": "https://www.uefa.com/uefachampionsleague/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "detectar-bulos",
+      "categoria": "elecciones",
+      "momento": "tarde",
+      "fecha": "2026-11-24T16:20:00+01:00",
+      "ejemplo": false,
+      "titular": "Tres pasos para no tragarte un bulo electoral",
+      "entradilla": "En la recta final de campaña circulan vídeos, capturas y audios falsos. Antes de compartir, comprueba.",
+      "puntos": [
+        "Busca la fuente original: si ningún medio serio lo publica, desconfía.",
+        "Mira la fecha: muchos vídeos virales son antiguos o de otro país.",
+        "Busca la imagen con Google Lens o en un verificador como Maldita o Newtral."
+      ],
+      "porque": "Un bulo que compartes tú llega a gente que confía en ti.",
+      "fuentes": [
+        {
+          "medio": "Maldita.es",
+          "url": "https://maldita.es/"
+        },
+        {
+          "medio": "Newtral",
+          "url": "https://www.newtral.es/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "como-votar-29n",
+      "categoria": "elecciones",
+      "momento": "manana",
+      "fecha": "2026-11-24T08:00:00+01:00",
+      "ejemplo": false,
+      "titular": "Guía rápida: cómo votar el domingo 29",
+      "entradilla": "Los colegios abren de 9:00 a 20:00. Solo necesitas un documento oficial con foto y saber cuál es tu mesa.",
+      "puntos": [
+        "Vale el DNI, el pasaporte o el carné de conducir, siempre originales y con foto.",
+        "Consulta tu colegio y tu mesa en la web del Ministerio del Interior antes de salir de casa.",
+        "Si cumples 18 años antes del día de la votación, puedes votar: la inscripción en el censo es automática."
+      ],
+      "porque": "Si acabas de cumplir 18, es tu primera oportunidad de decidir quién gobierna.",
+      "fuentes": [
+        {
+          "medio": "Ministerio del Interior, Infoelectoral",
+          "url": "https://infoelectoral.interior.gob.es/"
+        },
+        {
+          "medio": "BOE, ley electoral (LOREG)",
+          "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "dhondt-explicado",
+      "categoria": "elecciones",
+      "momento": "manana",
+      "fecha": "2026-11-24T07:30:00+01:00",
+      "ejemplo": false,
+      "titular": "La ley D'Hondt en 30 segundos: por qué no todos los votos pesan igual",
+      "entradilla": "El Congreso reparte 350 escaños en 52 circunscripciones. Cada una usa la misma fórmula.",
+      "puntos": [
+        "Los votos de cada partido se dividen entre 1, 2, 3… y los escaños van a los resultados más altos.",
+        "Solo entran en el reparto las candidaturas que superan el 3 % de los votos válidos de su circunscripción.",
+        "En las provincias con pocos escaños, a los partidos pequeños les cuesta mucho más entrar."
+      ],
+      "porque": "Explica por qué un partido puede sacar más escaños que otro con menos votos en total.",
+      "fuentes": [
+        {
+          "medio": "Congreso de los Diputados",
+          "url": "https://www.congreso.es/"
+        },
+        {
+          "medio": "BOE, ley electoral (LOREG)",
+          "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "jornada-reflexion",
+      "categoria": "elecciones",
+      "momento": "noche",
+      "fecha": "2026-11-24T07:00:00+01:00",
+      "ejemplo": false,
+      "titular": "Sábado de reflexión: qué se puede hacer y qué no",
+      "entradilla": "La campaña acaba el viernes a medianoche. Los partidos ya no pueden pedir el voto, pero tú puedes seguir hablando de política.",
+      "puntos": [
+        "El sábado no hay mítines ni propaganda electoral.",
+        "En los cinco días anteriores a la votación no se pueden publicar encuestas en España.",
+        "La prohibición es para partidos y candidaturas: opinar como ciudadano no es hacer campaña."
+      ],
+      "porque": "Si ese sábado ves anuncios pidiendo el voto, algo no cuadra.",
+      "fuentes": [
+        {
+          "medio": "BOE, ley electoral (LOREG)",
+          "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672"
+        },
+        {
+          "medio": "Junta Electoral Central",
+          "url": "https://www.juntaelectoralcentral.es/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "ley-ia-europea",
+      "categoria": "tecnologia",
+      "momento": "noche",
+      "fecha": "2026-11-24T18:05:00+01:00",
+      "ejemplo": false,
+      "titular": "La ley europea de IA, explicada: qué prohíbe y qué te tienen que contar",
+      "entradilla": "La UE clasifica la inteligencia artificial por niveles de riesgo. Cuanto más riesgo, más reglas.",
+      "puntos": [
+        "Prohíbe usos como puntuar socialmente a las personas según su comportamiento.",
+        "Los sistemas de alto riesgo, como los que filtran currículums, tienen que pasar controles estrictos.",
+        "Los contenidos hechos con IA que imitan a personas reales, como los deepfakes, deben avisar de que lo son."
+      ],
+      "porque": "En campaña circulan deepfakes: la ley obliga a avisar cuando un contenido está hecho con IA.",
+      "fuentes": [
+        {
+          "medio": "EUR-Lex, Reglamento (UE) 2024/1689",
+          "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    }
+  ]
+}

@@ -365,6 +365,24 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .foto { align-self: stretch; margin: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 6px; }
 .foto img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-m); }
 .foto figcaption { font-size: 13px; opacity: 0.8; }
+.foto figcaption a { color: inherit; text-underline-offset: 2px; }
+/* En Flash la foto ocupa todo el hueco y el crédito va encima, en una etiqueta de cristal.
+   Tiene una altura mínima; si aun así el texto no cabe, app.js se la quita (clase "sin-minimo") */
+.carta .foto { position: relative; display: block; min-height: clamp(110px, 24svh, 280px); }
+.carta .foto img { position: absolute; inset: 0; }
+.carta .foto figcaption {
+  position: absolute; left: 8px; bottom: 8px; max-width: calc(100% - 16px);
+  padding: 3px 9px; border-radius: 99px; font-size: 11.5px; opacity: 1;
+  color: #fff; background: rgb(0 0 0 / 0.45); backdrop-filter: blur(8px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.carta.sin-minimo .foto { min-height: 0; }
+.carta.sin-foto .foto > * { display: none; }
+/* La fila de la foto respeta su altura mínima (con minmax(0, …) la foto taparía el titular) */
+.carta:has(> .foto) { grid-template-rows: auto minmax(auto, 1fr) auto auto; }
+/* En la ficha, la foto en formato apaisado */
+.f-txt .foto { display: grid; grid-template-rows: auto auto; }
+.f-txt .foto img { height: auto; aspect-ratio: 16 / 10; }
 
 .carta h2 { font-weight: 850; font-stretch: var(--ancha); font-size: clamp(26px, min(4.4svh, 8.2vw), 42px); line-height: 1.04; letter-spacing: -0.03em; text-wrap: balance; }
 .puntos { padding: 0; list-style: none; display: grid; gap: 8px; margin-top: 14px; }
@@ -527,6 +545,13 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .item h3 a { text-decoration: none; }
 .item h3 a::after { content: ""; position: absolute; inset: 0; }
 .item:hover h3 { text-decoration: underline; text-decoration-thickness: 2px; text-decoration-color: var(--c); text-underline-offset: 4px; }
+/* Con foto: miniatura cuadrada a la derecha, a la altura del titular */
+.item.con-foto { grid-template-columns: minmax(0, 1fr) 92px; column-gap: 16px; }
+.item.con-foto > :not(.item-foto) { grid-column: 1; }
+.item-foto { grid-column: 2; grid-row: 1 / span 3; align-self: start; aspect-ratio: 1; border-radius: var(--r-s); overflow: hidden; background: var(--sup-2); }
+.item-foto img { width: 100%; height: 100%; object-fit: cover; transition: scale 0.5s var(--salida); }
+@media (hover: hover) { .item:hover .item-foto img { scale: 1.06; } }
+@media (max-width: 400px) { .item.con-foto { grid-template-columns: minmax(0, 1fr) 76px; column-gap: 12px; } }
 .item-entr { font-size: 15px; line-height: 1.45; max-height: 2.9em; color: var(--suave); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* Breves: ítems en columnas */
 .rejilla-items { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); column-gap: 28px; }
@@ -573,7 +598,10 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .tapa .marco { overflow: hidden; display: flex; align-items: flex-end; min-height: 0; }
 .tapa .gigante { -webkit-text-stroke-width: 1.5px; transition: translate 0.6s var(--muelle); }
 @media (hover: hover) { .tarjeta:hover .gigante { translate: 4% 0; } }
-.tapa img { width: calc(100% + 36px); margin: -16px -18px 0; height: calc(100% + 16px); object-fit: cover; }
+/* Con foto, la tapa es la foto a sangre (sin el margen de color) */
+.tarjeta .tapa:has(> img) { padding: 0; }
+.tapa > img { width: 100%; height: 100%; object-fit: cover; transition: scale 0.6s var(--salida); }
+@media (hover: hover) { .tarjeta:hover .tapa > img { scale: 1.04; } }
 
 .txt { padding: 16px 20px 20px; display: grid; gap: 10px; align-content: start; }
 .tarjeta h3 { font-size: 21px; font-weight: 800; font-stretch: 110%; line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance; }

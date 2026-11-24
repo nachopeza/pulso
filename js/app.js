@@ -204,11 +204,22 @@
     ? `<button type="button" class="btn icono" data-compartir="${esc(n.id)}" aria-label="Compartir">${ICONO_COMPARTIR}</button>`
     : `<button type="button" class="btn" data-compartir="${esc(n.id)}">${ICONO_COMPARTIR}<span>Compartir</span></button>`;
 
+  // La etiqueta <img> de una foto. "posicion" (opcional) elige qué parte se ve al recortarla,
+  // por ejemplo "50% 20%" para que no se corte una cara
+  function fotoImg(im) {
+    if (!im || !rutaImg(im.src)) return '';
+    const pos = /^[\d.% a-z]+$/i.test(im.posicion || '') ? ` style="object-position:${im.posicion}"` : '';
+    return `<img src="${rutaImg(im.src)}" alt="${esc(im.alt)}" loading="lazy" decoding="async"${pos}>`;
+  }
+
+  // Foto con su pie: autor y licencia (con enlace a la ficha de la licencia, si la hay)
   function imagenHTML(n, clase) {
     const im = n.imagen;
-    if (!im || !rutaImg(im.src)) return '';
+    const img = fotoImg(im);
+    if (!img) return '';
     const credito = [im.credito, im.licencia].filter(Boolean).map(esc).join(', ');
-    return `<figure class="${clase}"><img src="${rutaImg(im.src)}" alt="${esc(im.alt)}" loading="lazy">${credito ? `<figcaption>Foto: ${credito}</figcaption>` : ''}</figure>`;
+    const pie = credito && enlace(im.enlace) ? `<a href="${enlace(im.enlace)}" target="_blank" rel="noopener">${credito}</a>` : credito;
+    return `<figure class="${clase}">${img}${pie ? `<figcaption>Foto: ${pie}</figcaption>` : ''}</figure>`;
   }
 
   // La palabra gigante perfilada (la "imagen" tipográfica de cada noticia)
@@ -297,7 +308,7 @@
       ? `<ul class="sumario">${n.puntos.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '';
     return `<article class="tarjeta ${destacada ? 'destacada' : ''}" data-cat="${c}">
       <div class="tapa">
-        ${n.imagen && rutaImg(n.imagen.src) ? `<img src="${rutaImg(n.imagen.src)}" alt="${esc(n.imagen.alt)}" loading="lazy">` : `<div class="marco">${gigante(c)}</div>`}
+        ${fotoImg(n.imagen) || `<div class="marco">${gigante(c)}</div>`}
       </div>
       <div class="txt">
         <span class="etq"><b>${CATS[c]}</b><span class="hora">${hace(n.fecha)}</span></span>
@@ -312,7 +323,10 @@
   // Un ítem de solo texto (titular + entradilla corta), como en las columnas de los periódicos
   function itemHTML(n, conSeccion) {
     const c = cat(n);
-    return `<article class="item" data-cat="${c}">
+    // Si la noticia tiene foto, va en miniatura a la derecha (decorativa: el titular ya lo dice todo)
+    const mini = fotoImg(n.imagen) ? `<div class="item-foto" aria-hidden="true">${fotoImg({ ...n.imagen, alt: '' })}</div>` : '';
+    return `<article class="item ${mini ? 'con-foto' : ''}" data-cat="${c}">
+      ${mini}
       <p class="item-meta">${conSeccion ? `<b>${CATS[c]}</b>` : ''}<time datetime="${esc(n.fecha)}">${hace(n.fecha)}</time></p>
       <h3><a href="#${esc(n.id)}">${esc(n.titular)}</a></h3>
       <p class="item-entr">${esc(n.entradilla)}</p>
@@ -667,9 +681,13 @@
   function ajustarCartas() {
     const noCabe = (c) => c.scrollHeight > c.clientHeight + 1;
     main.querySelectorAll('.carta[data-cat]').forEach((c) => {
-      c.classList.remove('apretada', 'muy-apretada');
+      c.classList.remove('apretada', 'muy-apretada', 'sin-minimo', 'sin-foto');
       if (noCabe(c)) c.classList.add('apretada');
       if (noCabe(c)) c.classList.add('muy-apretada');
+      if (noCabe(c)) c.classList.add('sin-minimo');   // último recurso: la foto cede su altura mínima
+      // Si la foto se queda en una tira estrecha (móviles muy bajos), mejor no mostrarla
+      const foto = c.querySelector('.foto');
+      c.classList.toggle('sin-foto', !!foto && foto.clientHeight < 72);
     });
   }
 

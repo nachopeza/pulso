@@ -85,7 +85,13 @@
         }
       ],
       "titulares": [],
-      "imagen": null
+      "imagen": {
+        "src": "img/recta-final-29n.jpg",
+        "alt": "Fachada del Congreso de los Diputados, en Madrid",
+        "credito": "Javier Perez Montes",
+        "licencia": "CC BY-SA 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Congreso_de_los_Diputados_-_Madrid_02.jpg"
+      }
     },
     {
       "id": "agenda-campana-martes",
@@ -144,7 +150,13 @@
           "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
         }
       ],
-      "imagen": null
+      "imagen": {
+        "src": "img/seguridad-29n.jpg",
+        "alt": "Un coche patrulla de la Guardia Civil aparcado en una calle",
+        "credito": "AdelfunsCastellae",
+        "licencia": "CC BY-SA 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Veh%C3%ADculo_patrulla_de_la_Guardia_Civil.jpg"
+      }
     },
     {
       "id": "impuesto-banca-2027",
@@ -177,7 +189,13 @@
           "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
         }
       ],
-      "imagen": null
+      "imagen": {
+        "src": "img/impuesto-banca-2027.jpg",
+        "alt": "Edificio del Banco de España junto a la plaza de Cibeles, en Madrid",
+        "credito": "Sanva1959",
+        "licencia": "CC BY-SA 3.0 es",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Edificio_del_Banco_de_Espa%C3%B1a_2_Madrid.jpg"
+      }
     },
     {
       "id": "permisos-nacimiento-20-semanas",
@@ -206,7 +224,14 @@
           "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
         }
       ],
-      "imagen": null
+      "imagen": {
+        "src": "img/permisos-nacimiento-20-semanas.jpg",
+        "alt": "Un bebé recién nacido bostezando",
+        "credito": "Martin Falbisoner",
+        "licencia": "CC BY-SA 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Yawning_Infant,_August_2018.jpg",
+        "posicion": "50% 40%"
+      }
     },
     {
       "id": "ayudas-transporte-2027",
@@ -234,7 +259,13 @@
           "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
         }
       ],
-      "imagen": null
+      "imagen": {
+        "src": "img/ayudas-transporte-2027.jpg",
+        "alt": "Viajeros dentro de un vagón del metro de Madrid",
+        "credito": "kallerna",
+        "licencia": "CC BY-SA 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Madrid_metro_train_interior_1.jpg"
+      }
     },
     {
       "id": "precio-vivienda-venta",
@@ -257,7 +288,13 @@
         }
       ],
       "titulares": [],
-      "imagen": null
+      "imagen": {
+        "src": "img/precio-vivienda-venta.jpg",
+        "alt": "Bloques de viviendas en la calle Bailén, en Madrid",
+        "credito": "Diego Delso",
+        "licencia": "CC BY-SA 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Bloque_en_la_calle_Bail%C3%A9n_19-21,_Madrid,_Espa%C3%B1a,_2014-12-27,_DD_24.JPG"
+      }
     },
     {
       "id": "canarias-llegadas-noviembre",
@@ -290,7 +327,14 @@
           "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
         }
       ],
-      "imagen": null
+      "imagen": {
+        "src": "img/canarias-llegadas-noviembre.jpg",
+        "alt": "El puerto de La Restinga, en la isla de El Hierro",
+        "credito": "Pepelopex",
+        "licencia": "CC BY-SA 3.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:La_Restinga_Harbour-El_Hierro.jpg",
+        "posicion": "50% 75%"
+      }
     },
     {
       "id": "ratios-escuelas-infantiles",
@@ -323,7 +367,13 @@
           "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
         }
       ],
-      "imagen": null
+      "imagen": {
+        "src": "img/ratios-escuelas-infantiles.jpg",
+        "alt": "Un tobogán infantil en un patio de arena",
+        "credito": "Max Braun",
+        "licencia": "CC BY-SA 2.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Kindergarten_(2177667126).jpg"
+      }
     },
     {
       "id": "frente-atlantico-24n",
@@ -350,7 +400,13 @@
         }
       ],
       "titulares": [],
-      "imagen": null
+      "imagen": {
+        "src": "img/frente-atlantico-24n.jpg",
+        "alt": "Gotas de lluvia sobre la tela de un paraguas",
+        "credito": "CorraleH",
+        "licencia": "CC0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Rain_on_a_blue_umbrella.jpg"
+      }
     },
     {
       "id": "colombia-diez-anos-paz",
@@ -383,7 +439,13 @@
           "url": "https://www.diariodelsur.com.co/noticias/una-decada-de-paz-agridulce-en-colombia"
         }
       ],
-      "imagen": null
+      "imagen": {
+        "src": "img/colombia-diez-anos-paz.jpg",
+        "alt": "La plaza de Bolívar de Bogotá, con la catedral al fondo",
+        "credito": "Javierleiva",
+        "licencia": "CC BY-SA 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Plaza_de_Bol%C3%ADvar_en_Bogot%C3%A1_(Colombia).jpg"
+      }
     },
     {
       "id": "prado-mariana-de-austria",
@@ -410,7 +472,14 @@
         }
       ],
       "titulares": [],
-      "imagen": null
+      "imagen": {
+        "src": "img/prado-mariana-de-austria.jpg",
+        "alt": "Retrato de la reina Mariana de Austria pintado por Velázquez",
+        "credito": "Diego Velázquez, Museo del Prado",
+        "licencia": "dominio público",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Mariana_of_Austria_by_Vel%C3%A1zquez_(c._1652,_Museo_del_Prado).jpg",
+        "posicion": "50% 18%"
+      }
     },
     {
       "id": "real-madrid-psv",
@@ -437,7 +506,13 @@
         }
       ],
       "titulares": [],
-      "imagen": null
+      "imagen": {
+        "src": "img/real-madrid-psv.jpg",
+        "alt": "Interior del estadio Santiago Bernabéu durante un partido",
+        "credito": "Zoser",
+        "licencia": "CC BY 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Estadio_Santiago_Bernab%C3%A9u_Madrid.jpg"
+      }
     },
     {
       "id": "detectar-bulos",
@@ -464,7 +539,13 @@
         }
       ],
       "titulares": [],
-      "imagen": null
+      "imagen": {
+        "src": "img/detectar-bulos.jpg",
+        "alt": "Una mano sujeta un teléfono móvil",
+        "credito": "Dennis Cortés cortes",
+        "licencia": "CC0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Black_smartphone_in_hand_(Unsplash).jpg"
+      }
     },
     {
       "id": "como-votar-29n",
@@ -568,7 +649,13 @@
         }
       ],
       "titulares": [],
-      "imagen": null
+      "imagen": {
+        "src": "img/ley-ia-europea.jpg",
+        "alt": "Filas de servidores iluminados en un centro de datos",
+        "credito": "BalticServers.com",
+        "licencia": "CC BY-SA 3.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:BalticServers_data_center.jpg"
+      }
     }
   ]
 }

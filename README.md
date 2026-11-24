@@ -149,7 +149,7 @@ El agente **solo** edita este archivo. Cada vez que lo cambie, debe actualizar `
 | `fuentes` | Una o más fuentes originales, siempre con enlace `https://`. |
 | `titulares` | Opcional. Titulares literales de otros medios para «Cómo lo titulan». |
 | `correccion` | Opcional. Si una noticia se corrige, explica aquí qué cambió. Sale al final de la ficha. |
-| `imagen` | `null` (lo normal) o `{ "src": "img/foto.jpg", "alt": "...", "credito": "Autor", "licencia": "CC BY 4.0" }`. |
+| `imagen` | `null` (sin foto: sale el nombre de la sección en letra gigante) o `{ "src": "img/foto.jpg", "alt": "...", "credito": "Autor", "licencia": "CC BY 4.0", "enlace": "https://commons.wikimedia.org/wiki/File:...", "posicion": "50% 30%" }`. `enlace` (página de la foto con su licencia) y `posicion` (qué parte se ve al recortar) son opcionales. Las fotos van en la carpeta `img/`, a unos 1200 px de ancho. Las actuales son de Wikimedia Commons, con licencia libre. |
 
 Si un texto es demasiado largo para la pantalla, la tarjeta se «aprieta» sola (oculta «Por qué te importa» y reduce un poco la letra). Aun así, cuanto más corto, mejor.
 

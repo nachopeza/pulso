@@ -1,0 +1,15 @@
+# Cabeceras para Cloudflare Pages (GitHub Pages ignora este archivo)
+
+# Las noticias se piden siempre frescas: así "Hay noticias nuevas" funciona al momento
+/data/*
+  Cache-Control: no-cache
+
+# Las fotos casi nunca cambian: el navegador las guarda una semana
+/img/*
+  Cache-Control: public, max-age=604800
+
+# Seguridad básica
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN

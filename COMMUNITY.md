@@ -17,6 +17,17 @@ De ahí salen tres metas, por este orden:
 
 No buscamos viralidad a cualquier precio. Un titular de redes que no se cumple en la noticia es un lector perdido.
 
+### Nuestro mensaje
+
+pulso no es «otro medio». Es el colega que te salva en el grupo de clase y en la cena de Navidad. Contamos la actualidad desde situaciones reales de nuestro público: no enterarse, el ruido, el miedo a quedar mal, el tío que lo sabe todo. Y pulso es la salida: tranquilidad, lo importante y la fuente para que nadie te la cuele.
+
+Frases de la casa (se repiten hasta que sean nuestras):
+
+- **«Tranqui. Esto es pulso.»**: entrada de marca en los vídeos.
+- **«Ahora el que sabe eres tú.»**: el lema, la promesa al lector.
+- **«¿Fuente?»**: nuestro gesto. Lo que pedimos nosotros y lo que enseñamos a pedir.
+- **«1 minuto al día.»**: el hábito.
+
 ## 2. A quién le hablamos
 
 - Lee en el móvil, con prisa y con el pulgar: si la primera línea no engancha, sigue bajando.

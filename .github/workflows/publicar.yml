@@ -19,14 +19,20 @@ jobs:
       - name: Preparar solo los archivos de la web
         run: |
           mkdir web
-          cp -R index.html _headers css js data img web/
+          cp -R index.html _headers favicon.svg apple-touch-icon.png css js data img fonts web/
 
       # Mientras no esté el token en los secretos del repositorio, no se intenta subir
       - name: ¿Está el token de Cloudflare?
         id: token
         env:
           T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: if [ -n "$T" ]; then echo "hay=si" >> "$GITHUB_OUTPUT"; else echo "::warning::Falta el secreto CLOUDFLARE_API_TOKEN: no se publica"; fi
+        # "run: |" (bloque) y no en una línea: el ":" del aviso rompía el YAML
+        run: |
+          if [ -n "$T" ]; then
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Falta el secreto CLOUDFLARE_API_TOKEN, no se publica"
+          fi
 
       - name: Subir a Cloudflare Pages
         if: steps.token.outputs.hay == 'si'

@@ -15,7 +15,9 @@ NWS/
 ├── css/estilos.css     Todo el diseño: colores, tipografía, modo Flash, modo Lista, animaciones
 ├── js/app.js           Lee data/noticias.json y pinta la web. No hace falta tocarlo para publicar
 ├── data/noticias.json  LAS NOTICIAS. Es el único archivo que edita el agente redactor
-├── img/                Fotos con licencia libre de las noticias
+├── img/                Fotos con licencia libre de las noticias (y compartir.png, la imagen al compartir la web)
+├── fonts/              Tipografía Archivo alojada en la propia web (licencia OFL)
+├── favicon.svg         Icono de la pestaña; apple-touch-icon.png, el del iPhone
 ├── _headers            Cabeceras de Cloudflare (caché y seguridad)
 ├── AGENTE.md           Manual del agente redactor que prepara la edición de cada día
 ├── scripts/validar.py  Comprueba el JSON antes de publicar

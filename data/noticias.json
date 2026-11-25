@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-25T05:45:00+01:00",
+  "actualizado": "2026-11-25T06:30:00+01:00",
   "anuncio": null,
   "momentos": {
     "manana": {
@@ -336,22 +336,18 @@
       "momento": "tarde",
       "fecha": "2026-11-24T13:40:00+01:00",
       "ejemplo": false,
-      "titular": "Las encuestas antes del 29N no cuentan la misma historia",
-      "entradilla": "La mayoría de los sondeos dan mayoría absoluta a PP y Vox. El CIS dibuja lo contrario: el PSOE, casi diez puntos por delante del PP.",
+      "titular": "29N: qué se elige el domingo y cuántos escaños hacen falta para gobernar",
+      "entradilla": "El domingo se renuevan el Congreso y el Senado. Para gobernar sin apoyos hacen falta 176 de los 350 diputados.",
       "puntos": [
         "Se eligen 350 diputados y 209 senadores. La mayoría absoluta en el Congreso está en 176 escaños.",
         "La campaña empezó el 13 de noviembre y acaba el viernes 27 a medianoche. El sábado es jornada de reflexión.",
-        "Desde este martes ya no se pueden publicar encuestas: la ley lo prohíbe en los cinco días anteriores a la votación."
+        "Desde el martes no se pueden publicar encuestas: la ley lo prohíbe en los cinco días anteriores a la votación."
       ],
-      "porque": "Las encuestas son una foto aproximada, no un resultado. Lo que decide es quién vota el domingo.",
+      "porque": "Del reparto de esos 350 escaños sale quién puede formar gobierno. Lo que decide es quién vota el domingo.",
       "fuentes": [
         {
-          "medio": "EFE, vía Infobae",
-          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
-        },
-        {
-          "medio": "Wikipedia, elecciones generales de 2026",
-          "url": "https://es.wikipedia.org/wiki/Elecciones_generales_de_Espa%C3%B1a_de_2026"
+          "medio": "Ministerio del Interior",
+          "url": "https://infoelectoral.interior.gob.es/"
         },
         {
           "medio": "BOE, ley electoral (LOREG)",
@@ -406,11 +402,10 @@
       "fecha": "2026-11-24T10:05:00+01:00",
       "ejemplo": false,
       "titular": "El impuesto a la banca seguirá en 2027 y lo recaudado irá a vivienda",
-      "entradilla": "El Consejo de Ministros aprueba la prórroga. El Gobierno calcula que recaudará 1.400 millones de euros.",
+      "entradilla": "El Consejo de Ministros aprobó el martes prorrogar un año más el impuesto a la banca.",
       "puntos": [
-        "El dinero se destinará a vivienda protegida, ayudas a inquilinos y rehabilitación.",
-        "Sánchez lo había anunciado el sábado en un acto de campaña.",
-        "El mismo Consejo aprueba una rebaja del IRPF para autónomos de 465 millones y cambios en el IVA."
+        "El Gobierno calcula que recaudará unos 1.400 millones de euros.",
+        "El dinero se destinará a vivienda protegida, ayudas a inquilinos y rehabilitación."
       ],
       "porque": "Si alquilas, parte de ese dinero se reparte en ayudas al alquiler.",
       "fuentes": [
@@ -665,8 +660,7 @@
       "entradilla": "La muestra explica cómo el arte sirvió para dar autoridad a una de las figuras de la monarquía del siglo XVII.",
       "puntos": [
         "Mariana de Austria fue reina y gobernó como regente durante la minoría de edad de su hijo Carlos II.",
-        "La exposición analiza los retratos como herramienta de poder.",
-        "Hoy también: Paco Ibáñez, con 92 años, actúa en el Liceu con Serrat y Maria del Mar Bonet, entre otros."
+        "La exposición analiza los retratos como herramienta de poder."
       ],
       "porque": "Los retratos oficiales eran la propaganda de la época: entenderlos ayuda a leer las imágenes de hoy.",
       "fuentes": [
@@ -724,13 +718,7 @@
           "url": "https://www.canal26.com/futbol/champions-league/real-madrid-vs-psv-en-vivo-hoy-resultado-goles-y-minuto-a-minuto-de-la-champions-league-2026-2027/"
         }
       ],
-      "imagen": {
-        "src": "img/real-madrid-psv.jpg",
-        "alt": "Interior del estadio Santiago Bernabéu durante un partido",
-        "credito": "Zoser",
-        "licencia": "CC BY 4.0",
-        "enlace": "https://commons.wikimedia.org/wiki/File:Estadio_Santiago_Bernab%C3%A9u_Madrid.jpg"
-      }
+      "imagen": null
     },
     {
       "id": "detectar-bulos",

@@ -14,12 +14,19 @@
   <meta property="og:locale" content="es_ES">
   <meta property="og:title" content="pulso, noticias en corto">
   <meta property="og:description" content="Las noticias del día, cortas y claras, con enlace a sus fuentes.">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://pulsomedio.es/img/compartir.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="pulso: las noticias del día, en corto y con fuentes.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@pulsomedio">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1c1d21" media="(prefers-color-scheme: dark)">
 
   <!-- Icono de la pestaña: una "p" con el punto amarillo -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23141414'/%3E%3Ctext x='5' y='23' font-family='Arial,sans-serif' font-weight='900' font-size='22' fill='%23fff'%3Ep%3C/text%3E%3Ccircle cx='24' cy='21' r='3.5' fill='%23ffd400'/%3E%3C/svg%3E">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <!-- Icono al guardar la web en la pantalla de inicio del iPhone -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
   <!-- Preferencias de lectura (tema y tamaño de letra): se aplican ANTES de pintar para que no haya parpadeo -->
   <script>
@@ -29,10 +36,9 @@
     } catch (e) { /* sin localStorage: valores por defecto */ }
   </script>
 
-  <!-- Tipografía: Archivo, una sola familia con eje de anchura (estrecha ↔ expandida) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+  <!-- Tipografía: Archivo, alojada en la propia web (ver @font-face al principio de estilos.css).
+       Precargamos el archivo principal para que los titulares no "salten" al cargar. -->
+  <link rel="preload" href="fonts/archivo-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
 
   <link rel="stylesheet" href="css/estilos.css">
 </head>

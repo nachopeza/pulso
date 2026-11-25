@@ -90,6 +90,18 @@ La gente vuelve a lo que es **previsible y suyo**. Por eso pulso tiene citas a l
 - **Domingo 29:** recordatorio del horario (9:00–20:00) por la mañana; desde el cierre, resultados oficiales y explicados, siempre con el mismo trato a todos.
 - **Lunes 30:** «Y ahora, ¿qué?»: cómo se forma gobierno y qué fechas vienen.
 
+### Cómo son los vídeos de pulso
+
+La sobriedad no funciona en TikTok. Los vídeos de pulso tienen que entrar por los ojos en el primer segundo, sin perder la identidad.
+
+- **Gancho humano en el primer segundo:** una situación que el público ha vivido, mejor que un titular. Formatos que funcionan: «POV: …», un chat de grupo, «tú vs. tu tío en Navidad», «nadie: / yo: …». Son referencias de su vida diaria, sin marcas ni personajes con derechos.
+- **Ritmo de 120 BPM:** un corte o un golpe cada medio segundo, para que encaje con casi cualquier sonido de la biblioteca comercial.
+- **Texto que golpea:** palabras grandes que entran con escala y un ligero temblor, pegatinas giradas un par de grados y fondos a pantalla completa con los colores de sección.
+- **La identidad siempre:** Archivo ancha y pesada, el punto amarillo, el icono con su latido y la tarjeta de la web. pulso tiene que reconocerse aunque el vídeo se vea sin sonido.
+- **Estructura:** gancho → problema (el ruido, no enterarse) → pulso como respuesta → cómo se ve → remate con humor → llamada a la acción.
+- **Duración:** de 15 a 30 segundos, y todo lo importante fuera del 25 % inferior de la pantalla, donde TikTok pone el texto del vídeo y los botones.
+- **Neutralidad incluso en el humor:** se ríe de situaciones, nunca de partidos, candidatos ni votantes.
+
 ## 7. La rutina diaria
 
 1. **7:15. Leer pulso.** La edición del día sale a las 7:00. Se lee entera en `https://pulsomedio.es/api/noticias`: noticias, destacada y momentos.

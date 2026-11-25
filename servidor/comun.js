@@ -212,17 +212,24 @@ export async function enviarEmail(env, { para, asunto, texto: cuerpo }) {
     console.log(`\n=== EMAIL a ${para.join(', ')} ===\n${asunto}\n\n${cuerpo}\n`);
     return true;
   }
-  if (!env.BREVO_KEY) return false;
-  const r = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': env.BREVO_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({
-      sender: { name: 'pulso', email: env.REMITENTE },
-      to: para.map((email) => ({ email })),
-      subject: asunto,
-      textContent: cuerpo
-    })
-  });
-  if (!r.ok) console.log('Brevo no ha enviado el email:', r.status, await r.text());
-  return r.ok;
+  // La clave se pega desde el portapapeles: quitamos espacios o saltos de línea que se cuelen
+  const clave = (env.BREVO_KEY || '').trim();
+  if (!clave) return false;
+  try {
+    const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': clave, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        sender: { name: 'pulso', email: env.REMITENTE },
+        to: para.map((email) => ({ email })),
+        subject: asunto,
+        textContent: cuerpo
+      })
+    });
+    if (!r.ok) console.log('Brevo no ha enviado el email:', r.status, await r.text());
+    return r.ok;
+  } catch (e) {
+    console.log('No se ha podido contactar con Brevo:', e.message);
+    return false;
+  }
 }

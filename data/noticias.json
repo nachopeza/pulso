@@ -1,21 +1,21 @@
 {
-  "actualizado": "2026-11-24T19:15:00+01:00",
+  "actualizado": "2026-11-25T05:45:00+01:00",
   "anuncio": null,
   "momentos": {
     "manana": {
       "titulo": "Para empezar el día",
       "puntos": [
         {
-          "texto": "El impuesto a la banca seguirá en 2027 y se destinará a vivienda.",
-          "id": "impuesto-banca-2027"
+          "texto": "Último día para votar por correo.",
+          "id": "campana-dia-13"
         },
         {
-          "texto": "Permiso por nacimiento de 20 semanas: qué cambia.",
-          "id": "permisos-nacimiento-20-semanas"
+          "texto": "25N: dónde y a qué hora son las marchas.",
+          "id": "dia-25n-2026"
         },
         {
-          "texto": "Lluvia fuerte en Galicia y aviso por nieve en León.",
-          "id": "frente-atlantico-24n"
+          "texto": "Aviso naranja por temporal en el Cantábrico.",
+          "id": "tiempo-25n"
         }
       ]
     },
@@ -23,16 +23,16 @@
       "titulo": "A media tarde",
       "puntos": [
         {
-          "texto": "Cinco días para el 29N: lo que dicen las encuestas.",
-          "id": "recta-final-29n"
+          "texto": "Puigdemont comparece en Bruselas tras la amnistía.",
+          "id": "puigdemont-amnistia"
         },
         {
-          "texto": "Canarias roza las 13.000 llegadas en noviembre.",
-          "id": "canarias-llegadas-noviembre"
+          "texto": "Champions: Barça y Villarreal a las 18:45, Atlético a las 21:00.",
+          "id": "champions-miercoles-25"
         },
         {
-          "texto": "Seis de cada diez pisos en venta pasan de 250.000 euros.",
-          "id": "precio-vivienda-venta"
+          "texto": "Cómo votar el domingo, también con MiDNI.",
+          "id": "como-votar-29n"
         }
       ]
     },
@@ -40,29 +40,303 @@
       "titulo": "Para cerrar el día",
       "puntos": [
         {
-          "texto": "Colau y García Albiol debaten sobre vivienda a las 23:00.",
-          "id": "agenda-campana-martes"
+          "texto": "Feijóo, Ayuso y Almeida, en la Caja Mágica.",
+          "id": "campana-dia-13"
         },
         {
-          "texto": "El Madrid recibe al PSV en la Champions.",
+          "texto": "Las primeras imágenes de Hera del asteroide Dimorphos.",
+          "id": "hera-dimorphos"
+        },
+        {
+          "texto": "El Madrid golea 5-1 al PSV.",
           "id": "real-madrid-psv"
-        },
-        {
-          "texto": "Diez años del acuerdo de paz en Colombia.",
-          "id": "colombia-diez-anos-paz"
         }
       ]
     }
   },
   "noticias": [
     {
+      "id": "campana-dia-13",
+      "categoria": "elecciones",
+      "momento": "manana",
+      "fecha": "2026-11-25T05:40:00+01:00",
+      "destacado": true,
+      "ejemplo": false,
+      "titular": "Cuatro días para el 29N: hoy es el último día para votar por correo",
+      "entradilla": "La campaña entra en su día 13 con el 25N de fondo, un gran mitin en Madrid y el debate a cuatro preparado para el jueves.",
+      "puntos": [
+        "Si pediste el voto por correo, hoy es el último día para enviarlo en Correos.",
+        "Feijóo da un mitin a las 19:30 en la Caja Mágica de Madrid con Ayuso y Almeida. Sánchez limita su agenda a entrevistas.",
+        "En el 25N, Colau y Montero van a la marcha de la Comisión 8M, y PSOE y PP, a la del Foro de Madrid. Vox no acude."
+      ],
+      "porque": "Si votas por correo y aún no lo has enviado, es hoy o nunca. Si no, te queda el domingo en tu colegio.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-miercoles-25-de-noviembre-de-2026/"
+        },
+        {
+          "medio": "Público, directo de campaña",
+          "url": "https://publico.es/politica/ultima-hora-campana-electoral-29n-directo-6.html"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "Lucha contra la violencia machista y preparativos para el debate en el día 13 de campaña",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/hoy-sera-noticia-miercoles-25-de-noviembre/"
+        }
+      ],
+      "imagen": {
+        "src": "img/recta-final-29n.jpg",
+        "alt": "Fachada del Congreso de los Diputados, en Madrid",
+        "credito": "Javier Perez Montes",
+        "licencia": "CC BY-SA 4.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Congreso_de_los_Diputados_-_Madrid_02.jpg"
+      }
+    },
+    {
+      "id": "dia-25n-2026",
+      "categoria": "espana",
+      "momento": "manana",
+      "fecha": "2026-11-25T05:30:00+01:00",
+      "ejemplo": false,
+      "titular": "25N: manifestaciones en toda España contra la violencia machista",
+      "entradilla": "Las organizaciones convocantes cuentan 46 mujeres asesinadas en lo que va de año.",
+      "puntos": [
+        "En Madrid hay dos marchas: a las 18:30, de Alcalá con Gran Vía a Plaza de España, y a las 19:00, de Neptuno a la Puerta del Sol.",
+        "También hay manifestaciones en Valencia, San Sebastián, Murcia y decenas de ciudades. Cada plataforma fija su hora y su recorrido.",
+        "El 016 atiende las 24 horas, es gratuito y no deja rastro en la factura. En una emergencia, el 112."
+      ],
+      "porque": "La violencia machista también la sufren chicas jóvenes, muchas veces empezando por el control del móvil. Saber dónde pedir ayuda importa.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-miercoles-25-de-noviembre-de-2026/"
+        },
+        {
+          "medio": "Qué!",
+          "url": "https://www.que.es/2026/11/24/manifestaciones-25n-horarios-puntos-partida/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "Qué!",
+          "titular": "Manifestaciones del 25N: horarios y puntos de partida en toda España",
+          "url": "https://www.que.es/2026/11/24/manifestaciones-25n-horarios-puntos-partida/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "puigdemont-amnistia",
+      "categoria": "espana",
+      "momento": "manana",
+      "fecha": "2026-11-25T05:20:00+01:00",
+      "ejemplo": false,
+      "titular": "El Supremo aplica la amnistía a Puigdemont y él comparece hoy en Bruselas",
+      "entradilla": "La causa del procés queda cerrada. Puigdemont ya puede volver sin riesgo de ser detenido, pero no ha dicho cuándo.",
+      "puntos": [
+        "El Supremo extingue su responsabilidad penal por el referéndum del 1 de octubre de 2017. La amnistía también se aplica a Toni Comín y Lluís Puig.",
+        "Llega después de que el Constitucional y el Tribunal de Justicia de la UE avalaran la ley.",
+        "Puigdemont da una rueda de prensa a las 11:00 en Bruselas."
+      ],
+      "porque": "Es el cierre judicial del conflicto catalán de 2017 y llega a cuatro días de votar.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-miercoles-25-de-noviembre-de-2026/"
+        },
+        {
+          "medio": "Qué!",
+          "url": "https://www.que.es/2026/11/24/amnistia-puigdemont-supremo-causa/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "El Español",
+          "titular": "Punto final a la causa del 'procés': el Supremo aplica la amnistía a Puigdemont tras nueve años prófugo",
+          "url": "https://www.elespanol.com/espana/tribunales/20261123/punto-final-causa-proces-supremo-aplica-amnistia-puigdemont-anos-profugo/1003744468681_0.html"
+        },
+        {
+          "medio": "elDiario.es",
+          "titular": "La amnistía a Puigdemont cierra para siempre la causa del procés: \"El Supremo llevaba dos años de rebelión contra la ley\"",
+          "url": "https://eldiario.es/catalunya/amnistia-puigdemont-cierra-causa-proces-supremo-llevaba-anos-rebelion-ley_1_13599616.html"
+        },
+        {
+          "medio": "Qué!",
+          "titular": "La amnistía de Puigdemont ya es efectiva: el Supremo extingue su causa por el 1-O y abre su regreso",
+          "url": "https://www.que.es/2026/11/24/amnistia-puigdemont-supremo-causa/"
+        }
+      ],
+      "imagen": {
+        "src": "img/puigdemont-amnistia.jpg",
+        "alt": "Fachada del Tribunal Supremo, en Madrid",
+        "credito": "Luis García (Zaqarbal)",
+        "licencia": "CC BY-SA 3.0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Tribunal_Supremo_de_Espa%C3%B1a_(Madrid)_01.jpg"
+      }
+    },
+    {
+      "id": "tiempo-25n",
+      "categoria": "clima",
+      "momento": "manana",
+      "fecha": "2026-11-25T05:10:00+01:00",
+      "ejemplo": false,
+      "titular": "Frío, nieve y temporal en el Cantábrico: aviso naranja en Cantabria y Euskadi",
+      "entradilla": "Bajan las temperaturas en toda la Península. En el norte llueve fuerte y en la montaña nieva desde los 900 metros.",
+      "puntos": [
+        "Aviso naranja por olas de unos 5 metros y viento fuerte en Cantabria, Bizkaia y Gipuzkoa.",
+        "En Euskadi pueden caer más de 80 litros por metro cuadrado hasta mañana jueves a las 9:00.",
+        "Hasta 10 centímetros de nieve en Lugo, Ourense y el Pirineo de Huesca.",
+        "Máximas: Madrid 11 °C, Barcelona 15 °C, Sevilla 17 °C, Valencia 19 °C."
+      ],
+      "porque": "Si vas a la montaña o conduces por el norte, mira los avisos antes de salir. Y sal abrigado.",
+      "fuentes": [
+        {
+          "medio": "Tutiempo.net",
+          "url": "https://www.tutiempo.net/noticias/prevision-tiempo-avisos-espana-miercoles-25-noviembre-2026.html"
+        },
+        {
+          "medio": "El Folio",
+          "url": "https://elfolio.es/el-tiempo-en-espana-25-de-noviembre-de-2026/"
+        },
+        {
+          "medio": "AEMET, avisos",
+          "url": "https://www.aemet.es/es/eltiempo/prediccion/avisos"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "El Folio",
+          "titular": "El tiempo en España el 25 de noviembre: frío, nieve y viento fuerte",
+          "url": "https://elfolio.es/el-tiempo-en-espana-25-de-noviembre-de-2026/"
+        }
+      ],
+      "imagen": {
+        "src": "img/frente-atlantico-24n.jpg",
+        "alt": "Gotas de lluvia sobre la tela de un paraguas",
+        "credito": "CorraleH",
+        "licencia": "CC0",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Rain_on_a_blue_umbrella.jpg"
+      }
+    },
+    {
+      "id": "champions-miercoles-25",
+      "categoria": "deportes",
+      "momento": "tarde",
+      "fecha": "2026-11-25T05:00:00+01:00",
+      "ejemplo": false,
+      "titular": "Champions: Barça, Villarreal y Atlético juegan hoy",
+      "entradilla": "Se cierra la quinta jornada de la fase de liga. Los ocho primeros pasan directos a octavos.",
+      "puntos": [
+        "18:45: Sabah-Barcelona, en Azerbaiyán, y Slavia Praga-Villarreal.",
+        "21:00: Atlético de Madrid-Viking, en el Metropolitano.",
+        "Del 9.º al 24.º puesto juegan una eliminatoria previa. Del 25.º para abajo, eliminados."
+      ],
+      "porque": "Quedan tres jornadas: lo que pase hoy pesa mucho para evitar la eliminatoria previa.",
+      "fuentes": [
+        {
+          "medio": "Gaceta Mexicana",
+          "url": "https://gacetamexicana.com/barcelona-atletico-cierre-quinta-jornada-champions-2026/"
+        },
+        {
+          "medio": "UEFA Champions League",
+          "url": "https://www.uefa.com/uefachampionsleague/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
+      "id": "rosendo-memorias",
+      "categoria": "cultura",
+      "momento": "tarde",
+      "fecha": "2026-11-25T04:50:00+01:00",
+      "ejemplo": false,
+      "titular": "Rosendo rompe su silencio con sus memorias, «Ni gozo ni calvario»",
+      "entradilla": "El rockero vuelve a aparecer en público casi ocho años después de retirarse.",
+      "puntos": [
+        "El libro, publicado por Espasa, repasa más de cuatro décadas de carrera.",
+        "Lo presenta hoy a las 11:00 en la Casa del Libro de la Gran Vía de Madrid."
+      ],
+      "porque": "Es una de las voces que más han influido en el rock en español, también en grupos actuales.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-miercoles-25-de-noviembre-de-2026/"
+        }
+      ],
+      "titulares": [
+        {
+          "medio": "EFE",
+          "titular": "Rosendo presenta sus memorias 'Ni gozo ni calvario'",
+          "url": "https://www.infobae.com/espana/agencias/2026/11/24/hoy-sera-noticia-miercoles-25-de-noviembre/"
+        }
+      ],
+      "imagen": null
+    },
+    {
+      "id": "hera-dimorphos",
+      "categoria": "tecnologia",
+      "momento": "noche",
+      "fecha": "2026-11-25T04:40:00+01:00",
+      "ejemplo": false,
+      "titular": "La misión Hera enseña hoy de cerca el asteroide que la NASA golpeó en 2022",
+      "entradilla": "La Agencia Espacial Europea presenta las primeras imágenes detalladas de Dimorphos tras el choque de la sonda DART.",
+      "puntos": [
+        "En 2022, la NASA estrelló la sonda DART contra Dimorphos para probar si se puede desviar un asteroide.",
+        "Hera, de la Agencia Espacial Europea, ha ido a ver cómo quedó. Las imágenes se presentan en Berlín a las 18:30, hora española."
+      ],
+      "porque": "Es el primer ensayo real de cómo defender la Tierra de un asteroide.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/america/agencias/2026/11/25/miercoles-25-de-noviembre-de-2026-0200-gmt/"
+        },
+        {
+          "medio": "Agencia Espacial Europea, misión Hera",
+          "url": "https://www.esa.int/Space_Safety/Hera"
+        }
+      ],
+      "titulares": [],
+      "imagen": {
+        "src": "img/hera-dimorphos.jpg",
+        "alt": "Ilustración de la sonda Hera pasando junto al asteroide Didymos",
+        "credito": "ESA, Science Office",
+        "licencia": "CC BY-SA 3.0 IGO",
+        "enlace": "https://commons.wikimedia.org/wiki/File:Hera_glides_past_Didymos.jpg"
+      }
+    },
+    {
+      "id": "senegal-cayuco-yoff",
+      "categoria": "mundo",
+      "momento": "noche",
+      "fecha": "2026-11-25T04:30:00+01:00",
+      "ejemplo": false,
+      "titular": "Casi 180 vecinos de un barrio de Dakar, desaparecidos en un cayuco que iba a Canarias",
+      "entradilla": "Las familias de Yoff, en Senegal, siguen sin noticias de la embarcación.",
+      "puntos": [
+        "Entre los desaparecidos hay grupos de hermanos de una misma familia.",
+        "La ruta atlántica hacia Canarias es una de las más peligrosas del mundo para quienes migran."
+      ],
+      "porque": "Detrás de las cifras de llegadas a Canarias hay barrios enteros esperando noticias.",
+      "fuentes": [
+        {
+          "medio": "EFE, vía Infobae",
+          "url": "https://www.infobae.com/america/agencias/2026/11/25/miercoles-25-de-noviembre-de-2026-0200-gmt/"
+        }
+      ],
+      "titulares": [],
+      "imagen": null
+    },
+    {
       "id": "recta-final-29n",
       "categoria": "elecciones",
       "momento": "tarde",
       "fecha": "2026-11-24T13:40:00+01:00",
-      "destacado": true,
       "ejemplo": false,
-      "titular": "Cinco días para el 29N: las encuestas no cuentan la misma historia",
+      "titular": "Las encuestas antes del 29N no cuentan la misma historia",
       "entradilla": "La mayoría de los sondeos dan mayoría absoluta a PP y Vox. El CIS dibuja lo contrario: el PSOE, casi diez puntos por delante del PP.",
       "puntos": [
         "Se eligen 350 diputados y 209 senadores. La mayoría absoluta en el Congreso está en 176 escaños.",
@@ -82,39 +356,6 @@
         {
           "medio": "BOE, ley electoral (LOREG)",
           "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672"
-        }
-      ],
-      "titulares": [],
-      "imagen": {
-        "src": "img/recta-final-29n.jpg",
-        "alt": "Fachada del Congreso de los Diputados, en Madrid",
-        "credito": "Javier Perez Montes",
-        "licencia": "CC BY-SA 4.0",
-        "enlace": "https://commons.wikimedia.org/wiki/File:Congreso_de_los_Diputados_-_Madrid_02.jpg"
-      }
-    },
-    {
-      "id": "agenda-campana-martes",
-      "categoria": "elecciones",
-      "momento": "noche",
-      "fecha": "2026-11-24T12:10:00+01:00",
-      "ejemplo": false,
-      "titular": "Martes de campaña: mítines en cinco ciudades y un debate sobre vivienda",
-      "entradilla": "Los candidatos apuran la recta final. Por la noche, Ada Colau y Xavier García Albiol debaten cara a cara sobre vivienda.",
-      "puntos": [
-        "Pedro Sánchez (PSOE) estará en Huesca a las 16:00 y en Barcelona con Salvador Illa a las 19:00.",
-        "Alberto Núñez Feijóo (PP) cierra el día en Alicante a las 18:30. Junts hace su acto en Girona a las 20:00.",
-        "El debate entre Colau (Frente Amplio) y García Albiol (PP) se emite en La Sexta a las 23:00."
-      ],
-      "porque": "La vivienda es la principal preocupación en España, según recoge EFE. Es el tema del debate de esta noche.",
-      "fuentes": [
-        {
-          "medio": "EFE, vía Infobae",
-          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
-        },
-        {
-          "medio": "EFE, previsión del día",
-          "url": "https://www.infobae.com/espana/agencias/2026/11/23/hoy-sera-noticia-martes-24-de-noviembre/"
         }
       ],
       "titulares": [],
@@ -376,39 +617,6 @@
       }
     },
     {
-      "id": "frente-atlantico-24n",
-      "categoria": "clima",
-      "momento": "manana",
-      "fecha": "2026-11-24T08:30:00+01:00",
-      "ejemplo": false,
-      "titular": "Un frente deja lluvia fuerte en Galicia y nieve en la montaña de León",
-      "entradilla": "El frente atlántico cruza la Península de oeste a este. El único aviso activo es amarillo, por nevadas.",
-      "puntos": [
-        "En Pontevedra se esperan 42,6 litros por metro cuadrado; en A Coruña, 26,4.",
-        "Aviso amarillo en la Cordillera Cantábrica de León: hasta 5 cm de nieve por encima de 1.200-1.400 metros.",
-        "Nieblas densas en la Meseta norte. Madrid no pasará de 9 °C."
-      ],
-      "porque": "Si viajas por el norte esta semana, revisa los avisos antes de salir.",
-      "fuentes": [
-        {
-          "medio": "Tutiempo.net",
-          "url": "https://www.tutiempo.net/noticias/frente-atlantico-en-espana-martes-24-noviembre-2026.html"
-        },
-        {
-          "medio": "AEMET, avisos",
-          "url": "https://www.aemet.es/es/eltiempo/prediccion/avisos"
-        }
-      ],
-      "titulares": [],
-      "imagen": {
-        "src": "img/frente-atlantico-24n.jpg",
-        "alt": "Gotas de lluvia sobre la tela de un paraguas",
-        "credito": "CorraleH",
-        "licencia": "CC0",
-        "enlace": "https://commons.wikimedia.org/wiki/File:Rain_on_a_blue_umbrella.jpg"
-      }
-    },
-    {
       "id": "colombia-diez-anos-paz",
       "categoria": "mundo",
       "momento": "noche",
@@ -485,27 +693,37 @@
       "id": "real-madrid-psv",
       "categoria": "deportes",
       "momento": "noche",
-      "fecha": "2026-11-24T17:45:00+01:00",
+      "fecha": "2026-11-24T23:10:00+01:00",
       "ejemplo": false,
-      "titular": "El Real Madrid recibe al PSV en la quinta jornada de la Champions",
-      "entradilla": "Partido de la fase de liga. Además, Gil Marín deja la vicepresidencia de LaLiga.",
+      "titular": "El Real Madrid remonta y golea 5-1 al PSV",
+      "entradilla": "El PSV se adelantó de penalti, pero el Madrid marcó cinco goles en la segunda parte.",
       "puntos": [
-        "Es la jornada 5 de la fase de liga de la Champions.",
-        "El PSV es el rival que eliminó al Madrid en una noche recordada como «la noche negra de Eindhoven».",
-        "Miguel Ángel Gil Marín dimite como vicepresidente de LaLiga tras seis años junto a Javier Tebas."
+        "Perišić adelantó al PSV de penalti en el minuto 32.",
+        "Valverde, Bellingham, Mbappé con dos goles y Vinicius al final remontaron el partido en el Bernabéu.",
+        "Es la quinta victoria seguida del Madrid en la fase de liga."
       ],
-      "porque": "Cada punto cuenta para meterse entre los ocho primeros y evitar la eliminatoria previa.",
+      "porque": "Cinco victorias en cinco partidos: el Madrid se acerca a los octavos sin pasar por la eliminatoria previa.",
       "fuentes": [
         {
-          "medio": "EFE, vía Infobae",
-          "url": "https://www.infobae.com/espana/agencias/2026/11/24/temas-del-dia-de-efe-espana-del-martes-24-de-noviembre-de-2026-1330-horas/"
+          "medio": "Canal26",
+          "url": "https://www.canal26.com/futbol/champions-league/real-madrid-vs-psv-en-vivo-hoy-resultado-goles-y-minuto-a-minuto-de-la-champions-league-2026-2027/"
+        },
+        {
+          "medio": "TNT Sports",
+          "url": "https://www.tntsports.co.uk/football/champions-league/2026-2027/real-madrid-psv_mtc21878582/live-commentary.shtml"
         },
         {
           "medio": "UEFA Champions League",
           "url": "https://www.uefa.com/uefachampionsleague/"
         }
       ],
-      "titulares": [],
+      "titulares": [
+        {
+          "medio": "Canal26",
+          "titular": "Real Madrid 5 - 1 PSV: así fue la victoria en la Champions League 2026-2027",
+          "url": "https://www.canal26.com/futbol/champions-league/real-madrid-vs-psv-en-vivo-hoy-resultado-goles-y-minuto-a-minuto-de-la-champions-league-2026-2027/"
+        }
+      ],
       "imagen": {
         "src": "img/real-madrid-psv.jpg",
         "alt": "Interior del estadio Santiago Bernabéu durante un partido",
@@ -550,13 +768,13 @@
     {
       "id": "como-votar-29n",
       "categoria": "elecciones",
-      "momento": "manana",
-      "fecha": "2026-11-24T08:00:00+01:00",
+      "momento": "tarde",
+      "fecha": "2026-11-25T05:35:00+01:00",
       "ejemplo": false,
       "titular": "Guía rápida: cómo votar el domingo 29",
       "entradilla": "Los colegios abren de 9:00 a 20:00. Solo necesitas un documento oficial con foto y saber cuál es tu mesa.",
       "puntos": [
-        "Vale el DNI, el pasaporte o el carné de conducir, siempre originales y con foto.",
+        "Vale el DNI, el pasaporte o el carné de conducir, siempre originales y con foto. También el DNI digital de la app MiDNI.",
         "Consulta tu colegio y tu mesa en la web del Ministerio del Interior antes de salir de casa.",
         "Si cumples 18 años antes del día de la votación, puedes votar: la inscripción en el censo es automática."
       ],
@@ -567,11 +785,21 @@
           "url": "https://infoelectoral.interior.gob.es/"
         },
         {
+          "medio": "Ministerio del Interior, DNI digital",
+          "url": "https://www.interior.gob.es/opencms/ca/detalle/articulo/El-DNI-digital-sera-valido-como-medio-de-identificacion-en-las-Elecciones-Generales-del-29-de-noviembre/"
+        },
+        {
           "medio": "BOE, ley electoral (LOREG)",
           "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672"
         }
       ],
-      "titulares": [],
+      "titulares": [
+        {
+          "medio": "Ministerio del Interior",
+          "titular": "El DNI digital será válido como medio de identificación en las Elecciones Generales del 29 de noviembre",
+          "url": "https://www.interior.gob.es/opencms/ca/detalle/articulo/El-DNI-digital-sera-valido-como-medio-de-identificacion-en-las-Elecciones-Generales-del-29-de-noviembre/"
+        }
+      ],
       "imagen": null
     },
     {

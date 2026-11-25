@@ -1,0 +1,37 @@
+# Publica la web en Cloudflare Pages cada vez que cambia la rama main
+# (por ejemplo, cuando el agente redactor sube la edición del día).
+name: Publicar en Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobar el JSON de noticias
+        run: python3 scripts/validar.py
+
+      - name: Preparar solo los archivos de la web
+        run: |
+          mkdir web
+          cp -R index.html _headers css js data img web/
+
+      # Mientras no esté el token en los secretos del repositorio, no se intenta subir
+      - name: ¿Está el token de Cloudflare?
+        id: token
+        env:
+          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: if [ -n "$T" ]; then echo "hay=si" >> "$GITHUB_OUTPUT"; else echo "::warning::Falta el secreto CLOUDFLARE_API_TOKEN: no se publica"; fi
+
+      - name: Subir a Cloudflare Pages
+        if: steps.token.outputs.hay == 'si'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy web --project-name=pulso --branch=main

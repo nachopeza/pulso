@@ -55,7 +55,7 @@ En `js/app.js`, arriba del todo, están la fecha de las elecciones (`DIA_29N`), 
 
 - [ ] **Aviso legal, privacidad y cookies.** En España son obligatorios (LSSI y RGPD). Cuando existan, pon su dirección en `LEGAL` (`js/app.js`) y aparecerán en el pie.
 - [ ] **Contacto** (correo o formulario), también en `LEGAL`.
-- [ ] **Perfiles de Bluesky y X** en `REDES`.
+- [x] **Perfiles de Bluesky y X** en `REDES` (@pulsomedio en las dos).
 - [ ] **Imagen para redes** (`og:image`, 1200×630) en `index.html`, para que los enlaces compartidos lleven imagen.
 - [ ] **Dominio propio** y, si hay publicidad real, datos del anunciante en `anuncio`.
 - [ ] Limitación conocida: como las noticias se abren con `#id`, al compartir una noticia la vista previa en redes muestra el título general de pulso, no el de la noticia. Para tener vista previa por noticia haría falta generar una página por noticia.

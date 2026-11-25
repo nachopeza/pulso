@@ -334,8 +334,7 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: 14px;
-  overflow: hidden auto;   /* si un texto no cabe en un móvil muy bajo, se desplaza dentro */
-  scrollbar-width: none;
+  overflow: hidden;   /* nunca scroll propio: el dedo siempre pasa a la siguiente tarjeta (ver ajustarCartas) */
 }
 .carta .cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13.5px; font-weight: 650; }
 .carta .etq b { background: var(--oscuro); color: var(--c); }
@@ -471,6 +470,9 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .carta.muy-apretada h2 { font-size: clamp(22px, min(3.8svh, 7vw), 32px); }
 .carta.muy-apretada .puntos { gap: 5px; margin-top: 10px; }
 .carta.muy-apretada .puntos li { font-size: 15px; line-height: 1.35; }
+.carta.recortada .pie-carta .fuentes,
+.carta.recortada .puntos li:nth-child(n+3),
+.carta.minima .puntos li:nth-child(n+2) { display: none; }
 
 /* Barra de progreso del modo Flash, pegada bajo la cabecera */
 .progreso { position: sticky; top: 0; height: 0; z-index: 2; }
@@ -647,8 +649,15 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .legal { display: flex; flex-wrap: wrap; gap: 18px; }
 .dia .lema span { display: block; font-size: 14px; font-weight: 650; color: var(--tinta); margin-top: 4px; }
 .logo-pie { font-weight: 900; font-stretch: 125%; font-size: 24px; letter-spacing: -0.045em; color: var(--tinta); line-height: 1; display: flex; align-items: baseline; }
-.redes { display: flex; gap: 16px; }
-.redes a { font-weight: 650; }
+.redes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.redes a {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  border: 1px solid var(--linea); border-radius: 99px; background: var(--sup);
+  font-size: 14.5px; font-weight: 700; color: var(--tinta); text-decoration: none;
+  transition: border-color 0.2s, translate 0.3s var(--muelle);
+}
+.redes a:hover { border-color: var(--tinta); translate: 0 -2px; }
+.redes svg { width: 16px; height: 16px; flex: none; }
 
 /* ---------- 8. Menú lateral de cristal ---------- */
 .menu {
@@ -958,6 +967,11 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 /* Móviles muy bajos: la portada Flash prescinde del lema */
 @media (max-height: 680px) {
   .saludo p { display: none; }
+}
+/* Pantallas muy bajas (móvil en horizontal): la portada Flash se queda en lo esencial */
+@media (max-height: 600px) {
+  .carta.portada .pista { display: none; }
+  .carta.portada .momentos li:nth-child(n+3) { display: none; }
 }
 /* Quien pide menos movimiento en su sistema, no lo tiene */
 @media (prefers-reduced-motion: reduce) {

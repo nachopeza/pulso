@@ -27,8 +27,10 @@
   const PUBLI_CADA = 6;                   // en la lista, un espacio publicitario cada 6 noticias
   // Redes donde publicamos los titulares. Pon aquí la dirección de cada perfil cuando exista.
   const REDES = [
-    { nombre: 'Bluesky', url: '' },
-    { nombre: 'X', url: '' }
+    { nombre: 'Bluesky', usuario: '@pulsomedio', url: 'https://bsky.app/profile/pulsomedio.bsky.social',
+      icono: 'M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z' },
+    { nombre: 'X', usuario: '@pulsomedio', url: 'https://x.com/pulsomedio',
+      icono: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' }
   ];
   // Páginas legales que todo medio en España debe tener (aviso legal, privacidad, cookies)
   // y una vía de contacto. Pon la dirección cuando existan; mientras estén vacías no se muestran.
@@ -425,7 +427,9 @@
 
   const redesHTML = () => {
     const r = REDES.filter((x) => enlace(x.url));
-    return r.length ? `<p class="redes">${r.map((x) => `<a href="${enlace(x.url)}" target="_blank" rel="noopener">${esc(x.nombre)}</a>`).join('')}</p>` : '';
+    // Cada red: su icono y el usuario. El nombre de la red va oculto para lectores de pantalla
+    return r.length ? `<p class="redes">${r.map((x) => `<a href="${enlace(x.url)}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${x.icono}"/></svg><span class="oculto">${esc(x.nombre)}: </span>${esc(x.usuario)}</a>`).join('')}</p>` : '';
   };
 
   // Banda del día: fecha, hora de actualización, cuenta atrás y momentos del día
@@ -678,13 +682,20 @@
   // la "apretamos" por pasos hasta que quepa:
   //   1.º .apretada     → se oculta "Por qué te importa" (se sigue leyendo en la ficha)
   //   2.º .muy-apretada → titular y puntos un poco más pequeños
+  //   3.º .sin-minimo   → la foto cede su altura mínima
+  //   4.º .recortada    → solo 2 puntos y sin la línea de fuentes
+  //   5.º .minima       → solo el primer punto
+  // Lo que se oculta sigue en la ficha ("Leer más"). La tarjeta NUNCA tiene scroll propio:
+  // si lo tuviera, el dedo movería el interior de la tarjeta y no pasaría a la siguiente.
+  const PASOS = ['apretada', 'muy-apretada', 'sin-minimo', 'recortada', 'minima'];
   function ajustarCartas() {
     const noCabe = (c) => c.scrollHeight > c.clientHeight + 1;
     main.querySelectorAll('.carta[data-cat]').forEach((c) => {
-      c.classList.remove('apretada', 'muy-apretada', 'sin-minimo', 'sin-foto');
-      if (noCabe(c)) c.classList.add('apretada');
-      if (noCabe(c)) c.classList.add('muy-apretada');
-      if (noCabe(c)) c.classList.add('sin-minimo');   // último recurso: la foto cede su altura mínima
+      c.classList.remove(...PASOS, 'sin-foto');
+      for (const paso of PASOS) {
+        if (!noCabe(c)) break;
+        c.classList.add(paso);
+      }
       // Si la foto se queda en una tira estrecha (móviles muy bajos), mejor no mostrarla
       const foto = c.querySelector('.foto');
       c.classList.toggle('sin-foto', !!foto && foto.clientHeight < 72);
@@ -711,19 +722,35 @@
   addEventListener('resize', () => {
     clearTimeout(esperaResize);
     esperaResize = setTimeout(() => {
+      medirCabecera();   // primero la cabecera: de ella depende el alto de las tarjetas
       if (estado.modo === 'flash') ajustarCartas();
       encajarPalabras();
       moverIndicador(false);
-      medirCabecera();
     }, 150);
   });
 
   // La cabecera flota encima del contenido (por el efecto cristal).
   // Guardamos su altura en --cab para que el contenido empiece justo debajo.
+  // Si cambia, las tarjetas Flash cambian de alto: hay que volver a encajarlas.
+  let altoCab = 0;
   function medirCabecera() {
-    document.documentElement.style.setProperty('--cab', `${top.offsetHeight}px`);
+    const alto = top.offsetHeight;
+    if (alto === altoCab) return;
+    altoCab = alto;
+    document.documentElement.style.setProperty('--cab', `${alto}px`);
+    if (estado.datos && estado.modo === 'flash') { ajustarCartas(); encajarPalabras(); }
   }
-  if ('ResizeObserver' in window) new ResizeObserver(medirCabecera).observe(top);
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(medirCabecera).observe(top);
+    // En el móvil, la barra del navegador se esconde al bajar y la pantalla útil crece o mengua:
+    // volvemos a encajar las tarjetas para que ninguna se salga
+    let altoMain = 0;
+    new ResizeObserver(() => {
+      if (main.clientHeight === altoMain) return;
+      altoMain = main.clientHeight;
+      if (estado.datos && estado.modo === 'flash') { ajustarCartas(); encajarPalabras(); }
+    }).observe(main);
+  }
   medirCabecera();
 
   // Detecta qué tarjeta está en pantalla: le pone la clase .activa (lanza su animación)
@@ -1120,10 +1147,10 @@
       abrirDesdeHash();
       // Cuando termina de llegar la tipografía, los textos cambian de tamaño: reajustamos
       document.fonts?.ready.then(() => {
+        medirCabecera();
         if (estado.modo === 'flash') ajustarCartas();
         encajarPalabras();
         moverIndicador(false);
-        medirCabecera();
       });
     } catch (err) {
       main.className = '';

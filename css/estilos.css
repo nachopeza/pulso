@@ -749,6 +749,9 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .menu-modo { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 650; }
 .menu-como { font-size: 14px; line-height: 1.5; color: var(--suave); }
 .menu-como b { color: var(--tinta); }
+.menu-legal { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 18px; font-size: 13px; }
+.menu-legal a { color: var(--suave); }
+.menu-legal a:hover { color: var(--tinta); }
 
 /* ---------- 9. Ficha (dialog) ---------- */
 #ficha {

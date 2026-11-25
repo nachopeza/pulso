@@ -19,7 +19,7 @@ jobs:
       - name: Preparar solo los archivos de la web
         run: |
           mkdir web
-          cp -R index.html _headers favicon.svg apple-touch-icon.png css js data img fonts web/
+          cp -R index.html aviso-legal.html privacidad.html cookies.html _headers favicon.svg apple-touch-icon.png css js data img fonts web/
 
       # Mientras no esté el token en los secretos del repositorio, no se intenta subir
       - name: ¿Está el token de Cloudflare?

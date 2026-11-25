@@ -1,0 +1,146 @@
+/* =====================================================================
+   pulso — legal.css
+   Estilos de las páginas de texto (aviso legal, privacidad, cookies).
+   Mismos colores y tipografía que la web, pero sin nada de la portada:
+   una columna de lectura cómoda y nada más.
+   ===================================================================== */
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url("../fonts/archivo-latin-wdth-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url("../fonts/archivo-latin-ext-wdth-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#ffffff, #1c1d21);
+  --sup: light-dark(#f1f1ee, #27282d);
+  --linea: light-dark(#e2e2dd, #393a40);
+  --tinta: light-dark(#141414, #f3f3f0);
+  --suave: light-dark(#5a5b61, #a9aab0);
+  --marca: #ffd400;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--tinta);
+  font: 17px/1.6 "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Cabecera mínima: el logo lleva de vuelta a la portada */
+.cabecera {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.logo {
+  font-weight: 800;
+  font-stretch: 118%;
+  font-size: 28px;
+  letter-spacing: -.04em;
+  color: var(--tinta);
+  text-decoration: none;
+}
+.logo span { color: var(--marca); }
+.volver { color: var(--suave); font-size: 15px; }
+
+main {
+  max-width: 720px;        /* unos 70 caracteres por línea: lectura cómoda */
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+h1 {
+  font-weight: 800;
+  font-stretch: 118%;
+  font-size: clamp(34px, 8vw, 52px);
+  line-height: 1.02;
+  letter-spacing: -.035em;
+  margin: 0 0 12px;
+}
+.fecha { color: var(--suave); margin: 0 0 32px; font-size: 15px; }
+
+/* El resumen en dos líneas, en la caja amarilla: lo que de verdad hay que saber */
+.resumen {
+  background: var(--marca);
+  color: #141414;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 0 0 36px;
+  font-weight: 500;
+}
+.resumen p { margin: 0; }
+
+h2 {
+  font-weight: 750;
+  font-stretch: 110%;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -.015em;
+  margin: 40px 0 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linea);
+}
+p, li { margin: 0 0 12px; }
+ul { padding-left: 1.2em; }
+
+a { color: inherit; text-decoration-color: var(--marca); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { text-decoration-color: currentColor; }
+a:focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; border-radius: 2px; }
+
+/* Ficha del titular: datos en dos columnas en pantallas anchas */
+.ficha {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 20px;
+  background: var(--sup);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 0 0 12px;
+}
+.ficha dt { color: var(--suave); }
+.ficha dd { margin: 0; }
+@media (max-width: 480px) {
+  .ficha { grid-template-columns: 1fr; gap: 0; }
+  .ficha dd { margin-bottom: 10px; }
+}
+
+/* Tabla de lo que guarda el navegador (página de cookies) */
+.tabla { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 15px; }
+.tabla th, .tabla td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--linea); }
+.tabla th { color: var(--suave); font-weight: 600; }
+.tabla code { font-size: 13px; white-space: nowrap; }
+
+.pie {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  border-top: 1px solid var(--linea);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 15px;
+  color: var(--suave);
+}
+.pie a[aria-current="page"] { color: var(--tinta); font-weight: 600; }

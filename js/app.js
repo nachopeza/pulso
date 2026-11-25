@@ -35,10 +35,10 @@
   // Páginas legales que todo medio en España debe tener (aviso legal, privacidad, cookies)
   // y una vía de contacto. Pon la dirección cuando existan; mientras estén vacías no se muestran.
   const LEGAL = [
-    { nombre: 'Aviso legal', url: '' },
-    { nombre: 'Privacidad', url: '' },
-    { nombre: 'Cookies', url: '' },
-    { nombre: 'Contacto', url: '' }
+    { nombre: 'Aviso legal', url: 'aviso-legal.html' },
+    { nombre: 'Privacidad', url: 'privacidad.html' },
+    { nombre: 'Cookies', url: 'cookies.html' },
+    { nombre: 'Contacto', url: 'mailto:hola@pulsomedio.com' }
   ];
 
   // ---------- 2. Pequeñas herramientas ----------
@@ -60,6 +60,8 @@
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // Solo aceptamos enlaces http(s). Cualquier otra cosa (javascript:, data:…) se descarta.
   const enlace = (u) => (/^https?:\/\//i.test(u || '') ? esc(u) : '');
+  // Enlaces de la propia web (páginas legales) y de correo: solo para lo que escribimos nosotros en LEGAL
+  const enlacePropio = (u) => (/^(mailto:[^\s"<>]+|[\w-]+\.html)$/i.test(u || '') ? esc(u) : '');
   // Imágenes: enlace https o ruta propia tipo img/foto.jpg
   const rutaImg = (u) => (/^https:\/\//i.test(u || '') || /^[\w\-./]+$/.test(u || '') ? esc(u) : '');
   const cat = (n) => (CATS[n.categoria] ? n.categoria : 'espana');
@@ -393,7 +395,6 @@
 
   // Pie: marca, secciones, cómo trabajamos y (si están configuradas) redes y páginas legales
   const pieHTML = () => {
-    const legales = LEGAL.filter((x) => enlace(x.url));
     return `<footer class="pie" id="como-trabajamos">
       <div class="pie-marca">
         <p class="logo-pie">pulso<span class="latido" aria-hidden="true"></span></p>
@@ -412,9 +413,16 @@
       </div>
       <div class="pie-base">
         <p>Actualizado el ${esc(actualizadoTxt())}</p>
-        ${legales.length ? `<p class="legal">${legales.map((x) => `<a href="${enlace(x.url)}">${esc(x.nombre)}</a>`).join('')}</p>` : ''}
+        ${legalHTML('legal')}
       </div>
     </footer>`;
+  };
+
+  // Enlaces legales (aviso legal, privacidad, cookies, contacto): en el pie y en el menú,
+  // porque en el móvil se lee en modo Flash y el pie casi no se ve
+  const legalHTML = (clase) => {
+    const legales = LEGAL.filter((x) => enlacePropio(x.url));
+    return legales.length ? `<p class="${clase}">${legales.map((x) => `<a href="${enlacePropio(x.url)}">${esc(x.nombre)}</a>`).join('')}</p>` : '';
   };
 
   // "24 de noviembre a las 19:15", a partir del campo "actualizado" del JSON
@@ -584,7 +592,8 @@
         </div>
       </section>
       <p class="menu-como">${COMO_TRABAJAMOS}</p>
-      ${redesHTML()}`;
+      ${redesHTML()}
+      ${legalHTML('menu-legal')}`;
   }
 
   // ---------- Buscador ----------

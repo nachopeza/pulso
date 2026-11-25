@@ -1,9 +1,10 @@
 // =====================================================================
 //  pulso — app.js
-//  Lee data/noticias.json y pinta la web en dos modos:
+//  Lee las noticias de /api/noticias (o, si no hay servidor, de data/noticias.json)
+//  y pinta la web en dos modos:
 //    · Flash: una noticia por pantalla, deslizando (como stories).
 //    · Lista: portada con última hora, la noticia destacada, lo último y la rejilla.
-//  El agente solo tiene que actualizar noticias.json; este archivo no se toca.
+//  Las noticias se gestionan en el panel (/admin); este archivo no se toca.
 // =====================================================================
 {
   // ---------- 1. Configuración ----------
@@ -38,7 +39,7 @@
     { nombre: 'Aviso legal', url: 'aviso-legal.html' },
     { nombre: 'Privacidad', url: 'privacidad.html' },
     { nombre: 'Cookies', url: 'cookies.html' },
-    { nombre: 'Contacto', url: 'mailto:hola@pulsomedio.com' }
+    { nombre: 'Contacto', url: 'mailto:hola@pulsomedio.es' }
   ];
 
   // ---------- 2. Pequeñas herramientas ----------
@@ -110,6 +111,7 @@
 
   const estado = {
     datos: null,
+    sueltas: {}, // noticias antiguas abiertas desde un enlace compartido
     cat: 'todo',
     // Cada visita empieza en el modo de su dispositivo: Flash en el móvil, Lista en el ordenador.
     // Si el lector lo cambia, se respeta hasta que cierre la pestaña.
@@ -126,9 +128,12 @@
   const menu = $('#menu');
   const aviso = $('#aviso');
 
-  // Todas las noticias: destacadas primero, luego de más nueva a más antigua
+  // Todas las noticias: la destacada primero, luego las que tienen orden fijado en el panel
+  // y después de más nueva a más antigua
   const ordenadas = () => [...(estado.datos?.noticias || [])].sort((a, b) =>
-    (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0) || new Date(b.fecha) - new Date(a.fecha));
+    (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0)
+    || (a.orden ?? Infinity) - (b.orden ?? Infinity)
+    || new Date(b.fecha) - new Date(a.fecha));
   // Las de la sección elegida
   function visibles() {
     const todas = ordenadas();
@@ -138,7 +143,7 @@
   }
   // Solo por fecha (para "Última hora" y "Lo último")
   const recientes = () => [...(estado.datos?.noticias || [])].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-  const buscar = (id) => (estado.datos?.noticias || []).find((n) => n.id === id);
+  const buscar = (id) => (estado.datos?.noticias || []).find((n) => n.id === id) || estado.sueltas[id];
   const presentes = () => Object.keys(CATS).filter((k) => (estado.datos?.noticias || []).some((n) => cat(n) === k));
 
   // ---------- 4. Piezas de HTML ----------
@@ -915,7 +920,19 @@
   function abrirDesdeHash() {
     const id = decodeURIComponent(location.hash.slice(1));
     const n = id && buscar(id);
-    if (!n) { cerrarFicha(); return; }
+    if (!n) {
+      cerrarFicha();
+      // Puede ser una noticia que ya no está en portada: se pide sola al servidor
+      if (/^[a-z0-9-]+$/.test(id) && estado.datos && !(id in estado.sueltas)) {
+        estado.sueltas[id] = null;
+        fetch(`/api/noticias/${id}`).then((r) => (r.ok ? r.json() : null)).then((x) => {
+          if (!x) return;
+          estado.sueltas[id] = x;
+          if (decodeURIComponent(location.hash.slice(1)) === id) abrirDesdeHash();
+        }).catch(() => {});
+      }
+      return;
+    }
     if (menu.open) menu.close();
     ficha.classList.remove('saliendo');
     fichaCuerpo.innerHTML = fichaHTML(n);
@@ -1141,12 +1158,21 @@
 
   // ---------- 10. Cargar datos ----------
 
+  // Primero el servidor; si no responde (abierta en local o en GitHub Pages), el archivo
+  async function pedirNoticias() {
+    for (const url of ['/api/noticias', 'data/noticias.json']) {
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        if (r.ok && (r.headers.get('Content-Type') || '').includes('json')) return await r.json();
+      } catch (e) { /* probamos la siguiente */ }
+    }
+    throw new Error('No hay noticias');
+  }
+
   async function cargar() {
     try {
-      const r = await fetch('data/noticias.json', { cache: 'no-store' });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const primera = !estado.datos;
-      estado.datos = await r.json();
+      estado.datos = await pedirNoticias();
       pintar();
       // Primera carga: la página entra en una secuencia escalonada (una sola vez)
       if (primera && !pocoMovimiento) {
@@ -1176,8 +1202,7 @@
   async function comprobarNovedades() {
     if (document.hidden || !estado.datos) return;
     try {
-      const r = await fetch('data/noticias.json', { cache: 'no-store' });
-      const nuevo = await r.json();
+      const nuevo = await pedirNoticias();
       if (nuevo.actualizado && nuevo.actualizado !== estado.datos.actualizado) avisar('Hay noticias nuevas', 'Actualizar');
     } catch (e) { /* sin conexión: ya lo intentaremos luego */ }
   }

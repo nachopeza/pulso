@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#ffd400">
+  <title>Redacción pulso</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- Panel de redacción de pulso. Todo lo pinta admin.js según la dirección (#/hoy, #/noticias…) -->
+  <header class="barra" id="barra" hidden>
+    <a class="marca" href="#/hoy"><span class="logo">pulso<span class="latido" aria-hidden="true"></span></span><span class="seccion-panel">Redacción</span></a>
+    <nav class="nav" id="nav" aria-label="Secciones del panel">
+      <a href="#/hoy" data-ruta="hoy">Hoy</a>
+      <a href="#/noticias" data-ruta="noticias">Noticias</a>
+      <a href="#/portada" data-ruta="portada">Portada</a>
+      <a href="#/momentos" data-ruta="momentos">Momentos</a>
+      <a href="#/usuarios" data-ruta="usuarios" data-solo="admin">Usuarios</a>
+    </nav>
+    <div class="quien">
+      <a class="btn btn-fino" href="/" target="_blank" rel="noopener">Ver la web</a>
+      <button type="button" class="btn btn-fino" id="salir">Salir</button>
+    </div>
+  </header>
+
+  <main id="vista" tabindex="-1"><p class="cargando">Cargando…</p></main>
+
+  <div class="avisos" id="avisos" role="status" aria-live="polite"></div>
+
+  <dialog class="modal" id="modal">
+    <div class="modal-cuerpo" id="modal-cuerpo"></div>
+  </dialog>
+
+  <script src="admin.js"></script>
+</body>
+</html>

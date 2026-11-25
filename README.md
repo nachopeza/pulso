@@ -3,7 +3,7 @@
 Medio de noticias cortas para gente joven (16-30 años) en España. Se lanza el sábado 28 de noviembre de 2026, víspera de las elecciones generales del **29N**: por eso el 29N tiene su sección, su cuenta atrás y su bloque en portada, aunque pulso cubre toda la actualidad.
 Cada noticia va resumida con nuestras palabras y enlaza siempre a su fuente original.
 
-Es una web estática: HTML, CSS y JavaScript puros, sin frameworks ni compilación. Está publicada en **https://pulsomedio.es** (Cloudflare Pages).
+La web de lectores es HTML, CSS y JavaScript puros, sin frameworks ni compilación. Las noticias viven en una base de datos de Cloudflare y se gestionan desde el **panel de redacción** (`pulsomedio.es/admin`). Está publicada en **https://pulsomedio.es** (Cloudflare Pages).
 
 ---
 
@@ -13,14 +13,20 @@ Es una web estática: HTML, CSS y JavaScript puros, sin frameworks ni compilaci�
 NWS/
 ├── index.html          La página: cabecera, zona de noticias, ficha (<dialog>) y avisos
 ├── css/estilos.css     Todo el diseño: colores, tipografía, modo Flash, modo Lista, animaciones
-├── js/app.js           Lee data/noticias.json y pinta la web. No hace falta tocarlo para publicar
-├── data/noticias.json  LAS NOTICIAS. Es el único archivo que edita el agente redactor
+├── js/app.js           Lee las noticias de /api/noticias y pinta la web. No hace falta tocarlo para publicar
+├── data/noticias.json  Copia de respaldo de las noticias (la web la usa si no hay servidor, por ejemplo en local)
+├── admin/              Panel de redacción (pulsomedio.es/admin): HTML, CSS y JS del panel
+├── functions/          Servidor (Cloudflare Pages Functions): la API pública, la del panel y la del agente
+├── servidor/comun.js   Piezas que comparten las funciones: horas de Madrid, validación, email, fotos
+├── migraciones/        Tablas de la base de datos (Cloudflare D1)
+├── wrangler.toml       Configuración de Cloudflare: base de datos D1 y almacén de fotos R2
 ├── img/                Fotos con licencia libre de las noticias (y compartir.png, la imagen al compartir la web)
 ├── fonts/              Tipografía Archivo alojada en la propia web (licencia OFL)
 ├── favicon.svg         Icono de la pestaña; apple-touch-icon.png, el del iPhone
 ├── _headers            Cabeceras de Cloudflare (caché y seguridad)
 ├── AGENTE.md           Manual del agente redactor que prepara la edición de cada día
-├── scripts/validar.py  Comprueba el JSON antes de publicar
+├── scripts/            validar.py (comprueba el JSON), enviar.py (el agente entrega la edición),
+│                       importar.py (pasó el JSON a la base de datos), preparar.sh (copia la web a web/)
 ├── .github/workflows/  Publicación automática en Cloudflare al subir cambios a main
 └── README.md           Este archivo
 ```
@@ -104,8 +110,30 @@ Si no carga, mira si el cortafuegos del Mac está bloqueando Python (Ajustes del
 
 - La web vive en **Cloudflare Pages** (proyecto `pulso`) con el dominio **pulsomedio.es**. El dominio se compró en Hostinger, pero sus DNS los gestiona Cloudflare. El correo sigue en Hostinger: sus registros (MX, SPF, DKIM, DMARC) están copiados en Cloudflare.
 - Cada `git push` a `main` lanza `.github/workflows/publicar.yml`: valida el JSON y sube la web a Cloudflare. Necesita dos secretos en el repositorio: `CLOUDFLARE_API_TOKEN` (con permiso *Cloudflare Pages: Edit*) y `CLOUDFLARE_ACCOUNT_ID`.
-- **Edición diaria:** una rutina de Claude Code en la nube («pulso: edición diaria», cada día a las 6:30 de Madrid) sigue `AGENTE.md`, actualiza `data/noticias.json` y hace push.
-- Para publicar a mano desde el Mac: `npx wrangler pages deploy <carpeta con la web> --project-name pulso --branch main`.
+- **Edición diaria:** una rutina de Claude Code en la nube («pulso: edición diaria», cada día a las 6:30 de Madrid) sigue `AGENTE.md`. Prepara 12 borradores y los entrega al panel con `scripts/enviar.py`. El panel manda un email al equipo, y si nadie revisa la edición, las 8 propuestas se publican solas a las 7:00.
+- Para publicar a mano desde el Mac: `sh scripts/preparar.sh && npx wrangler pages deploy --branch main`.
+
+### El panel de redacción
+
+- **Entrar:** `pulsomedio.es/admin`. Escribes tu email y te llega un enlace; no hay contraseñas. La sesión dura 30 días.
+- **Perfiles:** Administración (todo, también usuarios), Edición (escribe y publica) y Redacción (escribe borradores; otra persona publica).
+- **Pantallas:**
+  - *Hoy*: la edición del agente, con un interruptor por noticia y el botón «Publicar ahora».
+  - *Noticias*: buscador de todo, con editor, fotos, programar, retirar, destacar, fijar, corrección visible e historial con «volver a esta versión».
+  - *Portada*: orden y anuncio.
+  - *Momentos*: el bloque «mañana, tarde y noche».
+  - *Usuarios*.
+- **Datos:**
+  - Base de datos Cloudflare D1 `pulso`, con las tablas en `migraciones/`.
+  - Fotos en Cloudflare R2 `pulso-fotos`, servidas en `/fotos/…`.
+- **Secretos en Cloudflare Pages:**
+  - `AGENTE_KEY`: la clave con la que el agente entrega la edición.
+  - `BREVO_KEY`: la clave de Brevo para enviar emails.
+- **Probar en local:**
+  1. Crea un archivo `.dev.vars` con `DEV=1` y `AGENTE_KEY=lo-que-quieras`. Con `DEV=1`, los emails salen por la Terminal en vez de enviarse.
+  2. Ejecuta `npx wrangler d1 migrations apply pulso --local`.
+  3. Ejecuta `sh scripts/preparar.sh && npx wrangler pages dev`.
+  4. Abre `http://localhost:8788/admin`.
 
 ---
 

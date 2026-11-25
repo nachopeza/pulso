@@ -1,0 +1,21 @@
+# Configuración de Cloudflare Pages: la web estática (carpeta web/, la prepara el
+# workflow) más las funciones de servidor de la carpeta functions/.
+name = "pulso"
+pages_build_output_dir = "web"
+compatibility_date = "2026-10-01"
+
+# Base de datos con las noticias, el historial y los usuarios del panel
+[[d1_databases]]
+binding = "DB"
+database_name = "pulso"
+database_id = "b633d2bf-ee43-43cf-843c-2b3e371877e2"
+migrations_dir = "migraciones"
+
+# Fotos subidas desde el panel o importadas de Wikimedia Commons
+[[r2_buckets]]
+binding = "FOTOS"
+bucket_name = "pulso-fotos"
+
+[vars]
+SITIO = "https://pulsomedio.es"
+REMITENTE = "hola@pulsomedio.es"

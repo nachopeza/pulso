@@ -40,13 +40,15 @@ export async function onRequestPost({ request, env, data }) {
   const cuerpo = await leerJSON(request);
   const { datos, errores } = limpiarNoticia(cuerpo?.datos, { borrador: true });
   if (errores.length) return json({ error: errores[0], errores }, 400);
+  delete datos.actualizada;
   const id = crearId(datos.titular);
   const ahora = Date.now();
+  const imp = Number(cuerpo.importancia);
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO noticias (id, estado, revisada, categoria, titular, datos, autor, creada, actualizada)
-       VALUES (?, 'borrador', 1, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, datos.categoria, datos.titular, JSON.stringify(datos), data.usuario.email, ahora, ahora),
+      `INSERT INTO noticias (id, estado, revisada, importancia, categoria, titular, datos, autor, creada, actualizada)
+       VALUES (?, 'borrador', 1, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(id, imp >= 1 && imp <= 5 ? Math.round(imp) : 3, datos.categoria, datos.titular, JSON.stringify(datos), data.usuario.email, ahora, ahora),
     versionStmt(env, id, data.usuario.email, 'creada')
   ]);
   return json({ ok: true, id }, 201);

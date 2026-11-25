@@ -68,18 +68,24 @@
   const cat = (n) => (CATS[n.categoria] ? n.categoria : 'espana');
 
   const hora = (iso) => new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: ZONA });
-  // "hace 20 min", "hace 3 h", "ayer"… Si la fecha es futura, muestra la hora.
+  // Cuándo es una noticia, sin el «hace 17 h» que la hace parecer vieja:
+  // menos de 3 horas → "hace 20 min" o "hace 2 h"; de hoy → "7:00"; de ayer → "ayer, 21:00"; antes → "24 nov".
+  // Si la fecha es futura, muestra la hora.
   function hace(iso) {
-    const min = Math.round((Date.now() - new Date(iso)) / 60000);
+    const t = new Date(iso);
+    const min = Math.round((Date.now() - t) / 60000);
     if (Number.isNaN(min)) return '';
     if (min < 0) return hora(iso);
     if (min < 1) return 'ahora';
     if (min < 60) return `hace ${min} min`;
-    const h = Math.round(min / 60);
-    if (h < 24) return `hace ${h} h`;
-    const d = Math.round(h / 24);
-    return d === 1 ? 'ayer' : `hace ${d} días`;
+    if (min < 180) return `hace ${Math.floor(min / 60)} h`;
+    const dia = (d) => d.toLocaleDateString('en-CA', { timeZone: ZONA });
+    if (dia(t) === dia(new Date())) return hora(iso);
+    if (dia(t) === dia(new Date(Date.now() - 864e5))) return `ayer, ${hora(iso)}`;
+    return t.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', timeZone: ZONA });
   }
+  // Lo que se enseña junto a la sección: la hora de publicación o la de la última actualización
+  const cuando = (n) => (n.actualizada ? `actualizada ${hace(n.actualizada)}` : hace(n.fecha));
   const hoyISO = () => new Date().toLocaleDateString('en-CA', { timeZone: ZONA }); // "2026-11-24"
   const fechaLarga = () => new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', timeZone: ZONA }).replace(',', '');
   function momentoActual() {
@@ -128,8 +134,8 @@
   const menu = $('#menu');
   const aviso = $('#aviso');
 
-  // Todas las noticias: la destacada primero, luego las que tienen orden fijado en el panel
-  // y después de más nueva a más antigua
+  // Todas las noticias: la destacada primero y después en el orden que manda el servidor
+  // (importancia y edad, o el fijado a mano en el panel); si no hay orden, de más nueva a más antigua
   const ordenadas = () => [...(estado.datos?.noticias || [])].sort((a, b) =>
     (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0)
     || (a.orden ?? Infinity) - (b.orden ?? Infinity)
@@ -142,7 +148,8 @@
     return todas.filter((n) => cat(n) === estado.cat);
   }
   // Solo por fecha (para "Última hora" y "Lo último")
-  const recientes = () => [...(estado.datos?.noticias || [])].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  const ultimaVez = (n) => new Date(n.actualizada || n.fecha);
+  const recientes = () => [...(estado.datos?.noticias || [])].sort((a, b) => ultimaVez(b) - ultimaVez(a));
   const buscar = (id) => (estado.datos?.noticias || []).find((n) => n.id === id) || estado.sueltas[id];
   const presentes = () => Object.keys(CATS).filter((k) => (estado.datos?.noticias || []).some((n) => cat(n) === k));
 
@@ -241,7 +248,7 @@
     return `<section class="slide" id="s-${esc(n.id)}" aria-label="Noticia ${i + 1} de ${total}">
       <article class="carta" data-cat="${c}">
         <div class="cab">
-          <span class="etq"><b>${CATS[c]}</b><span class="hora">${hace(n.fecha)}${n.ejemplo ? ', ejemplo' : ''}</span></span>
+          <span class="etq"><b>${CATS[c]}</b><span class="hora">${cuando(n)}${n.ejemplo ? ', ejemplo' : ''}</span></span>
           <span class="cont">${i + 1} de ${total}</span>
         </div>
         ${imagenHTML(n, 'foto') || `<div class="hueco">${gigante(c)}</div>`}
@@ -320,7 +327,7 @@
         ${fotoImg(n.imagen) || `<div class="marco">${gigante(c)}</div>`}
       </div>
       <div class="txt">
-        <span class="etq"><b>${CATS[c]}</b><span class="hora">${hace(n.fecha)}</span></span>
+        <span class="etq"><b>${CATS[c]}</b><span class="hora">${cuando(n)}</span></span>
         <h3><a href="#${esc(n.id)}">${esc(n.titular)}</a></h3>
         <p class="entr">${esc(n.entradilla)}</p>
         ${sumario}
@@ -336,7 +343,7 @@
     const mini = fotoImg(n.imagen) ? `<div class="item-foto" aria-hidden="true">${fotoImg({ ...n.imagen, alt: '' })}</div>` : '';
     return `<article class="item ${mini ? 'con-foto' : ''}" data-cat="${c}">
       ${mini}
-      <p class="item-meta">${conSeccion ? `<b>${CATS[c]}</b>` : ''}<time datetime="${esc(n.fecha)}">${hace(n.fecha)}</time></p>
+      <p class="item-meta">${conSeccion ? `<b>${CATS[c]}</b>` : ''}<time datetime="${esc(n.actualizada || n.fecha)}">${cuando(n)}</time></p>
       <h3><a href="#${esc(n.id)}">${esc(n.titular)}</a></h3>
       <p class="item-entr">${esc(n.entradilla)}</p>
     </article>`;
@@ -525,7 +532,7 @@
     // Hasta 3 noticias más de la misma sección, para seguir leyendo
     const relacionadas = recientes().filter((x) => cat(x) === c && x.id !== n.id).slice(0, 3).map((x) => itemHTML(x, false)).join('');
     return `<div class="f-tapa" data-cat="${c}">
-        <span class="etq"><b>${CATS[c]}</b><span class="hora">${hace(n.fecha)}</span></span>
+        <span class="etq"><b>${CATS[c]}</b><span class="hora">${cuando(n)}</span></span>
         <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">${ICONO_X}</button>
       </div>
       <div class="f-txt">

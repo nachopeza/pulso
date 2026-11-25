@@ -1,5 +1,6 @@
 // GET  /api/admin/noticias/<id>                → la noticia y su historial
-// PUT  /api/admin/noticias/<id> { datos }      → guarda los cambios del texto
+// PUT  /api/admin/noticias/<id> { datos, importancia?, actualizacion? } → guarda los cambios del texto
+//      (actualizacion: true pone «Actualizada» en la web y la sube en portada)
 // POST /api/admin/noticias/<id> { accion, … }  → publicar, programar, retirar, destacar…
 import {
   json, fallo, leerJSON, limpiarNoticia, filaPanel, leerFila, versionStmt, puede, isoMadrid
@@ -25,15 +26,23 @@ export async function onRequestPut({ request, env, params, data }) {
   const cuerpo = await leerJSON(request);
   const { datos, errores } = limpiarNoticia(cuerpo?.datos, { borrador: !enLaWeb(f) });
   if (errores.length) return json({ error: errores[0], errores }, 400);
-  // La hora de publicación la pone el servidor, no el formulario
-  datos.fecha = JSON.parse(f.datos).fecha || '';
-  if (!datos.fecha) delete datos.fecha;
+  // La hora de publicación y la de actualización las pone el servidor, no el formulario
+  const antes = JSON.parse(f.datos);
   const ahora = Date.now();
+  datos.fecha = antes.fecha || '';
+  if (!datos.fecha) delete datos.fecha;
+  delete datos.actualizada;
+  if (antes.actualizada) datos.actualizada = antes.actualizada;
+  if (antes.sustituye) datos.sustituye = antes.sustituye;
+  const marcar = cuerpo.actualizacion === true && enLaWeb(f) && f.publicar_en <= ahora;
+  if (marcar) datos.actualizada = isoMadrid(ahora);
+  const imp = Number(cuerpo.importancia);
+  const importancia = imp >= 1 && imp <= 5 ? Math.round(imp) : f.importancia;
   await env.DB.batch([
     env.DB.prepare(
-      `UPDATE noticias SET datos = ?, titular = ?, categoria = ?, revisada = 1, autor = ?, actualizada = ? WHERE id = ?`
-    ).bind(JSON.stringify(datos), datos.titular, datos.categoria, u.email, ahora, params.id),
-    versionStmt(env, params.id, u.email, 'editada')
+      `UPDATE noticias SET datos = ?, titular = ?, categoria = ?, importancia = ?, revisada = 1, autor = ?, actualizada = ? WHERE id = ?`
+    ).bind(JSON.stringify(datos), datos.titular, datos.categoria, importancia, u.email, ahora, params.id),
+    versionStmt(env, params.id, u.email, marcar ? 'actualizada (se ve en la web)' : 'editada')
   ]);
   return json({ ok: true, noticia: filaPanel(await leerFila(env, params.id)) });
 }
@@ -93,7 +102,7 @@ export async function onRequestPost({ request, env, params, data }) {
       if (!v) return fallo('No existe esa versión.');
       const fila = JSON.parse(v.fila);
       sets.push(['estado', fila.estado], ['publicar_en', fila.publicar_en], ['retirar_en', fila.retirar_en],
-        ['fijada', fila.fijada], ['categoria', fila.categoria], ['titular', fila.titular],
+        ['fijada', fila.fijada], ['importancia', fila.importancia ?? f.importancia], ['categoria', fila.categoria], ['titular', fila.titular],
         ['datos', JSON.stringify(fila.datos)], ['revisada', 1]);
       nombre = `vuelta a la versión del ${isoMadrid(v.fecha).slice(0, 16).replace('T', ' ')}`;
       break;

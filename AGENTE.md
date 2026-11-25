@@ -2,13 +2,21 @@
 
 Instrucciones para el agente que prepara la edición diaria de **pulso** (pulsomedio.es).
 
-El agente **ya no publica**: prepara **borradores** y los entrega al panel de redacción (`pulsomedio.es/admin`). Allí el equipo los revisa, corrige y decide cuáles salen. Si nadie los revisa, **a las 7:00 (hora de Madrid) se publican solos** los que el agente haya marcado como propuesta.
+El agente **ya no publica**: prepara **borradores** y los entrega al panel de redacción (`pulsomedio.es/admin`). Allí el equipo los revisa, corrige y decide cuáles salen. Si nadie los revisa, **a la hora de la edición se publican solos** los que el agente haya marcado como propuesta.
 
 El agente **no toca el repositorio**: ni código, ni `data/noticias.json`, ni commits. Solo escribe un archivo `edicion.json` en su carpeta de trabajo y lo envía con `scripts/enviar.py`.
 
-## Cuándo
+## Cuándo: tres ediciones al día
 
-Cada día sobre las 6:30 (hora de Madrid), para que el equipo tenga media hora para revisar. Si se lanza más tarde, la edición sale sola 30 minutos después de entregarla.
+| Se lanza (Madrid) | `tipo` | Sale sola a las | Qué es |
+| --- | --- | --- | --- |
+| 6:30 | `manana` | 7:00 | La edición completa: 12 noticias, 8 propuestas. |
+| 13:30 | `tarde` | 14:00 | Actualización: 2 a 4 noticias nuevas o actualizadas y los momentos de la tarde. |
+| 20:30 | `noche` | 21:00 | Actualización: lo mismo para la noche. |
+
+Mira la hora con `TZ=Europe/Madrid date` y elige el `tipo`: antes de las 11:00 es `manana`, entre las 11:00 y las 18:00 es `tarde`, y a partir de las 18:00 es `noche`. Si se lanza tarde, la edición sale sola 30 minutos después de entregarla.
+
+Así la portada nunca se queda con todo «de esta mañana»: lo que pasa a lo largo del día entra en la siguiente edición.
 
 ## Paso a paso
 
@@ -17,19 +25,22 @@ Cada día sobre las 6:30 (hora de Madrid), para que el equipo tenga media hora p
    - Agendas de EFE en Infobae: «Temas del día de EFE España» y «Hoy será noticia» (busca la del día).
    - Medios de distinta línea editorial (por ejemplo: El País, El Mundo, elDiario.es, El Español, ABC, La Vanguardia, Público, 20minutos, RTVE).
    - Fuentes oficiales: BOE, ministerios, AEMET, INE, UEFA, organismos europeos.
-3. **Prepara 12 noticias** repartidas por secciones:
-   - Marca con `"propuesta": true` las **8** que recomiendas publicar. Las otras 4 llevan `"propuesta": false` y son alternativas para que el equipo elija.
+3. **Prepara las noticias**:
+   - **Mañana:** 12 repartidas por secciones. Marca con `"propuesta": true` las **8** que recomiendas publicar. Las otras 4 llevan `"propuesta": false` y son alternativas para que el equipo elija.
+   - **Tarde y noche:** solo lo que haya **cambiado o sido noticia desde la última edición**, de 2 a 4 noticias, todas propuestas. Si no ha pasado nada relevante, manda 1 noticia útil y no rellenes.
+   - A cada una ponle una **importancia** del 1 al 5 (ver abajo): decide el orden de la portada.
    - Comprueba cada dato en al menos una fuente fiable. Si dos fuentes no coinciden, cuenta solo lo que coincide o dilo.
 4. **Escribe cada noticia** con las reglas de abajo.
-5. **Si algo publicado ha cambiado**, por ejemplo un partido que ayer era previa y hoy tiene resultado, escribe una noticia **nueva con otro `id`** (por ejemplo `real-madrid-psv-resultado`) y pon el `id` antiguo en `retirar`. Pon también en `retirar` las noticias que ya no tengan sentido en portada. Las de más de 48 horas salen solas, salvo las guías fijadas.
-6. **Marca una sola noticia con `"destacado": true`**: la más importante del día, y tiene que ser una de las propuestas.
-7. **Escribe `momentos`** (mañana, tarde y noche) con 3 puntos cada uno. Cada punto apunta a un `id` de esta edición o de las que ya están publicadas.
+5. **Si algo publicado ha cambiado**, por ejemplo un partido que era previa y ya tiene resultado, escribe una noticia **nueva con otro `id`** (por ejemplo `real-madrid-psv-resultado`) y pon el `id` antiguo en `"sustituye"`. La nueva sale con la etiqueta «actualizada», sube en portada y la vieja se retira a la vez. Pon en `retirar` las noticias que ya no tengan sentido en portada. Las de más de 48 horas salen solas, salvo las guías fijadas.
+6. **Marca una sola noticia con `"destacado": true`**: la más importante del día, y tiene que ser una de las propuestas. En tarde y noche, solo si hay algo más importante que la destacada de la mañana.
+7. **Escribe `momentos`** con 3 puntos cada uno. Cada punto apunta a un `id` de esta edición o de las que ya están publicadas. Por la mañana, los tres (mañana, tarde y noche); en la edición de la tarde, solo `tarde` (y `noche` si quieres); en la de la noche, solo `noche`. Los que no mandes se quedan como estaban.
 8. **Guarda todo en `edicion.json`** con este formato:
 
    ```json
    {
+     "tipo": "manana",
      "noticias": [
-       { "id": "…", "propuesta": true, "destacado": true, "categoria": "…", "momento": "manana",
+       { "id": "…", "propuesta": true, "importancia": 5, "destacado": true, "categoria": "…", "momento": "manana",
          "titular": "…", "entradilla": "…", "puntos": ["…", "…"], "porque": "…",
          "fuentes": [{ "medio": "…", "url": "https://…" }],
          "titulares": [{ "medio": "…", "titular": "…", "url": "https://…" }],
@@ -44,7 +55,7 @@ Cada día sobre las 6:30 (hora de Madrid), para que el equipo tenga media hora p
    }
    ```
 
-9. **Entrega**: `python3 scripts/enviar.py edicion.json`. Necesita la variable de entorno `PULSO_AGENTE_KEY`.
+9. **Entrega**: `python3 scripts/enviar.py edicion.json`. Necesita la variable de entorno `PULSO_AGENTE_KEY`. Si no tienes el repositorio, vale con `curl -s -X POST https://pulsomedio.es/api/agente/edicion -H "Authorization: Bearer $PULSO_AGENTE_KEY" -H "Content-Type: application/json" --data-binary @edicion.json`.
    - Si responde con errores, corrígelos uno por uno y vuelve a enviar. Mientras nadie la haya tocado, la misma edición se puede reenviar.
    - Al aceptarla, el panel manda un email al equipo avisando de que la edición está lista.
 10. **Termina** con un resumen: cuántas noticias, cuáles propones y cualquier duda que el equipo deba revisar, por ejemplo un dato que no has podido confirmar.
@@ -55,6 +66,8 @@ Cada día sobre las 6:30 (hora de Madrid), para que el equipo tenga media hora p
 | --- | --- |
 | `id` | Minúsculas y guiones, único: `champions-miercoles-25`. Nunca reutilices el de una noticia ya publicada. |
 | `propuesta` | `true` si recomiendas publicarla, `false` si es alternativa. |
+| `importancia` | Del 1 al 5. **5:** lo más importante del día (1 o 2 como mucho). **4:** muy relevante. **3:** normal, la mayoría. **2:** menor. **1:** relleno. La portada se ordena con este número y la edad: cada 8 horas una noticia «pesa» la mitad. |
+| `sustituye` | Opcional. `id` de una noticia publicada que esta actualiza. La vieja se retira cuando sale la nueva. |
 | `categoria` | `elecciones`, `espana`, `mundo`, `economia`, `tecnologia`, `clima`, `cultura` o `deportes`. |
 | `momento` | `manana`, `tarde` o `noche`: cuándo le interesa más al lector. |
 | `titular` | Propio, claro, máximo unos 90 caracteres (el panel no acepta más de 110). Nunca copiado de otro medio. |

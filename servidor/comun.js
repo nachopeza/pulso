@@ -7,6 +7,37 @@ export const ROLES = ['admin', 'editor', 'redactor'];
 const HORA = 60 * 60 * 1000;
 export const PORTADA_HORAS = 48;
 
+// Tres ediciones al día. La de la mañana es la completa; las otras actualizan.
+// La clave de la edición ("2026-11-26 2-tarde") se ordena bien como texto.
+export const EDICIONES = {
+  manana: { n: 1, hora: '07:00', nombre: 'de la mañana' },
+  tarde: { n: 2, hora: '14:00', nombre: 'de la tarde' },
+  noche: { n: 3, hora: '21:00', nombre: 'de la noche' }
+};
+export const claveEdicion = (dia, tipo) => `${dia} ${EDICIONES[tipo].n}-${tipo}`;
+export function leerEdicion(clave) {
+  const [dia, resto = '1-manana'] = String(clave || '').split(' ');
+  const tipo = resto.split('-')[1] || 'manana';
+  return { dia, tipo, ...EDICIONES[tipo] };
+}
+
+// ---------- Orden de la portada ----------
+
+// Cada noticia vale su importancia (1 a 5) y pierde la mitad cada 8 horas.
+// Si se actualiza, cuenta desde la actualización: vuelve a subir.
+// Las que se han ordenado a mano en el panel van primero, en ese orden.
+const MEDIA_VIDA_H = 8;
+export function puntuacion(f, ahora = Date.now()) {
+  const d = typeof f.datos === 'string' ? JSON.parse(f.datos) : f.datos || {};
+  const desde = Math.max(f.publicar_en || 0, Date.parse(d.actualizada || '') || 0);
+  const horas = Math.max(0, (ahora - desde) / HORA);
+  return (f.importancia || 3) * 0.5 ** (horas / MEDIA_VIDA_H);
+}
+export function ordenarPortada(filas, ahora = Date.now()) {
+  return [...filas].sort((a, b) =>
+    (a.orden ?? Infinity) - (b.orden ?? Infinity) || puntuacion(b, ahora) - puntuacion(a, ahora));
+}
+
 // ---------- Respuestas ----------
 
 export function json(datos, estado = 200, cabeceras = {}) {
@@ -106,6 +137,9 @@ export function limpiarNoticia(entrada, { borrador = false } = {}) {
   };
   const corr = texto(e.correccion, 600);
   if (corr) d.correccion = corr;
+  // "Actualizada a las…": la pone el servidor, aquí solo se conserva
+  const act = texto(e.actualizada, 40);
+  if (act && !Number.isNaN(Date.parse(act))) d.actualizada = act;
   if (e.imagen && typeof e.imagen === 'object' && e.imagen.src) {
     d.imagen = {
       src: texto(e.imagen.src, 2000),
@@ -160,7 +194,7 @@ export function filaPanel(f, ahora = Date.now()) {
     id: f.id, estado: f.estado, situacion, visible,
     publicar_en: f.publicar_en, retirar_en: f.retirar_en,
     revisada: !!f.revisada, propuesta: !!f.propuesta, destacado: !!f.destacado, fijada: !!f.fijada,
-    orden: f.orden, categoria: f.categoria, titular: f.titular, edicion: f.edicion,
+    orden: f.orden, importancia: f.importancia ?? 3, categoria: f.categoria, titular: f.titular, edicion: f.edicion,
     autor: f.autor, creada: f.creada, actualizada: f.actualizada,
     datos: JSON.parse(f.datos)
   };
@@ -175,9 +209,40 @@ export function versionStmt(env, id, autor, accion) {
   return env.DB.prepare(
     `INSERT INTO versiones (noticia, fecha, autor, accion, fila)
      SELECT id, ?2, ?3, ?4, json_object('estado', estado, 'publicar_en', publicar_en, 'retirar_en', retirar_en,
-       'destacado', destacado, 'fijada', fijada, 'categoria', categoria, 'titular', titular, 'datos', json(datos))
+       'destacado', destacado, 'fijada', fijada, 'importancia', importancia, 'categoria', categoria, 'titular', titular, 'datos', json(datos))
      FROM noticias WHERE id = ?1`
   ).bind(id, Date.now(), autor, accion);
+}
+
+// ---------- Redes sociales ----------
+
+export const REDES = { bluesky: 'Bluesky', x: 'X', tiktok: 'TikTok', instagram: 'Instagram' };
+export const LIMITE_RED = { bluesky: 300, x: 280, tiktok: 2200, instagram: 2200 };
+export const ESTADOS_PIEZA = ['revisar', 'aprobada', 'cambiar', 'descartada', 'publicada'];
+// Caracteres como los cuenta cada red: emojis y letras con tilde cuentan uno;
+// en X cada enlace cuenta 23, lo largo que sea.
+export function largoRed(t, red) {
+  let s = String(t || '');
+  if (red === 'x') s = s.replace(/https?:\/\/\S+/g, 'x'.repeat(23));
+  try { return [...new Intl.Segmenter('es', { granularity: 'grapheme' }).segment(s)].length; }
+  catch (e) { return [...s].length; }
+}
+// Limpia una pieza de la escaleta y dice qué falla
+export function limpiarPieza(e) {
+  const p = {
+    hora: texto(e?.hora, 5), red: texto(e?.red, 12).toLowerCase(), serie: texto(e?.serie, 60),
+    noticia: texto(e?.noticia, 70) || null, texto: texto(e?.texto, 3000),
+    visual: texto(e?.visual, 600), alt: texto(e?.alt, 1000)
+  };
+  const errores = [];
+  if (!REDES[p.red]) errores.push(`la red tiene que ser ${Object.keys(REDES).join(', ')}`);
+  if (p.hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(p.hora)) errores.push('la hora va como "07:45"');
+  if (!p.texto) errores.push('falta el texto');
+  else if (REDES[p.red] && largoRed(p.texto, p.red) > LIMITE_RED[p.red]) {
+    errores.push(`el texto tiene ${largoRed(p.texto, p.red)} caracteres y en ${REDES[p.red]} caben ${LIMITE_RED[p.red]}`);
+  }
+  if (p.noticia && !/^[a-z0-9-]{3,70}$/.test(p.noticia)) errores.push('el id de la noticia no es válido');
+  return { pieza: p, errores };
 }
 
 // ---------- Fotos ----------

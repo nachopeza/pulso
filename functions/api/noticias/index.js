@@ -1,6 +1,6 @@
 // GET /api/noticias → lo que ve el lector, con el mismo formato que tenía data/noticias.json.
 // Las programadas aparecen solas al llegar su hora: no hace falta que nada "las publique".
-import { json, VISIBLE, PORTADA_HORAS, isoMadrid } from '../../../servidor/comun.js';
+import { json, VISIBLE, PORTADA_HORAS, isoMadrid, ordenarPortada } from '../../../servidor/comun.js';
 
 export async function onRequestGet({ env }) {
   const ahora = Date.now();
@@ -18,9 +18,10 @@ export async function onRequestGet({ env }) {
 
   // Solo una destacada: la más reciente de las marcadas
   const destacada = filas.find((f) => f.destacado)?.id;
-  const noticias = filas.map((f) => {
+  // El orden lo decide la importancia y la edad (ver ordenarPortada): cambia a lo largo del día
+  const noticias = ordenarPortada(filas, ahora).map((f, i) => {
     const d = JSON.parse(f.datos);
-    return { ...d, id: f.id, categoria: f.categoria, destacado: f.id === destacada, orden: f.orden ?? undefined,
+    return { ...d, id: f.id, categoria: f.categoria, destacado: f.id === destacada, orden: i + 1,
       fecha: d.fecha || isoMadrid(f.publicar_en) };
   });
   const ids = new Set(noticias.map((n) => n.id));

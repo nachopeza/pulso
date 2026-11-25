@@ -3,6 +3,8 @@
 Manual del agente que lleva las redes sociales de **pulso** (pulsomedio.es).
 El agente redactor hace las noticias (ver `AGENTE.md`). Este agente **no escribe noticias**: lee lo que pulso ya ha publicado y lo convierte en publicaciones para cada red, con un plan diario (la **escaleta**) que Nacho revisa antes de que salga nada.
 
+La escaleta se entrega **al panel de redacción** (`pulsomedio.es/admin`, pestaña **Redes**), no a Notion. Allí Nacho aprueba, corrige, copia y marca como publicada cada pieza, y le llega un email con cada entrega.
+
 ---
 
 ## 1. Para qué existe
@@ -77,13 +79,15 @@ Enlaces: siempre a la noticia concreta, `https://pulsomedio.es/#<id>`. A la port
 
 La gente vuelve a lo que es **previsible y suyo**. Por eso pulso tiene citas a la misma hora y series que se reconocen al instante.
 
-### Citas del día (siguen los `momentos` de la web)
+### Citas del día (siguen las tres ediciones de la web)
+
+La web publica **tres ediciones al día**: la completa a las **7:00** y dos actualizaciones a las **14:00** y a las **21:00**. Cada cita de redes sale después de su edición, con media hora para que Nacho revise.
 
 | Hora (Madrid) | Cita | Qué es |
 | --- | --- | --- |
 | **7:45** | **Buenos días, esto es lo que importa** | Las 3 claves del `momento` «Para empezar el día», en hilo (Bluesky) o tarjeta (X). |
-| **14:15** | **A media tarde** | 1 o 2 piezas de los puntos de la tarde. |
-| **21:00** | **Para cerrar el día** | Lo de la noche más el vídeo del día (TikTok). |
+| **14:45** | **A media tarde** | 1 o 2 piezas con lo nuevo de la edición de las 14:00. |
+| **21:30** | **Para cerrar el día** | Lo nuevo de la edición de las 21:00 más el vídeo del día (TikTok). |
 
 ### Series (cada una con su nombre, su color y siempre la misma forma)
 
@@ -113,34 +117,68 @@ La sobriedad no funciona en TikTok. Los vídeos de pulso tienen que entrar por l
 - **Duración:** de 15 a 30 segundos, y todo lo importante fuera del 25 % inferior de la pantalla, donde TikTok pone el texto del vídeo y los botones.
 - **Neutralidad incluso en el humor:** se ríe de situaciones, nunca de partidos, candidatos ni votantes.
 
-## 7. La rutina diaria
+## 7. La rutina diaria: tres tandas
 
-1. **7:15. Leer pulso.** La edición del día sale a las 7:00. Se lee entera en `https://pulsomedio.es/api/noticias`: noticias, destacada y momentos.
-2. **Preparar la escaleta** (sección 8) y dejarla en Notion, en **Escaletas de redes**, con el estado «Por revisar».
-3. **Nacho revisa** cada pieza: Aprobada, Cambiar (con una nota) o Descartar.
-4. **Publicar** las aprobadas a su hora, red por red. Bluesky y X, desde el navegador; TikTok lo sube Nacho con el vídeo que deja preparado el agente. Cada pieza publicada se marca con su enlace.
+| Se lanza (Madrid) | `tanda` | Qué hace |
+| --- | --- | --- |
+| **7:15** | `manana` | La escaleta completa del día (8 a 12 piezas): citas, series, especial 29N, vídeo, comunidad e ideas. |
+| **14:15** | `tarde` | 1 a 3 piezas sobre lo nuevo de la edición de las 14:00. |
+| **21:05** | `noche` | 1 a 3 piezas sobre lo nuevo de la edición de las 21:00. |
+
+Mira la hora con `TZ=Europe/Madrid date` para saber qué tanda toca: antes de las 11:00 es `manana`, entre las 11:00 y las 18:00 es `tarde`, y a partir de las 18:00 es `noche`.
+
+1. **Leer pulso.** Se lee entero en `https://pulsomedio.es/api/noticias`: noticias (ya en el orden de la portada), destacada y momentos. Las noticias con el campo `actualizada` son actualizaciones: en tarde y noche son las primeras candidatas.
+2. **Preparar la escaleta** (sección 8) y **entregarla al panel** (sección 8, «Entrega»). Si se reenvía la misma tanda, se sustituyen las piezas que Nacho aún no ha tocado.
+3. **Nacho revisa** cada pieza en el panel: Aprobar, Pedir cambio (con una nota) o Descartar.
+4. **Publicar** las aprobadas a su hora, red por red. Desde el panel, el botón «Abrir en X» o «Abrir en Bluesky» abre la red con el texto ya escrito; TikTok lo sube Nacho con el vídeo que deja preparado el agente. Cada pieza publicada se marca como «Publicada» con su enlace.
 5. **Comunidad, dos veces al día:** responder preguntas con datos y enlace; dar las gracias a quien comparte; ocultar insultos y spam; no entrar en discusiones políticas.
-6. **Cierre:** apuntar qué funcionó y qué no, para afinar el día siguiente.
+6. **Cierre:** apuntar qué funcionó y qué no, para afinar el día siguiente (en «Ideas para mañana»).
 
-Si la edición del día no ha salido o tiene menos de 6 noticias, la escaleta lo avisa arriba del todo y tira de guías fijadas y de piezas de marca.
+Si la edición del día no ha salido o tiene menos de 6 noticias, la escaleta lo avisa en las alertas y tira de guías fijadas y de piezas de marca.
+
+### Cómo se ordena la web (para elegir qué contar)
+
+- Cada noticia lleva una **importancia** del 1 al 5 y pierde la mitad de peso cada 8 horas. Por eso `api/noticias` ya viene ordenada: lo de arriba es lo que más importa **ahora**.
+- Una noticia **actualizada** (campo `actualizada`) vuelve a subir: es material para la cita siguiente («Actualizamos: …»).
+- La **destacada** (`destacado: true`) es la pieza estrella del día.
 
 ## 8. Cómo es una escaleta
 
-Una página por día, con este orden:
+Cada entrega es un archivo `escaleta.json` con esto:
 
-1. **Resumen en 3 líneas:** el tema del día, la pieza estrella y cualquier alerta.
-2. **Alertas legales del día:** por ejemplo, «veda de encuestas activa» o «jornada de reflexión: solo información práctica».
-3. **Tabla de piezas**, una fila por publicación:
+```json
+{
+  "tanda": "manana",
+  "resumen": "Tres líneas: el tema del día, la pieza estrella y cualquier alerta.",
+  "alertas": ["Veda de encuestas activa hasta el cierre de urnas del domingo 29"],
+  "piezas": [
+    { "hora": "07:45", "red": "bluesky", "serie": "Buenos días", "noticia": "id-de-la-noticia",
+      "texto": "El post completo tal cual se publica, con el enlace https://pulsomedio.es/#id-de-la-noticia",
+      "visual": "Tarjeta La cifra, color 29N: 176 / escaños para gobernar sin apoyos",
+      "alt": "Texto alternativo de la imagen" }
+  ],
+  "video": "Guion cronometrado escena a escena, con el texto en pantalla, gancho, pie del vídeo y hashtags (3 como máximo).",
+  "comunidad": "A qué contestar y qué conversación abrir.",
+  "ideas": "Ideas para mañana."
+}
+```
 
-| Hora | Red | Serie / formato | Noticia (`id`) | Texto listo para publicar | Visual | Texto alternativo | Enlace | Estado |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+- **`red`:** `bluesky`, `x`, `tiktok` o `instagram`.
+- **`texto`:** completo, **con el enlace dentro**, tal y como se publicaría. El panel cuenta los caracteres igual que cada red y rechaza los que se pasan: **300 en Bluesky** y **280 en X**, donde cada enlace cuenta 23 sea como sea de largo.
+- **`noticia`:** el `id` de una noticia que exista en pulso. El panel lo comprueba.
+- **`hora`:** como `"07:45"`.
+- En las tandas `tarde` y `noche`, `video`, `comunidad` e `ideas` son opcionales.
+- **Estado** de cada pieza (lo cambia Nacho en el panel): Por revisar → Aprobada / Cambiar / Descartada → Publicada.
 
-   - El **texto** va completo, tal y como se publicaría, contando caracteres (300 en Bluesky, 280 en X).
-   - El **visual** dice qué plantilla usar y qué lleva («Tarjeta La cifra, color 29N: 176 / escaños para gobernar sin apoyos»).
-   - **Estado:** Por revisar → Aprobada / Cambiar / Descartada → Publicada.
-4. **Vídeo del día:** guion cronometrado (escena a escena, con el texto en pantalla), gancho, pie del vídeo y hashtags (3 como máximo).
-5. **Comunidad:** a qué contestar y qué conversación abrir.
-6. **Ideas para mañana.**
+### Entrega
+
+```
+curl -s -X POST https://pulsomedio.es/api/agente/escaleta \
+  -H "Authorization: Bearer $PULSO_AGENTE_KEY" -H "Content-Type: application/json" \
+  --data-binary @escaleta.json
+```
+
+(o `python3 scripts/enviar.py escaleta.json` si tienes el repositorio). Necesita la variable de entorno `PULSO_AGENTE_KEY`, la misma que usa el redactor. Si responde con errores, corrígelos uno por uno y vuelve a enviar: no se guarda nada hasta que todo está bien. Si la red no deja llegar a pulsomedio.es, deja la escaleta completa en tu respuesta final y dilo arriba del todo.
 
 ## 9. Cómo medimos
 
@@ -149,6 +187,6 @@ Cada lunes, una nota corta con:
 - Seguidores nuevos por red.
 - Las 3 piezas con más interacción y las 3 con menos, y por qué creemos que pasó.
 - En TikTok: retención a los 3 segundos y porcentaje de vídeo visto.
-- Visitas a la web llegadas desde redes. Ahora mismo la web no mide visitas; se puede activar Cloudflare Web Analytics, que no usa cookies.
+- Visitas a la web llegadas desde redes, en Cloudflare Web Analytics (ya activo, sin cookies). Nacho lo ve desde el panel, en «Hoy → Abrir estadísticas».
 
 Lo que funciona se repite. Lo que no, se cambia o se quita.

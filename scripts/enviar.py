@@ -1,6 +1,7 @@
-"""Entrega la edición del día al panel de pulso.
+"""Entrega al panel de pulso una edición (agente redactor) o una escaleta de redes (community manager).
 
 Uso:  python3 scripts/enviar.py edicion.json
+      python3 scripts/enviar.py escaleta.json     (si el archivo trae "piezas", es una escaleta)
 
 Necesita la variable de entorno PULSO_AGENTE_KEY (la clave del agente).
 PULSO_URL cambia la web de destino (por defecto https://pulsomedio.es; en local http://localhost:8788).
@@ -27,7 +28,8 @@ except Exception as e:  # JSON roto: mejor saberlo antes de enviar
     print(f"El archivo no es un JSON válido: {e}")
     sys.exit(1)
 
-url = os.environ.get("PULSO_URL", "https://pulsomedio.es").rstrip("/") + "/api/agente/edicion"
+es_escaleta = isinstance(edicion, dict) and "piezas" in edicion
+url = os.environ.get("PULSO_URL", "https://pulsomedio.es").rstrip("/") + ("/api/agente/escaleta" if es_escaleta else "/api/agente/edicion")
 peticion = urllib.request.Request(
     url,
     data=json.dumps(edicion, ensure_ascii=False).encode("utf-8"),
@@ -38,15 +40,18 @@ peticion = urllib.request.Request(
 try:
     with urllib.request.urlopen(peticion, timeout=120) as r:
         d = json.load(r)
-    print(f"Edición entregada: {d['noticias']} noticias, {d['propuestas']} propuestas para publicar.")
-    print(f"Se publica sola a las {d['publicaA'][11:16]} si nadie la revisa antes.")
+    if es_escaleta:
+        print(f"Escaleta entregada: {d['piezas']} piezas ({d['tanda']}, {d['dia']}). Nacho las revisa en el panel.")
+    else:
+        print(f"Edición {d['tipo']} entregada: {d['noticias']} noticias, {d['propuestas']} propuestas para publicar.")
+        print(f"Se publica sola a las {d['publicaA'][11:16]} si nadie la revisa antes.")
     print("Email de aviso enviado." if d.get("email") else "OJO: no se ha podido enviar el email de aviso.")
 except urllib.error.HTTPError as e:
     try:
         d = json.load(e)
     except Exception:
         d = {"error": e.reason}
-    print(f"El panel ha rechazado la edición ({e.code}): {d.get('error')}")
+    print(f"El panel lo ha rechazado ({e.code}): {d.get('error')}")
     for x in d.get("errores", []):
         print(" -", x)
     sys.exit(1)

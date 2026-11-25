@@ -6,6 +6,7 @@
 //    #/editar/<id>   editar una noticia     #/nueva  escribir una desde cero
 //    #/portada       orden de la portada y anuncio
 //    #/momentos      "mañana, tarde y noche"
+//    #/redes         escaleta de redes sociales del community manager
 //    #/usuarios      quién entra al panel (solo administración)
 //  Todo se guarda a través de /api/… (carpeta functions/ del proyecto).
 // =====================================================================
@@ -21,6 +22,7 @@
     editor: 'Escribe, edita y publica',
     redactor: 'Escribe borradores; otra persona los publica'
   };
+  const IMPORTANCIA = { 5: '5 · Lo más importante del día', 4: '4 · Muy importante', 3: '3 · Normal', 2: '2 · Menor', 1: '1 · Relleno' };
   const SITUACION = {
     visible: 'En la web', programada: 'Programada', borrador: 'Borrador',
     retirada: 'Retirada', descartada: 'Descartada', nueva: 'Nueva'
@@ -153,7 +155,7 @@
     $$('#nav a').forEach((a) => a.toggleAttribute('aria-current', a.dataset.ruta === nombre || (nombre === 'editar' || nombre === 'nueva') && a.dataset.ruta === 'noticias'));
     $$('#nav a[aria-current]').forEach((a) => a.setAttribute('aria-current', 'page'));
     const vistas = { hoy: vistaHoy, noticias: vistaNoticias, editar: () => vistaEditor(decodeURIComponent(arg || '')),
-      nueva: () => vistaEditor(null), portada: vistaPortada, momentos: vistaMomentos, usuarios: vistaUsuarios };
+      nueva: () => vistaEditor(null), portada: vistaPortada, momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios };
     const f = vistas[nombre] || vistaHoy;
     try {
       await f();
@@ -182,12 +184,13 @@
         <div><h1>Hoy</h1><p>${esc(diaLargo(hoy))}</p></div>
         <div class="acciones"><a class="btn" href="#/nueva">Escribir una noticia</a></div>
       </div>
-      ${!e.dia ? `<div class="vacio"><b>Todavía no ha llegado ninguna edición del agente.</b>Cada mañana sobre las 6:30 aparecerá aquí y te llegará un email.</div>` : `
+      ${!e.dia ? `<div class="vacio"><b>Todavía no ha llegado ninguna edición del agente.</b>Llegan tres al día (sobre las 6:30, 13:30 y 20:30) y con cada una te llega un email.</div>` : `
       <section class="bloque">
         <div class="cabeza" style="margin-bottom:8px">
           <div>
-            <h2>Edición del ${esc(diaLargo(e.dia))}</h2>
+            <h2>Edición ${esc(e.nombre || '')} del ${esc(diaLargo(e.dia))}</h2>
             ${e.dia !== hoy ? '<p class="nota">Es la última que ha llegado. La de hoy suele llegar sobre las 6:30.</p>' : ''}
+            ${e.tipo && e.tipo !== 'manana' ? '<p class="nota">Es una actualización: solo trae lo nuevo. Lo demás sigue en la web.</p>' : ''}
           </div>
           ${e.autoEn && puedePublicar() ? `<button class="btn btn-principal" id="publicar-ed" type="button">Publicar ahora (${marcadas.length})</button>` : ''}
         </div>
@@ -244,6 +247,7 @@
       <div class="fila-txt">
         <a href="#/editar/${encodeURIComponent(n.id)}">${esc(n.titular)}</a>
         <div class="meta">${seccion(n.categoria)}${n.destacado ? '<span class="estrella">★ Destacada</span>' : ''}
+          ${n.datos?.sustituye ? '<span>Actualización</span>' : ''}<span>Importancia ${n.importancia}</span>
           ${n.propuesta ? '<span>Propuesta del agente</span>' : '<span>Extra</span>'}${n.revisada ? '' : '<span>Sin revisar</span>'}</div>
       </div>
       ${chip(n)}
@@ -341,6 +345,10 @@
                 ${Object.entries(MOMENTOS).map(([k, t]) => `<option value="${k}" ${d.momento === k ? 'selected' : ''}>${t}</option>`).join('')}
               </select></div>
           </div>
+          <div class="campo"><label for="importancia">Importancia <span class="ayuda">decide el orden en portada: cuanto más alta, más arriba y más tiempo aguanta</span></label>
+            <select id="importancia" name="importancia">
+              ${[5, 4, 3, 2, 1].map((k) => `<option value="${k}" ${(n.importancia ?? 3) === k ? 'selected' : ''}>${IMPORTANCIA[k]}</option>`).join('')}
+            </select></div>
           <div class="campo"><label for="titular">Titular <span class="contador" id="cont-titular"></span></label>
             <textarea id="titular" name="titular" class="titular-input" rows="2" maxlength="160" required>${esc(d.titular)}</textarea>
             <p class="ayuda">Propio, claro, unos 90 caracteres como mucho. Nunca copiado de otro medio.</p></div>
@@ -361,6 +369,8 @@
             <div id="foto"></div></div>
           <div class="campo"><label for="correccion">Corrección <span class="ayuda">solo si se corrige un error; se ve en la noticia</span></label>
             <textarea id="correccion" name="correccion" rows="2">${esc(d.correccion || '')}</textarea></div>
+          ${n.situacion === 'visible' ? `<label class="casilla"><input type="checkbox" id="actualizacion">
+            <span><b>Es una actualización</b> <span class="ayuda">al guardar, la web pone «actualizada» con la hora y la noticia vuelve a subir en portada${d.actualizada ? `. Última: ${esc(fecha(Date.parse(d.actualizada)))}` : ''}</span></span></label>` : ''}
           </fieldset>
         </form>
         <aside class="lateral" id="lateral"></aside>
@@ -535,7 +545,7 @@
       mostrarErrores(null);
       try {
         if (!n.id) {
-          const r = await api('admin/noticias', { metodo: 'POST', cuerpo: { datos: leerFormulario() } });
+          const r = await api('admin/noticias', { metodo: 'POST', cuerpo: { datos: leerFormulario(), importancia: Number(form.elements.importancia.value) } });
           sucio = false;
           n.id = r.id;
           hashAnterior = `#/editar/${encodeURIComponent(r.id)}`;
@@ -544,9 +554,11 @@
           return true;
         }
         if (!sucio) return true;
-        await api(`admin/noticias/${encodeURIComponent(n.id)}`, { metodo: 'PUT', cuerpo: { datos: leerFormulario() } });
+        const actualizacion = !!$('#actualizacion')?.checked;
+        await api(`admin/noticias/${encodeURIComponent(n.id)}`, { metodo: 'PUT', cuerpo: { datos: leerFormulario(), importancia: Number(form.elements.importancia.value), actualizacion } });
         sucio = false;
-        if (!silencioso) avisar('Cambios guardados');
+        if (actualizacion) { $('#actualizacion').checked = false; avisar('Guardada como actualización: ya sube en portada'); }
+        else if (!silencioso) avisar('Cambios guardados');
         return true;
       } catch (e) {
         mostrarErrores(e);
@@ -677,6 +689,10 @@
         <div><h1>Portada</h1><p>Lo que ven ahora los lectores, en este orden. La destacada va siempre primero.</p></div>
         ${pub ? '<button class="btn btn-principal" type="button" id="guardar-orden" disabled>Guardar orden</button>' : ''}
       </div>
+      <p class="nota" style="margin-bottom:14px">${d.aMano
+        ? 'Ahora manda el <b>orden que fijaste a mano</b>, hasta la próxima edición del agente.'
+        : 'Orden <b>automático</b>: cada noticia pesa según su importancia y va bajando con las horas; si se actualiza, vuelve a subir. Si lo cambias a mano, manda tu orden hasta la próxima edición.'}
+        ${d.aMano && pub ? ' <button class="btn btn-fino" type="button" id="orden-auto">Volver al orden automático</button>' : ''}</p>
       <ul class="lista" id="orden"></ul>
       <section class="bloque" style="margin-top:28px">
         <h2>Anuncio</h2>
@@ -699,7 +715,7 @@
             <button class="btn btn-icono btn-fino" type="button" data-mover="${i}" data-dir="1" aria-label="Bajar" ${i === ids.length - 1 ? 'disabled' : ''}>↓</button>` : `${i + 1}`}</span>
           ${mini(n)}
           <div class="fila-txt"><a href="#/editar/${encodeURIComponent(id)}">${esc(n.titular)}</a>
-            <div class="meta">${seccion(n.categoria)}${n.destacado ? '<span class="estrella">★ Destacada</span>' : ''}${n.fijada ? '<span>Fijada</span>' : ''}<span>${fecha(n.publicar_en)}</span></div></div>
+            <div class="meta">${seccion(n.categoria)}${n.destacado ? '<span class="estrella">★ Destacada</span>' : ''}${n.fijada ? '<span>Fijada</span>' : ''}<span>Importancia ${n.importancia}</span><span>${fecha(n.publicar_en)}</span>${n.datos?.actualizada ? '<span>Actualizada</span>' : ''}</div></div>
           <span></span>
         </li>`;
       }).join('') || '<li class="vacio"><b>No hay noticias en la web.</b></li>';
@@ -719,6 +735,10 @@
       e.target.disabled = true;
       try { await api('admin/portada', { metodo: 'PUT', cuerpo: { orden: ids } }); avisar('Orden guardado'); }
       catch (err) { avisar(err.message, true); e.target.disabled = false; }
+    });
+    $('#orden-auto')?.addEventListener('click', async () => {
+      try { await api('admin/portada', { metodo: 'PUT', cuerpo: { orden: 'automatico' } }); avisar('Vuelve el orden automático'); await vistaPortada(); }
+      catch (err) { avisar(err.message, true); }
     });
     $('#f-anuncio').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -781,7 +801,162 @@
     });
   }
 
-  // ---------- 9. Usuarios ----------
+  // ---------- 9. Redes: la escaleta del community manager ----------
+
+  const REDES = { bluesky: 'Bluesky', x: 'X', tiktok: 'TikTok', instagram: 'Instagram' };
+  const LIMITE = { bluesky: 300, x: 280, tiktok: 2200, instagram: 2200 };
+  const ESTADO_PIEZA = { revisar: 'Por revisar', aprobada: 'Aprobada', cambiar: 'Cambiar', descartada: 'Descartada', publicada: 'Publicada' };
+  const TANDAS = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche', manual: 'A mano' };
+  // Igual que cuenta cada red: en X los enlaces valen 23
+  function largo(t, red) {
+    let s = String(t || '');
+    if (red === 'x') s = s.replace(/https?:\/\/\S+/g, 'x'.repeat(23));
+    try { return [...new Intl.Segmenter('es', { granularity: 'grapheme' }).segment(s)].length; } catch (e) { return [...s].length; }
+  }
+  const sumarDias = (ymd, n) => new Date(Date.parse(`${ymd}T12:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
+  // Enlace para abrir la red con el texto ya escrito (TikTok e Instagram no lo permiten: se copia)
+  const componer = (p) => ({
+    x: `https://x.com/intent/post?text=${encodeURIComponent(p.texto)}`,
+    bluesky: `https://bsky.app/intent/compose?text=${encodeURIComponent(p.texto)}`
+  }[p.red]);
+
+  async function vistaRedes(diaPedido) {
+    const d = await api(`admin/redes${/^\d{4}-\d{2}-\d{2}$/.test(diaPedido || '') ? `?dia=${diaPedido}` : ''}`);
+    const pub = puedePublicar();
+    const cuenta = (e) => d.piezas.filter((p) => p.estado === e).length;
+    const esc_ = d.escaleta || {};
+    const tandas = Object.keys(TANDAS).filter((t) => esc_[t] && (esc_[t].resumen || esc_[t].alertas?.length || esc_[t].video || esc_[t].comunidad || esc_[t].ideas));
+    vista.innerHTML = `
+      <div class="cabeza">
+        <div><h1>Redes</h1><p>La escaleta del community manager: nada sale sin tu aprobación.</p></div>
+        <div class="acciones">
+          <a class="btn btn-fino" href="#/redes/${sumarDias(d.dia, -1)}" aria-label="Día anterior">←</a>
+          <span class="dia-redes">${esc(diaLargo(d.dia))}</span>
+          <a class="btn btn-fino" href="#/redes/${sumarDias(d.dia, 1)}" aria-label="Día siguiente">→</a>
+          ${d.dia !== hoyMadrid() ? '<a class="btn btn-fino" href="#/redes">Hoy</a>' : ''}
+        </div>
+      </div>
+      ${!d.piezas.length && !tandas.length ? `<div class="vacio"><b>No hay escaleta para este día.</b>El community manager la prepara cada mañana sobre las 7:15 y añade piezas a las 14:15 y a las 21:15. Te llega un email con cada una.</div>` : `
+      <div class="resumen">
+        <div><b>${cuenta('revisar')}</b>por revisar</div>
+        <div><b>${cuenta('aprobada')}</b>aprobadas</div>
+        <div><b>${cuenta('publicada')}</b>publicadas</div>
+        <div><b>${cuenta('cambiar') + cuenta('descartada')}</b>con cambios o descartadas</div>
+      </div>
+      ${tandas.map((t) => {
+        const x = esc_[t];
+        return `<section class="bloque">
+          <h2>${TANDAS[t]}</h2>
+          ${x.resumen ? `<p class="texto-libre">${esc(x.resumen)}</p>` : ''}
+          ${x.alertas?.length ? `<ul class="alertas">${x.alertas.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
+          ${[['video', 'Vídeo del día'], ['comunidad', 'Comunidad'], ['ideas', 'Ideas para mañana']].filter(([k]) => x[k]).map(([k, tit]) =>
+            `<details class="desplegable"><summary>${tit}</summary><p class="texto-libre">${esc(x[k])}</p></details>`).join('')}
+        </section>`;
+      }).join('')}`}
+      <ul class="piezas" id="piezas">${d.piezas.map(pieza).join('')}</ul>
+      <details class="bloque desplegable" style="margin-top:20px">
+        <summary>Añadir una pieza a mano</summary>
+        <form id="f-pieza" style="margin-top:12px">
+          <div class="dos">
+            <div class="campo"><label for="p-red">Red</label><select id="p-red">${Object.entries(REDES).map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div>
+            <div class="campo"><label for="p-hora">Hora</label><input type="time" id="p-hora"></div>
+          </div>
+          <div class="campo"><label for="p-texto">Texto <span class="ayuda">el post completo, con el enlace</span></label><textarea id="p-texto" rows="4" required></textarea></div>
+          <button class="btn" type="submit">Añadir</button>
+        </form>
+      </details>`;
+
+    function pieza(p) {
+      const n = largo(p.texto, p.red);
+      return `<li class="pieza pieza-${esc(p.estado)}" data-id="${p.id}">
+        <div class="pieza-cab">
+          <b class="pieza-hora">${esc(p.hora || '--:--')}</b>
+          <span class="red red-${esc(p.red)}">${esc(REDES[p.red])}</span>
+          ${p.serie ? `<span class="nota">${esc(p.serie)}</span>` : ''}
+          <span class="situ situ-pieza-${esc(p.estado)}">${esc(ESTADO_PIEZA[p.estado])}</span>
+        </div>
+        ${p.noticia ? `<p class="nota">Noticia: <a href="#/editar/${encodeURIComponent(p.noticia)}">${esc(p.titular_noticia || p.noticia)}</a></p>` : ''}
+        <div class="campo" style="margin:8px 0">
+          <label class="oculto" for="t-${p.id}">Texto</label>
+          <textarea id="t-${p.id}" data-texto rows="${Math.min(10, Math.max(3, Math.ceil(p.texto.length / 70)))}">${esc(p.texto)}</textarea>
+          <span class="contador${n > LIMITE[p.red] ? ' pasado' : ''}" data-contador>${n}/${LIMITE[p.red]}</span>
+        </div>
+        ${p.visual || p.alt ? `<details class="desplegable"><summary>Imagen</summary>
+          ${p.visual ? `<p class="texto-libre"><b>Visual:</b> ${esc(p.visual)}</p>` : ''}
+          ${p.alt ? `<p class="texto-libre"><b>Texto alternativo:</b> ${esc(p.alt)} <button class="btn btn-fino" type="button" data-copiar-alt>Copiar</button></p>` : ''}
+        </details>` : ''}
+        ${p.nota ? `<p class="nota"><b>Nota:</b> ${esc(p.nota)}</p>` : ''}
+        ${p.enlace ? `<p class="nota"><a href="${esc(p.enlace)}" target="_blank" rel="noopener">Ver la publicación</a></p>` : ''}
+        <div class="acciones">
+          <button class="btn btn-fino" type="button" data-copiar>Copiar texto</button>
+          ${componer(p) ? `<a class="btn btn-fino" href="${esc(componer(p))}" target="_blank" rel="noopener">Abrir en ${esc(REDES[p.red])}</a>` : ''}
+          ${pub && p.estado !== 'aprobada' && p.estado !== 'publicada' ? '<button class="btn btn-fino" type="button" data-estado="aprobada">Aprobar</button>' : ''}
+          ${pub && p.estado !== 'publicada' ? '<button class="btn btn-fino btn-principal" type="button" data-estado="publicada">Marcar publicada</button>' : ''}
+          ${p.estado !== 'cambiar' && p.estado !== 'publicada' ? '<button class="btn btn-fino" type="button" data-estado="cambiar">Pedir cambio</button>' : ''}
+          ${pub && p.estado !== 'descartada' && p.estado !== 'publicada' ? '<button class="btn btn-fino btn-peligro" type="button" data-estado="descartada">Descartar</button>' : ''}
+          ${pub && (p.estado === 'descartada' || p.estado === 'publicada') ? '<button class="btn btn-fino" type="button" data-estado="revisar">Volver a revisar</button>' : ''}
+        </div>
+      </li>`;
+    }
+
+    const lista = $('#piezas');
+    const guardar = async (id, cuerpo, msg) => {
+      try { await api(`admin/redes/${id}`, { metodo: 'PUT', cuerpo }); if (msg) avisar(msg); return true; }
+      catch (e) { avisar(e.message, true); return false; }
+    };
+    lista.addEventListener('input', (e) => {
+      if (!e.target.matches('[data-texto]')) return;
+      const li = e.target.closest('.pieza');
+      const red = d.piezas.find((p) => p.id === Number(li.dataset.id)).red;
+      const n = largo(e.target.value, red);
+      const c = $('[data-contador]', li);
+      c.textContent = `${n}/${LIMITE[red]}`;
+      c.classList.toggle('pasado', n > LIMITE[red]);
+    });
+    lista.addEventListener('change', async (e) => {
+      if (!e.target.matches('[data-texto]')) return;
+      const id = Number(e.target.closest('.pieza').dataset.id);
+      if (await guardar(id, { texto: e.target.value }, 'Texto guardado')) d.piezas.find((p) => p.id === id).texto = e.target.value.trim();
+    });
+    lista.addEventListener('click', async (e) => {
+      const li = e.target.closest('.pieza');
+      if (!li) return;
+      const p = d.piezas.find((x) => x.id === Number(li.dataset.id));
+      const copiar = async (t, msg) => {
+        try { await navigator.clipboard.writeText(t); avisar(msg); } catch (err) { prompt('Copia el texto:', t); }
+      };
+      if (e.target.closest('[data-copiar]')) return copiar($('[data-texto]', li).value, 'Texto copiado');
+      if (e.target.closest('[data-copiar-alt]')) return copiar(p.alt, 'Texto alternativo copiado');
+      const b = e.target.closest('[data-estado]');
+      if (!b) return;
+      const estado = b.dataset.estado;
+      const cuerpo = { estado };
+      if (estado === 'cambiar') {
+        const nota = prompt('¿Qué hay que cambiar?', p.nota || '');
+        if (nota === null) return;
+        cuerpo.nota = nota;
+        if (!pub) delete cuerpo.estado;
+      }
+      if (estado === 'publicada') {
+        const enlace = prompt('Pega el enlace de la publicación (opcional):', p.enlace || '');
+        if (enlace === null) return;
+        cuerpo.enlace = enlace;
+      }
+      b.disabled = true;
+      if (await guardar(p.id, cuerpo, ESTADO_PIEZA[estado] || 'Guardado')) await vistaRedes(d.dia);
+      else b.disabled = false;
+    });
+    $('#f-pieza').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await api('admin/redes', { metodo: 'POST', cuerpo: { dia: d.dia, red: $('#p-red').value, hora: $('#p-hora').value, texto: $('#p-texto').value } });
+        avisar('Pieza añadida');
+        await vistaRedes(d.dia);
+      } catch (err) { avisar(err.message, true); }
+    });
+  }
+
+  // ---------- 10. Usuarios ----------
 
   async function vistaUsuarios() {
     if (yo.rol !== 'admin') { vista.innerHTML = '<div class="vacio"><b>Solo administración puede ver esta página.</b></div>'; return; }
@@ -822,7 +997,7 @@
     });
   }
 
-  // ---------- 10. Arranque ----------
+  // ---------- 11. Arranque ----------
 
   async function iniciar() {
     // ¿Venimos del enlace del email?

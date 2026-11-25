@@ -110,7 +110,9 @@ Si no carga, mira si el cortafuegos del Mac está bloqueando Python (Ajustes del
 
 - La web vive en **Cloudflare Pages** (proyecto `pulso`) con el dominio **pulsomedio.es**. El dominio se compró en Hostinger, pero sus DNS los gestiona Cloudflare. El correo sigue en Hostinger: sus registros (MX, SPF, DKIM, DMARC) están copiados en Cloudflare.
 - Cada `git push` a `main` lanza `.github/workflows/publicar.yml`: valida el JSON y sube la web a Cloudflare. Necesita dos secretos en el repositorio: `CLOUDFLARE_API_TOKEN` (con permiso *Cloudflare Pages: Edit*) y `CLOUDFLARE_ACCOUNT_ID`.
-- **Edición diaria:** una rutina de Claude Code en la nube («pulso: edición diaria», cada día a las 6:30 de Madrid) sigue `AGENTE.md`. Prepara 12 borradores y los entrega al panel con `scripts/enviar.py`. El panel manda un email al equipo, y si nadie revisa la edición, las 8 propuestas se publican solas a las 7:00.
+- **Tres ediciones al día:** una rutina de Claude Code en la nube («pulso: edición diaria», a las 6:30, 13:30 y 20:30 de Madrid) sigue `AGENTE.md`. Por la mañana prepara 12 borradores; a mediodía y por la noche, de 2 a 4 noticias nuevas o actualizadas. Las entrega al panel con `scripts/enviar.py`, el panel manda un email al equipo, y si nadie revisa la edición, las propuestas se publican solas a las 7:00, 14:00 y 21:00.
+- **Orden de la portada:** cada noticia tiene una importancia del 1 al 5 que pierde la mitad cada 8 horas; si se actualiza, vuelve a subir. Se puede ordenar a mano en *Portada* hasta la siguiente edición.
+- **Redes:** otra rutina («pulso: escaleta de redes», a las 7:15, 14:15 y 21:05) sigue `COMMUNITY.md` y entrega la escaleta al panel. Nada se publica en redes sin aprobarlo antes.
 - Para publicar a mano desde el Mac: `sh scripts/preparar.sh && npx wrangler pages deploy --branch main`.
 
 ### El panel de redacción
@@ -120,8 +122,9 @@ Si no carga, mira si el cortafuegos del Mac está bloqueando Python (Ajustes del
 - **Pantallas:**
   - *Hoy*: la edición del agente, con un interruptor por noticia y el botón «Publicar ahora».
   - *Noticias*: buscador de todo, con editor, fotos, programar, retirar, destacar, fijar, corrección visible e historial con «volver a esta versión».
-  - *Portada*: orden y anuncio.
+  - *Portada*: orden (automático o a mano) y anuncio.
   - *Momentos*: el bloque «mañana, tarde y noche».
+  - *Redes*: la escaleta del community manager, con aprobar, pedir cambio, descartar, copiar, abrir en X o Bluesky y marcar como publicada.
   - *Usuarios*.
 - **Datos:**
   - Base de datos Cloudflare D1 `pulso`, con las tablas en `migraciones/`.

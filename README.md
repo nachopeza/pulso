@@ -3,7 +3,7 @@
 Medio de noticias cortas para gente joven (16-30 años) en España. Se lanza el sábado 28 de noviembre de 2026, víspera de las elecciones generales del **29N**: por eso el 29N tiene su sección, su cuenta atrás y su bloque en portada, aunque pulso cubre toda la actualidad.
 Cada noticia va resumida con nuestras palabras y enlaza siempre a su fuente original.
 
-Es una web estática: HTML, CSS y JavaScript puros, sin frameworks ni compilación. Se puede subir tal cual a GitHub Pages.
+Es una web estática: HTML, CSS y JavaScript puros, sin frameworks ni compilación. Está publicada en **https://pulsomedio.es** (Cloudflare Pages).
 
 ---
 
@@ -15,6 +15,11 @@ NWS/
 ├── css/estilos.css     Todo el diseño: colores, tipografía, modo Flash, modo Lista, animaciones
 ├── js/app.js           Lee data/noticias.json y pinta la web. No hace falta tocarlo para publicar
 ├── data/noticias.json  LAS NOTICIAS. Es el único archivo que edita el agente redactor
+├── img/                Fotos con licencia libre de las noticias
+├── _headers            Cabeceras de Cloudflare (caché y seguridad)
+├── AGENTE.md           Manual del agente redactor que prepara la edición de cada día
+├── scripts/validar.py  Comprueba el JSON antes de publicar
+├── .github/workflows/  Publicación automática en Cloudflare al subir cambios a main
 └── README.md           Este archivo
 ```
 
@@ -44,7 +49,7 @@ Al elegir una sección se ve su cabecera, la primera noticia destacada y el rest
 tema Auto / Claro (versión en blanco) / Oscuro, y tamaño de letra normal, grande o muy grande. Se recuerdan en el navegador.
 En el ordenador también hay atajos en la cabecera: lupa (buscar) y «Aa» (lectura).
 
-- Cada noticia tiene su enlace propio: `https://tu-web/#id-de-la-noticia` abre directamente su ficha.
+- Cada noticia tiene su enlace propio: `https://pulsomedio.es/#id-de-la-noticia` abre directamente su ficha.
 - Las guardadas y el modo elegido se recuerdan en el navegador (localStorage). No hay cuentas de usuario.
 - Cada 5 minutos la web mira si `actualizado` ha cambiado en el JSON. Si ha cambiado, muestra el aviso «Hay noticias nuevas».
 
@@ -57,7 +62,8 @@ En `js/app.js`, arriba del todo, están la fecha de las elecciones (`DIA_29N`), 
 - [ ] **Contacto** (correo o formulario), también en `LEGAL`.
 - [x] **Perfiles de Bluesky y X** en `REDES` (@pulsomedio en las dos).
 - [ ] **Imagen para redes** (`og:image`, 1200×630) en `index.html`, para que los enlaces compartidos lleven imagen.
-- [ ] **Dominio propio** y, si hay publicidad real, datos del anunciante en `anuncio`.
+- [x] **Dominio propio**: pulsomedio.es.
+- [ ] Si hay publicidad real, datos del anunciante en `anuncio`.
 - [ ] Limitación conocida: como las noticias se abren con `#id`, al compartir una noticia la vista previa en redes muestra el título general de pulso, no el de la noticia. Para tener vista previa por noticia haría falta generar una página por noticia.
 
 ---
@@ -92,9 +98,12 @@ El móvil y el Mac tienen que estar conectados a la **misma wifi**.
 
 Si no carga, mira si el cortafuegos del Mac está bloqueando Python (Ajustes del Sistema → Red → Cortafuegos).
 
-### Publicarla en GitHub Pages
+### Cómo se publica
 
-Sube la carpeta a un repositorio y activa Pages en *Settings → Pages → Deploy from a branch → main / (root)*. No hay que compilar nada.
+- La web vive en **Cloudflare Pages** (proyecto `pulso`) con el dominio **pulsomedio.es**. El dominio se compró en Hostinger, pero sus DNS los gestiona Cloudflare. El correo sigue en Hostinger: sus registros (MX, SPF, DKIM, DMARC) están copiados en Cloudflare.
+- Cada `git push` a `main` lanza `.github/workflows/publicar.yml`: valida el JSON y sube la web a Cloudflare. Necesita dos secretos en el repositorio: `CLOUDFLARE_API_TOKEN` (con permiso *Cloudflare Pages: Edit*) y `CLOUDFLARE_ACCOUNT_ID`.
+- **Edición diaria:** una rutina de Claude Code en la nube («pulso: edición diaria», cada día a las 6:30 de Madrid) sigue `AGENTE.md`, actualiza `data/noticias.json` y hace push.
+- Para publicar a mano desde el Mac: `npx wrangler pages deploy <carpeta con la web> --project-name pulso --branch main`.
 
 ---
 

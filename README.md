@@ -112,7 +112,7 @@ Si no carga, mira si el cortafuegos del Mac está bloqueando Python (Ajustes del
 - Cada `git push` a `main` lanza `.github/workflows/publicar.yml`: valida el JSON y sube la web a Cloudflare. Necesita dos secretos en el repositorio: `CLOUDFLARE_API_TOKEN` (con permiso *Cloudflare Pages: Edit*) y `CLOUDFLARE_ACCOUNT_ID`.
 - **Tres ediciones al día:** una rutina de Claude Code en la nube («pulso: edición diaria», a las 6:30, 13:30 y 20:30 de Madrid) sigue `AGENTE.md`. Por la mañana prepara 12 borradores; a mediodía y por la noche, de 2 a 4 noticias nuevas o actualizadas. Las entrega al panel con `scripts/enviar.py`, el panel manda un email al equipo, y si nadie revisa la edición, las propuestas se publican solas a las 7:00, 14:00 y 21:00.
 - **Orden de la portada:** cada noticia tiene una importancia del 1 al 5 que pierde la mitad cada 8 horas; si se actualiza, vuelve a subir. Se puede ordenar a mano en *Portada* hasta la siguiente edición.
-- **Redes:** otra rutina («pulso: escaleta de redes», a las 7:15, 14:15 y 21:05) sigue `COMMUNITY.md` y entrega la escaleta al panel. Nada se publica en redes sin aprobarlo antes.
+- **Redes:** otra rutina («pulso: escaleta de redes», a las 7:15, 14:15 y 21:15) sigue `COMMUNITY.md` y entrega la escaleta al panel. Nada se publica en redes sin aprobarlo antes.
 - Para publicar a mano desde el Mac: `sh scripts/preparar.sh && npx wrangler pages deploy --branch main`.
 
 ### El panel de redacción

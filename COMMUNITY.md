@@ -123,7 +123,7 @@ La sobriedad no funciona en TikTok. Los vídeos de pulso tienen que entrar por l
 | --- | --- | --- |
 | **7:15** | `manana` | La escaleta completa del día (8 a 12 piezas): citas, series, especial 29N, vídeo, comunidad e ideas. |
 | **14:15** | `tarde` | 1 a 3 piezas sobre lo nuevo de la edición de las 14:00. |
-| **21:05** | `noche` | 1 a 3 piezas sobre lo nuevo de la edición de las 21:00. |
+| **21:15** | `noche` | 1 a 3 piezas sobre lo nuevo de la edición de las 21:00. |
 
 Mira la hora con `TZ=Europe/Madrid date` para saber qué tanda toca: antes de las 11:00 es `manana`, entre las 11:00 y las 18:00 es `tarde`, y a partir de las 18:00 es `noche`.
 

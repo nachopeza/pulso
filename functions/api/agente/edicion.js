@@ -91,15 +91,43 @@ export async function onRequestPost({ request, env }) {
   }
   await env.DB.batch(stmts);
 
-  // 4. Aviso por email a quien puede publicar
+  // 4. Aviso por email a quien puede publicar, con toda la edición para revisarla desde el móvil
   const { results: equipo } = await env.DB.prepare("SELECT email FROM usuarios WHERE activo = 1 AND rol IN ('admin', 'editor')").all();
   const propuestas = preparadas.filter((p) => p.propuesta);
+  const alternativas = preparadas.filter((p) => !p.propuesta);
   const hora = isoMadrid(autoEn).slice(11, 16);
+  const ficha = (p) => {
+    const d = p.datos;
+    return [
+      `${p.destacado ? '★ DESTACADA · ' : ''}${d.categoria.toUpperCase()}${p.fijada ? ' · fijada' : ''}`,
+      d.titular,
+      d.entradilla,
+      ...(d.puntos || []).map((x) => `  · ${x}`),
+      d.porque ? `Por qué te importa: ${d.porque}` : '',
+      `Fuentes: ${(d.fuentes || []).map((f) => `${f.medio} (${f.url})`).join(', ')}`,
+      d.imagen ? `Foto: ${d.imagen.credito || 'sí'}` : 'Sin foto',
+      `Editar: ${env.SITIO}/admin/#/editar/${p.id}`
+    ].filter(Boolean).join('\n');
+  };
+  const retiradas = [];
+  for (const id of (Array.isArray(c.retirar) ? c.retirar : []).slice(0, 40)) {
+    const f = await env.DB.prepare('SELECT titular FROM noticias WHERE id = ? AND retirar_en = ?').bind(String(id), autoEn).first();
+    if (f) retiradas.push(`- ${f.titular}`);
+  }
   const emailOk = equipo.length ? await enviarEmail(env, {
     para: equipo.map((u) => u.email),
-    asunto: `Edición lista: ${preparadas.length} borradores, se publica sola a las ${hora}`,
-    texto: `Buenos días:\n\nEl agente ha preparado la edición de hoy con ${preparadas.length} noticias. Propone publicar ${propuestas.length}:\n\n${
-      propuestas.map((p) => `- ${p.datos.titular}`).join('\n')}\n\nSi no la revisas antes, se publica sola a las ${hora}.\n\nRevisarla: ${env.SITIO}/admin/\n\npulso`
+    asunto: `Edición lista: ${propuestas.length} propuestas de ${preparadas.length}, se publica sola a las ${hora}`,
+    texto: [
+      'Buenos días:',
+      `El agente ha preparado la edición de hoy con ${preparadas.length} noticias. Propone publicar ${propuestas.length}. Si no haces nada, salen solas a las ${hora}.`,
+      `Para aceptarla tal cual, cambiar cuáles salen o publicarla ya: ${env.SITIO}/admin/#/hoy`,
+      `══ PROPUESTAS (${propuestas.length}) ══`,
+      ...propuestas.map(ficha),
+      alternativas.length ? `══ ALTERNATIVAS (${alternativas.length}), no salen si no las activas ══` : '',
+      ...alternativas.map(ficha),
+      retiradas.length ? `══ SE QUITAN DE PORTADA A LAS ${hora} ══\n${retiradas.join('\n')}` : '',
+      'pulso'
+    ].filter(Boolean).join('\n\n')
   }) : false;
 
   return json({ ok: true, dia, publicaA: isoMadrid(autoEn), noticias: preparadas.length, propuestas: propuestas.length, email: emailOk });

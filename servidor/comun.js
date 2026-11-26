@@ -231,7 +231,9 @@ export function largoRed(t, red) {
 export function limpiarPieza(e) {
   const p = {
     hora: texto(e?.hora, 5), red: texto(e?.red, 12).toLowerCase(), serie: texto(e?.serie, 60),
-    noticia: texto(e?.noticia, 70) || null, texto: texto(e?.texto, 3000),
+    noticia: texto(e?.noticia, 70) || null,
+    // Los enlaces al dominio antiguo se pasan al nuevo (pulsomedio.es redirige, pero mejor publicar el bueno)
+    texto: texto(e?.texto, 3000).replace(/(https?:\/\/)?(www\.)?pulsomedio\.es/gi, (m, p) => (p ? 'https://' : '') + 'pulso.com.es'),
     visual: texto(e?.visual, 600), alt: texto(e?.alt, 1000)
   };
   const errores = [];

@@ -111,7 +111,7 @@
       ${error ? `<p class="errores">${esc(error)}</p>` : ''}
       <form id="f-entrar">
         <label for="email">Email</label>
-        <input type="email" id="email" name="email" autocomplete="email" required placeholder="hola@pulsomedio.es">
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="hola@pulso.com.es">
         <button class="btn btn-principal" type="submit">Enviarme el enlace</button>
       </form>
     </div>`;

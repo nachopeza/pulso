@@ -18,6 +18,5 @@ bucket_name = "pulso-fotos"
 
 [vars]
 SITIO = "https://pulso.com.es"
-# El correo sigue en pulsomedio.es hasta que exista el buzón hola@pulso.com.es
-# (y esté verificado en Brevo como remitente).
-REMITENTE = "hola@pulsomedio.es"
+# Remitente de los emails automáticos (dominio verificado en Brevo el 26 nov)
+REMITENTE = "hola@pulso.com.es"

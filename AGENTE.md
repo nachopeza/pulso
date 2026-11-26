@@ -14,7 +14,7 @@ El agente **no toca el repositorio**: ni código, ni `data/noticias.json`, ni co
 | 13:30 | `tarde` | 14:00 | Actualización: 2 a 4 noticias nuevas o actualizadas y los momentos de la tarde. |
 | 20:30 | `noche` | 21:00 | Actualización: lo mismo para la noche. |
 
-Mira la hora con `TZ=Europe/Madrid date` y elige el `tipo`: antes de las 11:00 es `manana`, entre las 11:00 y las 18:00 es `tarde`, y a partir de las 18:00 es `noche`. Si se lanza tarde, la edición sale sola 30 minutos después de entregarla.
+Mira la hora con `TZ=Europe/Madrid date` y elige el `tipo`: antes de las 11:00 es `manana`, entre las 11:00 y las 18:00 es `tarde`, y a partir de las 18:00 es `noche`. El tipo `especial` (sale como pronto a las 23:30) solo se usa si el encargo lo pide expresamente, como la noche electoral. Si se lanza tarde, la edición sale sola 30 minutos después de entregarla.
 
 Así la portada nunca se queda con todo «de esta mañana»: lo que pasa a lo largo del día entra en la siguiente edición.
 
@@ -77,6 +77,7 @@ Así la portada nunca se queda con todo «de esta mañana»: lo que pasa a lo la
 | `fuentes` | Siempre al menos una, con `medio` y `url` a la información original. |
 | `titulares` | «Cómo lo titulan»: titulares **literales** de otros medios, con su nombre y enlace. Mejor si son de líneas editoriales distintas. Puede ir vacío. |
 | `imagen` | `null` o una foto con licencia libre (ver abajo). |
+| `montaje` | Opcional. Si no hay foto buena y la noticia lo merece: la idea de montaje en una frase. No se ve en la web. |
 | `fijada` | Opcional. `true` solo para guías que deben seguir en portada más de 48 horas. |
 
 No pongas `fecha`: la pone el panel al publicar.
@@ -87,7 +88,7 @@ No pongas `fecha`: la pone el panel al publicar.
 - **Neutralidad política.** pulso es transversal: mismo trato a todos los partidos y ninguna información se evita por su tema. Nada de adjetivos valorativos. Cuando se cuenta la agenda de campaña, se reparte entre formaciones.
 - **Encuestas:** del martes 24 al domingo 29 de noviembre de 2026 la ley prohíbe publicar sondeos electorales nuevos. No se publican.
 - **Jornada de reflexión** (sábado 28): nada que pida el voto ni campaña; solo información práctica.
-- **Fotos:** solo con licencia libre (Wikimedia Commons) o propias. Nunca fotos de otros medios ni de agencias. Si no hay una foto adecuada, `null`: la web pone el nombre de la sección en letra gigante.
+- **Fotos:** solo con licencia libre (Wikimedia Commons) o propias. Nunca fotos de otros medios ni de agencias. Si no hay una foto adecuada, `null`: la web pone el nombre de la sección en letra gigante. Si la noticia ganaría mucho con imagen (importancia 4 o 5, o destacada), añade además `"montaje": "idea en una frase"` (qué montaje gráfico harías: elementos, sin fotos de otros medios); Nacho lo ve en el email y en el panel y decide si lo hace. No pidas montaje en más de 3 noticias por edición.
 - **Lenguaje claro**, frases cortas, sin jerga. Se explica lo que no es obvio.
 
 ## Fotos de Wikimedia Commons

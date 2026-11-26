@@ -33,8 +33,11 @@ export async function onRequestGet({ env }) {
     for (const m of Object.values(momentos)) m.puntos = (m.puntos || []).filter((p) => ids.has(p.id));
   }
   const anuncio = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'anuncio'").first();
-  // Límite de lectura sin cuenta: { gratis: 5, dias: 7 } (sin ajuste o con gratis 0 → sin límite)
-  const lectura = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'lectura'").first();
+  // Límite de lectura sin cuenta: { gratis: 5, dias: 7, desde: "2026-11-30T00:00:00+01:00" }
+  // (sin ajuste, con gratis 0 o antes de "desde" → sin límite)
+  const ajusteLectura = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'lectura'").first();
+  let lectura = ajusteLectura?.valor ? JSON.parse(ajusteLectura.valor) : null;
+  if (lectura?.desde && Date.parse(lectura.desde) > ahora) lectura = null;
 
   // "Actualizado": lo último que ha cambiado de lo que se ve
   const ultima = Math.max(0, mom?.desde || 0, mom?.actualizado || 0,
@@ -43,7 +46,7 @@ export async function onRequestGet({ env }) {
   return json({
     actualizado: isoMadrid(ultima || ahora),
     anuncio: anuncio?.valor ? JSON.parse(anuncio.valor) : null,
-    lectura: lectura?.valor ? JSON.parse(lectura.valor) : null,
+    lectura: lectura ? { gratis: lectura.gratis, dias: lectura.dias } : null,
     momentos,
     noticias
   }, 200, { 'Cache-Control': 'no-cache' });

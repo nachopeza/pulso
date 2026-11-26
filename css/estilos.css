@@ -922,8 +922,12 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 #resultados .item h3 { font-size: 16.5px; }
 
 /* Preferencias: botones segmentados */
-.lectura { display: grid; gap: 12px; border-top: 1px solid var(--linea); padding-top: 18px; }
-.lectura h2 { font-size: 15px; font-weight: 800; }
+/* El menú va por bloques, cada uno con su título pequeño y una línea fina encima */
+.menu-bloque { display: grid; gap: 12px; border-top: 1px solid var(--linea); padding-top: 18px; }
+.menu-tit { font-size: 13px; font-weight: 750; color: var(--suave); letter-spacing: 0.01em; }
+.lectura .pref + .pref { padding-top: 2px; }
+.menu-info { gap: 14px; }
+.menu-info .menu-legal { margin-top: 0; }
 .pref { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 600; }
 .seg { display: flex; gap: 2px; background: var(--sup-2); border-radius: 999px; padding: 3px; }
 .seg button { min-height: 40px; min-width: 44px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--suave); font-size: 14px; font-weight: 650; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
@@ -1028,8 +1032,6 @@ body { top: 0 !important; }
 .muro-ya button, .enlace-txt { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 /* Bloque «Tu cuenta» del menú */
-.menu-cuenta { display: grid; gap: 8px; margin: 4px 0 14px; }
-.menu-cuenta > p { font-weight: 650; }
 .menu-cuenta-btn { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border-radius: var(--r-m); border: 1.5px solid var(--linea); background: var(--sup); color: var(--tinta); cursor: pointer; font: inherit; }
 .menu-cuenta-btn b { font-weight: 800; font-stretch: 110%; overflow-wrap: anywhere; }
 .menu-cuenta-btn span { font-size: 13.5px; color: var(--suave); }

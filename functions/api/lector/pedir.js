@@ -33,6 +33,7 @@ export async function onRequestPost({ request, env }) {
   const enviado = await enviarEmail(env, {
     para: [email],
     asunto: yaTiene ? 'Tu enlace para entrar en pulso' : 'Confirma tu cuenta de pulso',
+    boton: { texto: yaTiene ? 'Entrar en pulso' : 'Confirmar mi cuenta', url: enlace },
     texto: [
       'Hola:',
       yaTiene

@@ -30,6 +30,7 @@ export async function onRequestPost({ request, env }) {
   const enviado = await enviarEmail(env, {
     para: [email],
     asunto: 'Tu enlace para entrar en la redacción de pulso',
+    boton: { texto: 'Entrar en la redacción', url: enlace },
     texto: `Hola, ${u.nombre}:\n\nPara entrar en el panel de pulso, abre este enlace en los próximos 20 minutos:\n\n${enlace}\n\nSi no lo has pedido tú, ignora este mensaje: nadie puede entrar sin él.\n\npulso`
   });
   if (!enviado) return fallo('No se ha podido enviar el email. Revisa la configuración de Brevo.', 503);

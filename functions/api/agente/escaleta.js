@@ -70,6 +70,7 @@ export async function onRequestPost({ request, env }) {
   const emailOk = equipo.length ? await enviarEmail(env, {
     para: equipo.map((u) => u.email),
     asunto: `Escaleta de redes ${EDICIONES[tanda].nombre}: ${piezas.length} piezas por revisar`,
+    boton: { texto: 'Revisar las piezas', url: `${env.SITIO}/admin/#/redes` },
     texto: [
       'Hola:',
       `El community manager ha preparado ${piezas.length} piezas para redes. No sale nada sin tu aprobación.`,

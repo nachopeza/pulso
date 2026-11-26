@@ -565,6 +565,8 @@
       `<button type="button" data-${grupo}="${valor}" aria-pressed="${actual === valor}">${texto}</button>`;
     const tema = document.documentElement.dataset.tema || 'auto';
     const letra = document.documentElement.dataset.letra || 'normal';
+    // Orden del menú, de lo que más se usa a lo que menos:
+    // buscar → secciones (y el 29N) → tu cuenta → ajustes de lectura → quiénes somos, redes y legal
     return `<div class="menu-cab">
         <p class="logo-pie notranslate" translate="no">pulso<span class="latido" aria-hidden="true"></span></p>
         <button type="button" class="cerrar" data-cerrar-menu aria-label="Cerrar el menú">${ICONO_X}</button>
@@ -574,33 +576,34 @@
         <input type="search" id="buscar" placeholder="Buscar noticias" autocomplete="off" enterkeyhint="search">
         <div id="resultados" aria-live="polite"></div>
       </div>
-      ${menuCuentaHTML()}
-      <div class="menu-modo">
-        <p>Leer en modo</p>
-        <div class="modo modo-menu" data-modo="${estado.modo}" role="group" aria-label="Cómo quieres leer">
-          <button type="button" data-poner-modo="flash" aria-pressed="${estado.modo === 'flash'}">Flash</button>
-          <button type="button" data-poner-modo="lista" aria-pressed="${estado.modo === 'lista'}">Lista</button>
-        </div>
-      </div>
-      <div class="menu-modo menu-idioma notranslate" translate="no">
-        <p id="pref-idioma">Idioma</p>
-        <div class="seg" role="group" aria-labelledby="pref-idioma">
-          ${Object.entries(IDIOMAS).map(([k, t]) => `<button type="button" data-idioma="${k}" lang="${k}" aria-label="${t}" title="${t}" aria-pressed="${idiomaGuardado() === k}">${k.toUpperCase()}</button>`).join('')}
-        </div>
-      </div>
-      ${idiomaGuardado() === 'es' ? '' : '<p class="pref-nota notranslate" translate="no">Traducción automática de Google. El original está en castellano.</p>'}
-      <nav aria-label="Ir a una sección">
+      <nav class="menu-bloque" aria-labelledby="menu-tit-secciones">
+        <h2 class="menu-tit" id="menu-tit-secciones">Secciones</h2>
         <ul class="menu-secciones">
           <li><button type="button" data-filtro="todo" aria-pressed="${estado.cat === 'todo'}"><i aria-hidden="true"></i>Portada</button></li>
           ${secciones}
           <li><button type="button" data-filtro="guardadas" aria-pressed="${estado.cat === 'guardadas'}"><i aria-hidden="true"></i>Guardadas</button></li>
         </ul>
+        <button type="button" class="menu-29n" data-filtro="elecciones">
+          <b>${esc(c.num)}</b><span><strong>${esc(c.txt)}</strong>Todo sobre las elecciones generales</span>
+        </button>
       </nav>
-      <button type="button" class="menu-29n" data-filtro="elecciones">
-        <b>${esc(c.num)}</b><span><strong>${esc(c.txt)}</strong>Todo sobre las elecciones generales</span>
-      </button>
-      <section class="lectura" id="lectura" aria-labelledby="lectura-titulo">
-        <h2 id="lectura-titulo">Lectura</h2>
+      ${menuCuentaHTML()}
+      <section class="menu-bloque lectura" id="lectura" aria-labelledby="lectura-titulo">
+        <h2 class="menu-tit" id="lectura-titulo">Lectura</h2>
+        <div class="pref">
+          <p id="pref-modo">Modo</p>
+          <div class="modo modo-menu" data-modo="${estado.modo}" role="group" aria-labelledby="pref-modo">
+            <button type="button" data-poner-modo="flash" aria-pressed="${estado.modo === 'flash'}">Flash</button>
+            <button type="button" data-poner-modo="lista" aria-pressed="${estado.modo === 'lista'}">Lista</button>
+          </div>
+        </div>
+        <div class="pref menu-idioma notranslate" translate="no">
+          <p id="pref-idioma">Idioma</p>
+          <div class="seg" role="group" aria-labelledby="pref-idioma">
+            ${Object.entries(IDIOMAS).map(([k, t]) => `<button type="button" data-idioma="${k}" lang="${k}" aria-label="${t}" title="${t}" aria-pressed="${idiomaGuardado() === k}">${k.toUpperCase()}</button>`).join('')}
+          </div>
+        </div>
+        ${idiomaGuardado() === 'es' ? '' : '<p class="pref-nota notranslate" translate="no">Traducción automática de Google. El original está en castellano.</p>'}
         <div class="pref">
           <p id="pref-tema">Tema</p>
           <div class="seg" role="group" aria-labelledby="pref-tema">
@@ -614,9 +617,11 @@
           </div>
         </div>
       </section>
-      <p class="menu-como">${COMO_TRABAJAMOS}</p>
-      ${redesHTML()}
-      ${legalHTML('menu-legal')}`;
+      <div class="menu-bloque menu-info">
+        <p class="menu-como">${COMO_TRABAJAMOS}</p>
+        ${redesHTML()}
+        ${legalHTML('menu-legal')}
+      </div>`;
   }
 
   // ---------- Buscador ----------
@@ -1381,12 +1386,12 @@
 
   function menuCuentaHTML() {
     return estado.lector
-      ? `<div class="menu-cuenta">
-          <p>Tu cuenta</p>
+      ? `<div class="menu-bloque menu-cuenta">
+          <h2 class="menu-tit">Tu cuenta</h2>
           <button type="button" class="menu-cuenta-btn" data-cuenta><b class="notranslate" translate="no">${esc(estado.lector.email)}</b><span>Guardadas en todos tus dispositivos</span></button>
         </div>`
-      : `<div class="menu-cuenta">
-          <p>Tu cuenta</p>
+      : `<div class="menu-bloque menu-cuenta">
+          <h2 class="menu-tit">Tu cuenta</h2>
           <button type="button" class="menu-cuenta-btn" data-cuenta><b>Regístrate o inicia sesión</b><span>Es gratis: guarda noticias en todos tus dispositivos y lee sin límite</span></button>
         </div>`;
   }

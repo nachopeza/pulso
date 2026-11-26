@@ -247,7 +247,7 @@
       <div class="fila-txt">
         <a href="#/editar/${encodeURIComponent(n.id)}">${esc(n.titular)}</a>
         <div class="meta">${seccion(n.categoria)}${n.destacado ? '<span class="estrella">★ Destacada</span>' : ''}
-          ${n.datos?.sustituye ? '<span>Actualización</span>' : ''}<span>Importancia ${n.importancia}</span>
+          ${n.datos?.sustituye ? '<span>Actualización</span>' : ''}<span>Importancia ${n.importancia}</span>${n.datos?.montaje ? `<span title="${esc(n.datos.montaje)}">🎨 Pide montaje</span>` : ''}
           ${n.propuesta ? '<span>Propuesta del agente</span>' : '<span>Extra</span>'}${n.revisada ? '' : '<span>Sin revisar</span>'}</div>
       </div>
       ${chip(n)}

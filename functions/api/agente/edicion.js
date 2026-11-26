@@ -24,7 +24,7 @@ export async function onRequestPost({ request, env }) {
   if (!Array.isArray(c?.noticias) || !c.noticias.length) return fallo('La edición no trae noticias.');
   if (c.noticias.length > 20) return fallo('Como mucho 20 noticias por edición.');
   const tipo = c.tipo || 'manana';
-  if (!EDICIONES[tipo]) return fallo('El tipo de edición tiene que ser "manana", "tarde" o "noche".');
+  if (!EDICIONES[tipo]) return fallo('El tipo de edición tiene que ser "manana", "tarde", "noche" o "especial".');
 
   const ahora = Date.now();
   const dia = diaMadrid(ahora);
@@ -128,6 +128,7 @@ export async function onRequestPost({ request, env }) {
       d.porque ? `Por qué te importa: ${d.porque}` : '',
       `Fuentes: ${(d.fuentes || []).map((f) => `${f.medio} (${f.url})`).join(', ')}`,
       d.imagen ? `Foto: ${d.imagen.credito || 'sí'}` : 'Sin foto',
+      d.montaje ? `🎨 PIDE MONTAJE: ${d.montaje}` : '',
       `Editar: ${env.SITIO}/admin/#/editar/${p.id}`
     ].filter(Boolean).join('\n');
   };
@@ -140,6 +141,7 @@ export async function onRequestPost({ request, env }) {
   const emailOk = equipo.length ? await enviarEmail(env, {
     para: equipo.map((u) => u.email),
     asunto: `Edición ${ed.nombre} lista: ${propuestas.length} propuestas de ${preparadas.length}, sale sola a las ${hora}`,
+    boton: { texto: 'Revisar la edición', url: `${env.SITIO}/admin/#/hoy` },
     texto: [
       tipo === 'manana' ? 'Buenos días:' : 'Hola:',
       `El agente ha preparado la edición ${ed.nombre} con ${preparadas.length} noticias. Propone publicar ${propuestas.length}. Si no haces nada, salen solas a las ${hora}.`,

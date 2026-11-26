@@ -12,7 +12,9 @@ export const PORTADA_HORAS = 48;
 export const EDICIONES = {
   manana: { n: 1, hora: '07:00', nombre: 'de la mañana' },
   tarde: { n: 2, hora: '14:00', nombre: 'de la tarde' },
-  noche: { n: 3, hora: '21:00', nombre: 'de la noche' }
+  noche: { n: 3, hora: '21:00', nombre: 'de la noche' },
+  // Solo para noches señaladas (resultados del 29N): sale media hora después de entregarla como pronto
+  especial: { n: 4, hora: '23:30', nombre: 'especial' }
 };
 export const claveEdicion = (dia, tipo) => `${dia} ${EDICIONES[tipo].n}-${tipo}`;
 export function leerEdicion(clave) {
@@ -151,6 +153,9 @@ export function limpiarNoticia(entrada, { borrador = false } = {}) {
   };
   const corr = texto(e.correccion, 600);
   if (corr) d.correccion = corr;
+  // Si no hay foto buena, el agente puede pedir un montaje: idea en una frase (no se ve en la web)
+  const montaje = texto(e.montaje, 300);
+  if (montaje) d.montaje = montaje;
   // "Actualizada a las…": la pone el servidor, aquí solo se conserva
   const act = texto(e.actualizada, 40);
   if (act && !Number.isNaN(Date.parse(act))) d.actualizada = act;
@@ -288,7 +293,52 @@ export async function guardarFoto(env, cuerpo, tipo, nombre) {
 // ---------- Email (Brevo) ----------
 
 // Sin la clave BREVO_KEY no se envía nada; en local (DEV=1) el mensaje sale por la consola.
-export async function enviarEmail(env, { para, asunto, texto: cuerpo }) {
+// ---------- Emails con la imagen de pulso ----------
+// Se escriben como texto (así también llegan bien a quien no ve HTML) y aquí se visten:
+// cabecera con el logo «pulso•», párrafos, un botón amarillo opcional y pie.
+// Todo con estilos en línea y tablas: es lo único que entienden bien Gmail, Outlook y compañía.
+const MARCA = { amarillo: '#ffd400', tinta: '#141414', suave: '#5a5b61', fondo: '#f1f1ee', linea: '#e2e2dd' };
+const FUENTE = "'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const escHTML = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function parrafoHTML(p) {
+  const tit = p.match(/^══\s*(.+?)\s*══\n?([\s\S]*)$/);
+  if (tit) {
+    return `<h2 style="margin:28px 0 10px;font:800 13px/1.3 ${FUENTE};letter-spacing:.06em;color:${MARCA.suave};border-top:2px solid ${MARCA.tinta};padding-top:12px">${escHTML(tit[1])}</h2>`
+      + (tit[2].trim() ? parrafoHTML(tit[2]) : '');
+  }
+  const html = escHTML(p)
+    .replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}" style="color:${MARCA.tinta};text-decoration:underline;word-break:break-all">${u}</a>`)
+    .replace(/\n/g, '<br>');
+  return `<p style="margin:0 0 14px;font:400 16px/1.55 ${FUENTE};color:${MARCA.tinta}">${html}</p>`;
+}
+export function emailHTML({ asunto, texto, boton }) {
+  const partes = String(texto || '').split(/\n{2,}/).map((x) => x.trim()).filter(Boolean);
+  // La firma «pulso» del final la pone el pie
+  if (partes.at(-1) === 'pulso') partes.pop();
+  const resumen = escHTML((partes[1] || partes[0] || '').slice(0, 140));
+  const btn = boton?.url ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 22px"><tr><td style="background:${MARCA.amarillo};border-radius:999px">
+      <a href="${escHTML(boton.url)}" style="display:inline-block;padding:14px 26px;font:800 16px/1 ${FUENTE};color:${MARCA.tinta};text-decoration:none">${escHTML(boton.texto)}</a></td></tr></table>` : '';
+  // El botón va después del primer párrafo que lo menciona (el saludo y la explicación), o tras el segundo
+  const cuerpo = partes.map((p, i) => parrafoHTML(p) + (i === Math.min(1, partes.length - 1) ? btn : '')).join('');
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${escHTML(asunto)}</title></head>
+<body style="margin:0;padding:0;background:${MARCA.fondo}">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${resumen}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MARCA.fondo}"><tr><td align="center" style="padding:24px 12px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden">
+    <tr><td style="padding:26px 28px 18px;border-bottom:4px solid ${MARCA.amarillo}">
+      <span style="font:900 32px/1 ${FUENTE};letter-spacing:-.04em;color:${MARCA.tinta}">pulso</span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${MARCA.amarillo};margin-left:3px"></span>
+    </td></tr>
+    <tr><td style="padding:26px 28px 12px">${cuerpo}</td></tr>
+    <tr><td style="padding:18px 28px 26px;background:${MARCA.tinta}">
+      <p style="margin:0 0 4px;font:800 15px/1.4 ${FUENTE};color:#ffffff">pulso<span style="color:${MARCA.amarillo}">.</span> Lo importante del día, en corto y con fuentes.</p>
+      <p style="margin:0;font:400 13px/1.5 ${FUENTE};color:#a9aab0"><a href="https://pulso.com.es" style="color:#a9aab0">pulso.com.es</a> · Bluesky y X: @pulsomedio · <a href="mailto:hola@pulso.com.es" style="color:#a9aab0">hola@pulso.com.es</a></p>
+    </td></tr>
+  </table>
+</td></tr></table>
+</body></html>`;
+}
+
+export async function enviarEmail(env, { para, asunto, texto: cuerpo, boton }) {
   if (env.DEV === '1') {
     console.log(`\n=== EMAIL a ${para.join(', ')} ===\n${asunto}\n\n${cuerpo}\n`);
     return true;
@@ -304,7 +354,8 @@ export async function enviarEmail(env, { para, asunto, texto: cuerpo }) {
         sender: { name: 'pulso', email: env.REMITENTE },
         to: para.map((email) => ({ email })),
         subject: asunto,
-        textContent: cuerpo
+        textContent: cuerpo,
+        htmlContent: emailHTML({ asunto, texto: cuerpo, boton })
       })
     });
     if (!r.ok) console.log('Brevo no ha enviado el email:', r.status, await r.text());

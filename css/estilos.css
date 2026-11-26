@@ -1144,13 +1144,9 @@ body { top: 0 !important; }
 .f-txt .acciones .btn span { overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 380px) { .f-txt .acciones .btn svg { display: none; } }
 
-/* Abierta como app desde la pantalla de inicio: la barra de la hora es transparente y la hora va en
-   blanco. Con el tema claro, un velo oscuro muy suave solo detrás de la hora para que se lea,
-   sin tapar el cristal. */
+/* Abierta como app desde la pantalla de inicio: la barra de la hora va del color de la cabecera
+   (theme-color). El cristal se hace un poco más denso para que no se note el corte entre los dos. */
 @media (display-mode: standalone) {
-  .top::before { content: ""; position: absolute; z-index: 0; inset: 0 0 auto; height: env(safe-area-inset-top); background: linear-gradient(rgb(0 0 0 / 0.38), rgb(0 0 0 / 0.12)); pointer-events: none; }
-  @media (prefers-color-scheme: dark) { .top::before { display: none; } }
-  :root[data-tema="oscuro"] .top::before { display: none; }
-  :root[data-tema="claro"] .top::before { display: block; }
+  :root { --cristal: light-dark(rgb(255 255 255 / 0.9), rgb(28 29 33 / 0.9)); }
 }
 

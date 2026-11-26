@@ -702,9 +702,20 @@
 
   // ---------- Preferencias de lectura ----------
   // Tema: auto (el del sistema), claro u oscuro. Letra: normal, grande o enorme.
+  // Color de la barra de la hora (y de la barra del navegador): el del tema que se ve de verdad,
+  // también si eliges claro u oscuro a mano en contra del sistema
+  function colorBarra() {
+    const tema = document.documentElement.dataset.tema;
+    const oscuro = tema === 'oscuro' || (tema !== 'claro' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = oscuro ? '#1c1d21' : '#ffffff'; });
+  }
+  colorBarra();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', colorBarra);
+
   function ponerPref(clave, valor) {
     document.documentElement.dataset[clave] = valor;
     escribir(`pulso-${clave}`, valor);
+    if (clave === 'tema') colorBarra();
     document.querySelectorAll(`[data-${clave}]`).forEach((b) => {
       if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', b.dataset[clave] === valor);
     });

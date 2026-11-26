@@ -18,5 +18,8 @@ bucket_name = "pulso-fotos"
 
 [vars]
 SITIO = "https://pulso.com.es"
+# Cuenta de Bluesky donde se publican solas las piezas aprobadas.
+# Su contraseña de app va como secreto BSKY_CLAVE_APP en Cloudflare (nunca aquí).
+BSKY_USUARIO = "pulsomedio.bsky.social"
 # Remitente de los emails automáticos (dominio verificado en Brevo el 26 nov)
 REMITENTE = "hola@pulso.com.es"

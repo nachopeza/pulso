@@ -73,7 +73,7 @@ Habla como un colega que se ha leído las noticias por ti: humano, simple y de t
 | **TikTok** | Descubrimiento: llegar a quien no nos conoce. | 1 al día (2 en días grandes) | Vídeo vertical de 15–35 s. Gancho en el primer segundo y subtítulos siempre. |
 | **Instagram** (cuando exista la cuenta) | Escaparate visual y stories diarias. | 1 carrusel + 3–5 stories | El texto, en la imagen. En el pie, una frase y la llamada a la web. |
 
-Enlaces: siempre a la noticia concreta, `https://pulso.com.es/#<id>`. A la portada, solo en las piezas de marca.
+Enlaces: siempre a la noticia concreta, `https://pulso.com.es/n/<id>`. A la portada, solo en las piezas de marca.
 
 ## 6. La experiencia: citas fijas y series
 
@@ -118,6 +118,14 @@ La sobriedad no funciona en TikTok. Los vídeos de pulso tienen que entrar por l
 - **Neutralidad incluso en el humor:** se ríe de situaciones, nunca de partidos, candidatos ni votantes.
 
 ## 7. La rutina diaria: tres tandas
+
+**Cómo sale lo aprobado** (desde el 26 de noviembre):
+
+- Nacho revisa la escaleta en el panel y pulsa **«Confirmar escaleta»**: se aprueban de una vez las piezas que no haya cambiado ni descartado.
+- **Bluesky sale solo**, cada pieza a su hora. Por eso la **hora de cada pieza importa**: es la hora real de publicación. Si una pieza se aprueba más de 2 horas después de su hora, ya no sale sola.
+- **X lo publica Nacho** con «Compartir en X», que añade una tarjeta con la imagen de la noticia. Lo que falta aparece arriba del panel.
+- **TikTok** lo sube Nacho de momento.
+- Los enlaces a una noticia van siempre a `pulso.com.es/n/<id>`: esa página da a cada red la tarjeta con el titular y la foto de la noticia, y lleva al lector a la noticia en la web.
 
 | Se lanza (Madrid) | `tanda` | Qué hace |
 | --- | --- | --- |

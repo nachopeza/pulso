@@ -252,7 +252,9 @@ export function limpiarPieza(e) {
     hora: texto(e?.hora, 5), red: texto(e?.red, 12).toLowerCase(), serie: texto(e?.serie, 60),
     noticia: texto(e?.noticia, 70) || null,
     // Los enlaces al dominio antiguo se pasan al nuevo (pulsomedio.es redirige, pero mejor publicar el bueno)
-    texto: texto(e?.texto, 3000).replace(/(https?:\/\/)?(www\.)?pulsomedio\.es/gi, (m, p) => (p ? 'https://' : '') + 'pulso.com.es'),
+    texto: texto(e?.texto, 3000).replace(/(https?:\/\/)?(www\.)?pulsomedio\.es/gi, (m, p) => (p ? 'https://' : '') + 'pulso.com.es')
+      // y el enlace a una noticia va a su página para compartir (/n/<id>), que trae su propia tarjeta
+      .replace(/\b(pulso\.com\.es)\/#([a-z0-9-]{3,70})\b/g, '$1/n/$2'),
     visual: texto(e?.visual, 600), alt: texto(e?.alt, 1000)
   };
   const errores = [];

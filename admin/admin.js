@@ -820,6 +820,78 @@
     bluesky: `https://bsky.app/intent/compose?text=${encodeURIComponent(p.texto)}`
   }[p.red]);
 
+  // Tarjeta 1200×675 para acompañar el post (sobre todo en X, donde no se puede publicar solo)
+  const SECCION = {
+    elecciones: ['29N', '#FFD400'], espana: ['España', '#FFB08A'], mundo: ['Mundo', '#94D9FF'], economia: ['Economía', '#C8EF95'],
+    tecnologia: ['Tecnología', '#D3C4FF'], clima: ['Clima', '#86E8D2'], cultura: ['Cultura', '#FFD59A'], deportes: ['Deportes', '#B9ECFF']
+  };
+  const cargarImagen = (src, cors) => new Promise((ok, mal) => {
+    const i = new Image();
+    if (cors) i.crossOrigin = 'anonymous';
+    i.onload = () => ok(i); i.onerror = mal; i.src = src;
+  });
+  async function tarjetaPNG(p) {
+    const W = 1200, H = 675;
+    let c = document.createElement('canvas'); c.width = W; c.height = H;
+    let x = c.getContext('2d');
+    await Promise.all(['800 60px Archivo', '600 30px Archivo'].map((f) => document.fonts.load(f).catch(() => null)));
+    const [nombre, color] = SECCION[p.categoria_noticia] || ['pulso', '#FFD400'];
+    const titulo = p.titular_noticia || (p.texto.split('\n')[0] || '').replace(/https?:\/\/\S+|pulso\.com\.es\S*/g, '').trim();
+    x.fillStyle = '#1c1d21'; x.fillRect(0, 0, W, H);
+    // Foto de la noticia a la derecha, si la hay y se puede usar
+    let ancho = W;
+    const src = p.imagen_noticia;
+    if (src) {
+      try {
+        const externa = /^https?:\/\//.test(src);
+        const img = await cargarImagen(externa ? src : `/${src.replace(/^\//, '')}`, externa);
+        const fw = 470, esc_ = Math.max(fw / img.width, H / img.height);
+        x.save(); x.beginPath(); x.rect(W - fw, 0, fw, H); x.clip();
+        x.drawImage(img, W - fw + (fw - img.width * esc_) / 2, (H - img.height * esc_) / 2, img.width * esc_, img.height * esc_);
+        x.restore();
+        x.getImageData(0, 0, 1, 1); // si la foto "ensucia" el lienzo, salta aquí y se hace sin foto
+        ancho = W - fw;
+      } catch (e) {
+        // Lienzo nuevo: uno "ensuciado" por una foto de fuera ya no se puede exportar
+        c = document.createElement('canvas'); c.width = W; c.height = H; x = c.getContext('2d');
+        x.fillStyle = '#1c1d21'; x.fillRect(0, 0, W, H); ancho = W;
+      }
+    }
+    x.fillStyle = color; x.fillRect(0, 0, 16, H);                  // franja con el color de la sección
+    // Etiqueta de la sección
+    x.font = '800 30px Archivo'; x.fontStretch = 'semi-expanded'; x.textBaseline = 'middle';
+    const ew = x.measureText(nombre).width + 44;
+    x.fillStyle = color; x.beginPath(); x.roundRect(64, 60, ew, 56, 28); x.fill();
+    x.fillStyle = '#141414'; x.fillText(nombre, 86, 89);
+    // Titular: la letra más grande que quepa en 4 líneas
+    const max = ancho - 64 - 56;
+    let t = 76, lineas = [];
+    for (; t >= 40; t -= 4) {
+      x.font = `800 ${t}px Archivo`; x.fontStretch = 'expanded';
+      lineas = []; let l = '';
+      for (const palabra of titulo.split(/\s+/)) {
+        const prueba = l ? `${l} ${palabra}` : palabra;
+        if (x.measureText(prueba).width > max && l) { lineas.push(l); l = palabra; } else l = prueba;
+      }
+      if (l) lineas.push(l);
+      if (lineas.length <= 4) break;
+    }
+    x.fillStyle = '#f3f3f0'; x.textBaseline = 'alphabetic';
+    lineas.slice(0, 4).forEach((l, i) => x.fillText(l, 64, 210 + t + i * t * 1.05));
+    // Pie: icono y dominio
+    try { const ico = await cargarImagen('../favicon.svg'); x.drawImage(ico, 64, H - 112, 64, 64); } catch (e) { /* sin icono */ }
+    x.font = '700 30px Archivo'; x.fontStretch = 'normal'; x.fillStyle = '#a9aab0'; x.textBaseline = 'middle';
+    x.fillText('pulso.com.es', 146, H - 80);
+    return new Promise((ok) => c.toBlob(ok, 'image/png'));
+  }
+  const nombreImagen = (p) => `pulso-${p.noticia || p.id}.png`;
+  function descargar(blob, nombre) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  // "07:45" de ahora mismo en Madrid, para saber qué va con retraso
+  const ahoraMadrid = () => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', hour12: false }).format(Date.now());
+
   async function vistaRedes(diaPedido) {
     const d = await api(`admin/redes${/^\d{4}-\d{2}-\d{2}$/.test(diaPedido || '') ? `?dia=${diaPedido}` : ''}`);
     const pub = puedePublicar();
@@ -828,7 +900,7 @@
     const tandas = Object.keys(TANDAS).filter((t) => esc_[t] && (esc_[t].resumen || esc_[t].alertas?.length || esc_[t].video || esc_[t].comunidad || esc_[t].ideas));
     vista.innerHTML = `
       <div class="cabeza">
-        <div><h1>Redes</h1><p>La escaleta del community manager: nada sale sin tu aprobación.</p></div>
+        <div><h1>Redes</h1><p>La escaleta del community manager: nada sale sin tu aprobación. Lo aprobado de Bluesky sale solo a su hora; X lo publicas tú.</p></div>
         <div class="acciones">
           <a class="btn btn-fino" href="#/redes/${sumarDias(d.dia, -1)}" aria-label="Día anterior">←</a>
           <span class="dia-redes">${esc(diaLargo(d.dia))}</span>
@@ -837,6 +909,20 @@
         </div>
       </div>
       ${!d.piezas.length && !tandas.length ? `<div class="vacio"><b>No hay escaleta para este día.</b>El community manager la prepara cada mañana sobre las 7:15 y añade piezas a las 14:15 y a las 21:15. Te llega un email con cada una.</div>` : `
+      ${pub && cuenta('revisar') ? `<div class="bloque confirmar">
+        <p><b>${cuenta('revisar')} ${cuenta('revisar') === 1 ? 'pieza' : 'piezas'} por revisar.</b> Corrige o descarta lo que no te convenza y confirma el resto de una vez: Bluesky saldrá solo, cada pieza a su hora.</p>
+        <button class="btn btn-principal" type="button" id="confirmar">Confirmar escaleta</button>
+      </div>` : ''}
+      ${!d.bluesky ? '<p class="nota aviso-bluesky">Bluesky todavía no publica solo: falta el secreto BSKY_CLAVE_APP en Cloudflare.</p>' : ''}
+      ${(() => {
+        const faltan = d.piezas.filter((p) => p.red === 'x' && (p.estado === 'aprobada' || p.estado === 'revisar'));
+        if (!faltan.length) return d.piezas.some((p) => p.red === 'x') ? '<div class="bloque faltan-x listo"><b>X: todo publicado.</b></div>' : '';
+        const hoy = d.dia === hoyMadrid(), ya = ahoraMadrid();
+        return `<div class="bloque faltan-x"><h2>Te falta en X: ${faltan.length}</h2><ul>${faltan.map((p) => {
+          const tarde = (hoy && p.hora && p.hora <= ya) || d.dia < hoyMadrid();
+          return `<li class="${tarde ? 'tarde' : ''}"><a href="#pieza-${p.id}" data-ir="${p.id}"><b>${esc(p.hora || '--:--')}</b> ${esc(p.texto.slice(0, 70))}${p.texto.length > 70 ? '…' : ''}</a>${tarde ? ' <span class="nota">ya toca</span>' : ''}${p.estado === 'revisar' ? ' <span class="nota">sin revisar</span>' : ''}</li>`;
+        }).join('')}</ul></div>`;
+      })()}
       <div class="resumen">
         <div><b>${cuenta('revisar')}</b>por revisar</div>
         <div><b>${cuenta('aprobada')}</b>aprobadas</div>
@@ -868,7 +954,7 @@
 
     function pieza(p) {
       const n = largo(p.texto, p.red);
-      return `<li class="pieza pieza-${esc(p.estado)}" data-id="${p.id}">
+      return `<li class="pieza pieza-${esc(p.estado)}" data-id="${p.id}" id="pieza-${p.id}">
         <div class="pieza-cab">
           <b class="pieza-hora">${esc(p.hora || '--:--')}</b>
           <span class="red red-${esc(p.red)}">${esc(REDES[p.red])}</span>
@@ -885,11 +971,20 @@
           ${p.visual ? `<p class="texto-libre"><b>Visual:</b> ${esc(p.visual)}</p>` : ''}
           ${p.alt ? `<p class="texto-libre"><b>Texto alternativo:</b> ${esc(p.alt)} <button class="btn btn-fino" type="button" data-copiar-alt>Copiar</button></p>` : ''}
         </details>` : ''}
+        ${p.momento ? `<p class="nota sale-sola sale-${esc(p.momento)}">${{
+          pronto: `Saldrá sola en Bluesky a las ${esc(p.hora)}.`,
+          toca: 'Sale sola en Bluesky en unos minutos.',
+          tarde: 'Pasó su hora hace más de 2 horas: ya no sale sola. Cambia la hora o publícala a mano.',
+          'sin-hora': 'No tiene hora: ponle una para que salga sola.'
+        }[p.momento]}</p>` : ''}
+        ${p.red === 'x' && p.estado === 'aprobada' ? '<p class="nota">Aprobada: publícala tú con «Abrir en X» y márcala como publicada.</p>' : ''}
         ${p.nota ? `<p class="nota"><b>Nota:</b> ${esc(p.nota)}</p>` : ''}
         ${p.enlace ? `<p class="nota"><a href="${esc(p.enlace)}" target="_blank" rel="noopener">Ver la publicación</a></p>` : ''}
         <div class="acciones">
           <button class="btn btn-fino" type="button" data-copiar>Copiar texto</button>
-          ${componer(p) ? `<a class="btn btn-fino" href="${esc(componer(p))}" target="_blank" rel="noopener">Abrir en ${esc(REDES[p.red])}</a>` : ''}
+          ${p.red === 'x' && p.estado !== 'publicada' ? '<button class="btn btn-fino btn-principal" type="button" data-compartir>Compartir en X</button>'
+            : componer(p) ? `<a class="btn btn-fino" href="${esc(componer(p))}" target="_blank" rel="noopener">Abrir en ${esc(REDES[p.red])}</a>` : ''}
+          <button class="btn btn-fino" type="button" data-imagen>Descargar imagen</button>
           ${pub && p.estado !== 'aprobada' && p.estado !== 'publicada' ? '<button class="btn btn-fino" type="button" data-estado="aprobada">Aprobar</button>' : ''}
           ${pub && p.estado !== 'publicada' ? '<button class="btn btn-fino btn-principal" type="button" data-estado="publicada">Marcar publicada</button>' : ''}
           ${p.estado !== 'cambiar' && p.estado !== 'publicada' ? '<button class="btn btn-fino" type="button" data-estado="cambiar">Pedir cambio</button>' : ''}
@@ -898,6 +993,29 @@
         </div>
       </li>`;
     }
+
+    // Las tarjetas de X se preparan ya: en el móvil, compartir tiene que ocurrir justo al tocar el botón
+    const imagenes = {};
+    d.piezas.filter((p) => p.red === 'x' && p.estado !== 'publicada').forEach((p) => {
+      tarjetaPNG(p).then((b) => { imagenes[p.id] = new File([b], nombreImagen(p), { type: 'image/png' }); }).catch(() => null);
+    });
+
+    const bConfirmar = $('#confirmar');
+    if (bConfirmar) bConfirmar.addEventListener('click', async () => {
+      if (!confirm('Se aprobarán todas las piezas por revisar. Las de Bluesky saldrán solas a su hora. ¿Seguimos?')) return;
+      bConfirmar.disabled = true;
+      try {
+        const r = await api('admin/redes/confirmar', { metodo: 'POST', cuerpo: { dia: d.dia } });
+        avisar(`${r.aprobadas} ${r.aprobadas === 1 ? 'pieza aprobada' : 'piezas aprobadas'}${r.bluesky ? '. Bluesky saldrá solo.' : ''}`);
+        await vistaRedes(d.dia);
+      } catch (err) { avisar(err.message, true); bConfirmar.disabled = false; }
+    });
+
+    vista.querySelectorAll('[data-ir]').forEach((a) => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const li = $(`#pieza-${a.dataset.ir}`);
+      if (li) { li.scrollIntoView({ behavior: 'smooth', block: 'center' }); li.classList.add('resaltada'); setTimeout(() => li.classList.remove('resaltada'), 1600); }
+    }));
 
     const lista = $('#piezas');
     const guardar = async (id, cuerpo, msg) => {
@@ -927,6 +1045,37 @@
       };
       if (e.target.closest('[data-copiar]')) return copiar($('[data-texto]', li).value, 'Texto copiado');
       if (e.target.closest('[data-copiar-alt]')) return copiar(p.alt, 'Texto alternativo copiado');
+      if (e.target.closest('[data-imagen]')) {
+        try { descargar(await tarjetaPNG(p), nombreImagen(p)); avisar('Imagen descargada'); } catch (err) { avisar('No se ha podido crear la imagen', true); }
+        return;
+      }
+      if (e.target.closest('[data-compartir]')) {
+        const texto = $('[data-texto]', li).value;
+        let compartida = false;
+        try {
+          const archivo = imagenes[p.id] || new File([await tarjetaPNG(p)], nombreImagen(p), { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+            // Móvil: menú de compartir con el texto y la imagen juntos → elige X
+            await navigator.share({ text: texto, files: [archivo] });
+            compartida = true;
+          } else {
+            // Ordenador: se descarga la imagen y se abre X con el texto escrito; arrastra la imagen al post
+            descargar(archivo, archivo.name);
+            window.open(`https://x.com/intent/post?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+            compartida = true;
+            avisar('Imagen descargada: arrástrala al post de X');
+          }
+        } catch (err) {
+          if (err && err.name === 'AbortError') return; // cancelado en el menú de compartir
+          window.open(`https://x.com/intent/post?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+          compartida = true;
+        }
+        if (compartida) setTimeout(async () => {
+          if (!confirm('¿La has publicado en X? La marco como publicada.')) return;
+          if (await guardar(p.id, { estado: 'publicada' }, 'Marcada como publicada')) await vistaRedes(d.dia);
+        }, 800);
+        return;
+      }
       const b = e.target.closest('[data-estado]');
       if (!b) return;
       const estado = b.dataset.estado;

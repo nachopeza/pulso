@@ -74,7 +74,7 @@ export async function onRequestPost({ request, env }) {
     texto: [
       'Hola:',
       `El community manager ha preparado ${piezas.length} piezas para redes. No sale nada sin tu aprobación.`,
-      `Revisarlas, aprobarlas y copiarlas: ${env.SITIO}/admin/#/redes`,
+      `Revísalas y pulsa «Confirmar escaleta»: Bluesky saldrá solo, cada pieza a su hora. Las de X las compartes tú desde el panel con su imagen. ${env.SITIO}/admin/#/redes`,
       datos[tanda].resumen,
       datos[tanda].alertas.length ? `ALERTAS:\n${datos[tanda].alertas.map((a) => `- ${a}`).join('\n')}` : '',
       ...orden.map((p) => `${p.hora || '--:--'} · ${REDES[p.red]}${p.serie ? ` · ${p.serie}` : ''}\n${p.texto}`),

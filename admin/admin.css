@@ -281,3 +281,17 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--marca); out
   .bloque { padding: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Redes: confirmar la escaleta y aviso de publicación automática */
+.confirmar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.confirmar p { margin: 0; flex: 1 1 320px; }
+.sale-sola { font-weight: 600; }
+.sale-tarde, .sale-sin-hora, .aviso-bluesky { color: #b45309; }
+
+/* Redes: lo que falta por publicar en X */
+.faltan-x h2 { margin: 0 0 8px; }
+.faltan-x ul { margin: 0; padding-left: 1.1em; }
+.faltan-x li { margin: 4px 0; }
+.faltan-x li.tarde a { color: #b45309; font-weight: 600; }
+.faltan-x.listo { color: #15803d; }
+.pieza.resaltada { outline: 3px solid #FFD400; outline-offset: 4px; transition: outline-color .3s; }

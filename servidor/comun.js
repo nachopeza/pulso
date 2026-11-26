@@ -285,6 +285,42 @@ export function limpiarPieza(e) {
 
 // Descarga una foto de Wikimedia Commons y la guarda en nuestro almacén.
 // Devuelve la ruta "/fotos/…" o null si no se puede.
+// Buscar fotos libres en Wikimedia Commons (lo usan el panel y el agente).
+// Commons rechaza a quien no se identifica: por eso va siempre con nuestro User-Agent.
+// Devuelve null si Commons no responde.
+const sinHTML = (s) => String(s || '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+  .replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+const LICENCIA_LIBRE = /^(cc0|cc by(-sa)? [\d.]+|public domain|pd|attribution)/i;
+export async function buscarCommons(q, cuantas = 24) {
+  const api = new URL('https://commons.wikimedia.org/w/api.php');
+  Object.entries({
+    action: 'query', format: 'json', generator: 'search', gsrnamespace: '6', gsrsearch: `${q} filetype:bitmap`,
+    gsrlimit: String(cuantas), prop: 'imageinfo', iiprop: 'url|extmetadata|size', iiurlwidth: '1200'
+  }).forEach(([k, v]) => api.searchParams.set(k, v));
+  const r = await fetch(api, { headers: { 'User-Agent': 'pulso-noticias/1.0 (https://pulso.com.es; hola@pulso.com.es)' } });
+  if (!r.ok) return null;
+  const d = await r.json();
+  return Object.values(d.query?.pages || {})
+    .sort((a, b) => (a.index || 0) - (b.index || 0))
+    .map((p) => {
+      const i = p.imageinfo?.[0];
+      const m = i?.extmetadata || {};
+      return i && {
+        titulo: sinHTML(m.ObjectName?.value) || p.title.replace(/^File:|\.\w+$/g, ''),
+        // Sin el «?utm_source=…» que Commons añade ahora: la dirección limpia vale igual
+        miniatura: i.thumburl.split('?')[0],
+        url: i.thumburl.split('?')[0],
+        ancho: i.width,
+        alto: i.height,
+        credito: sinHTML(m.Artist?.value).slice(0, 120) || 'Autoría en Wikimedia Commons',
+        licencia: sinHTML(m.LicenseShortName?.value),
+        enlace: i.descriptionurl,
+        descripcion: sinHTML(m.ImageDescription?.value).slice(0, 200)
+      };
+    })
+    .filter((f) => f && f.miniatura && LICENCIA_LIBRE.test(f.licencia));
+}
+
 export async function importarFoto(env, url, nombre) {
   let u;
   try { u = new URL(url); } catch (e) { return null; }

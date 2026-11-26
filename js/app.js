@@ -789,11 +789,13 @@
   // Lo que se oculta sigue en la ficha ("Leer más"). La tarjeta NUNCA tiene scroll propio:
   // si lo tuviera, el dedo movería el interior de la tarjeta y no pasaría a la siguiente.
   const PASOS = ['apretada', 'muy-apretada', 'sin-minimo', 'recortada', 'minima'];
+  // Con foto, la foto es lo último que se encoge: antes se recortan puntos (siguen en «Leer más»)
+  const PASOS_FOTO = ['apretada', 'recortada', 'muy-apretada', 'minima', 'sin-minimo'];
   function ajustarCartas() {
     const noCabe = (c) => c.scrollHeight > c.clientHeight + 1;
     main.querySelectorAll('.carta[data-cat]').forEach((c) => {
       c.classList.remove(...PASOS, 'sin-foto');
-      for (const paso of PASOS) {
+      for (const paso of (c.querySelector('.foto img') ? PASOS_FOTO : PASOS)) {
         if (!noCabe(c)) break;
         c.classList.add(paso);
       }

@@ -93,18 +93,18 @@ No pongas `fecha`: la pone el panel al publicar.
 
 ## Fotos de Wikimedia Commons
 
-Búsqueda por la API pública (sin datos personales en la petición):
+**Busca siempre con el script**, no con curl ni con Python a mano: Commons rechaza (error 403 o respuesta vacía) a quien no se identifica, y desde tu entorno a veces no responde. El script pregunta a pulso, que busca por ti, y si no puede va a Commons identificándose:
 
 ```
-https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrsearch=<búsqueda>&gsrlimit=8&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=1200
+python3 scripts/fotos.py "La Restinga El Hierro puerto"
 ```
 
-- De `extmetadata` salen el autor (`Artist`, sin el HTML) y la licencia (`LicenseShortName`). Usa solo CC0, CC BY, CC BY-SA o dominio público.
-- En `imagen` pon:
-  - `src`: la `thumburl` (la de 1200 px);
-  - `alt`: qué se ve en la foto;
-  - `credito`;
-  - `licencia`;
-  - `enlace`: la `descriptionurl`.
+- Cada resultado trae el bloque `imagen` listo para pegar (`src`, `credito`, `licencia`, `enlace`). Solo tienes que escribir `alt`: qué se ve en la foto.
+- Solo salen licencias libres (CC0, CC BY, CC BY-SA, dominio público).
+- **Objetivo: foto en al menos la mitad de las noticias**, y siempre que se pueda en la destacada y en las de importancia 4 o 5.
+- Busca por lo que se ve, no por la noticia:
+  - el lugar, el edificio, el objeto o el evento («Congreso de los Diputados», «urna electoral», «Estadio Metropolitano»);
+  - si en castellano no sale nada, prueba en inglés.
+- **Personas:** solo fotos de Commons de la propia persona, sin montajes.
+- Si después de 2 o 3 búsquedas no hay foto que encaje, `imagen: null` y, si la noticia lo merece, `montaje`.
 - El panel copia la foto a su propio almacén, así que no hace falta descargarla.
-- Si la API responde «429», espera unos segundos y vuelve a intentarlo.

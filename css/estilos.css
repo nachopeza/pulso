@@ -928,6 +928,16 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .seg { display: flex; gap: 2px; background: var(--sup-2); border-radius: 999px; padding: 3px; }
 .seg button { min-height: 40px; min-width: 44px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--suave); font-size: 14px; font-weight: 650; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
 .seg button[aria-pressed=true] { background: var(--tinta); color: var(--bg); }
+/* Idioma en el menú: ES · CA · EU · GL */
+.menu-idioma .seg button { min-width: 40px; padding: 0 8px; }
+.pref-nota { font-size: 13px; color: var(--suave); margin: -6px 0 12px; }
+
+/* Traducción: nuestra barra fina en lugar de la de Google */
+.barra-idioma { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 6px 16px; font-size: 13px; color: var(--suave); background: var(--sup-2); }
+.barra-idioma button { border: 0; background: none; color: var(--tinta); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 0; }
+body > .skiptranslate, iframe.skiptranslate, .goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+body { top: 0 !important; }
+.goog-text-highlight { background: none !important; box-shadow: none !important; }
 .a1, .a2, .a3 { font-weight: 850; line-height: 1; }
 .a1 { font-size: 13px; } .a2 { font-size: 16px; } .a3 { font-size: 20px; }
 

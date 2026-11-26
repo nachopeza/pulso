@@ -74,6 +74,8 @@
   const hora = (ms) => fmt({ hour: '2-digit', minute: '2-digit' }).format(ms);
   const fecha = (ms) => fmt({ weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(ms);
   const diaLargo = (ymd) => fmt({ weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${ymd}T12:00:00Z`));
+  // "07:45" de ahora mismo en Madrid, para saber qué va con retraso
+  const ahoraMadrid = () => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', hour12: false }).format(Date.now());
   const hoyMadrid = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(Date.now());
   function dentroDe(ms) {
     const min = Math.round((ms - Date.now()) / 60000);
@@ -94,7 +96,7 @@
     : `<span class="mini" data-cat="${esc(n.categoria)}"></span>`);
   function chip(n) {
     let t = SITUACION[n.situacion] || n.situacion;
-    if (n.situacion === 'programada') t = `Sale ${fecha(n.publicar_en)}`;
+    if (n.situacion === 'programada') t = hoyMadrid() === new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(n.publicar_en) ? `Sale a las ${hora(n.publicar_en)}` : `Sale ${fecha(n.publicar_en)}`;
     return `<span class="situ situ-${esc(n.situacion)}">${esc(t)}</span>`;
   }
   const seccion = (c) => `<span class="sec" data-cat="${esc(c)}">${esc(CATS[c] || 'Sin sección')}</span>`;
@@ -103,7 +105,7 @@
   // ---------- 2. Entrar y salir ----------
 
   function pintarEntrar(error) {
-    $('#barra').hidden = true;
+    document.body.classList.remove('dentro');
     vista.innerHTML = `<div class="entrar">
       <span class="logo">pulso<span class="latido" aria-hidden="true"></span></span>
       <h1>Entra en la redacción</h1>
@@ -141,6 +143,30 @@
   let hashAnterior = location.hash;
   addEventListener('beforeunload', (e) => { if (sucio) e.preventDefault(); });
 
+  // Menú lateral: en el móvil se abre como un cajón desde «Menú»
+  function menu(abrir) {
+    document.body.classList.toggle('menu-abierto', abrir);
+    $('#velo').hidden = !abrir;
+    $('#abrir-menu').setAttribute('aria-expanded', String(abrir));
+    if (abrir) $('#nav a')?.focus();
+  }
+  $('#abrir-menu').addEventListener('click', () => menu(!document.body.classList.contains('menu-abierto')));
+  $('#velo').addEventListener('click', () => menu(false));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('menu-abierto')) menu(false); });
+
+  // Contadores del menú: lo que tienes pendiente en Hoy y en Redes
+  function ponerCuenta(cual, n) {
+    $$(`[data-cuenta="${cual}"]`).forEach((s) => { s.textContent = n > 9 ? '9+' : String(n); s.hidden = !n; });
+  }
+  async function actualizarCuentas() {
+    try {
+      const [e, r] = await Promise.all([api('admin/edicion'), api('admin/redes')]);
+      const t = tareas(e, r);
+      ponerCuenta('hoy', t.length);
+      ponerCuenta('redes', cuentaRedes(r));
+    } catch (err) { /* los contadores no son imprescindibles */ }
+  }
+
   async function navegar() {
     if (!yo) return;
     if (sucio && location.hash !== hashAnterior) {
@@ -151,65 +177,132 @@
       sucio = false;
     }
     hashAnterior = location.hash;
+    menu(false);
     const [, nombre = 'hoy', arg] = location.hash.split('/');
-    $$('#nav a').forEach((a) => a.toggleAttribute('aria-current', a.dataset.ruta === nombre || (nombre === 'editar' || nombre === 'nueva') && a.dataset.ruta === 'noticias'));
-    $$('#nav a[aria-current]').forEach((a) => a.setAttribute('aria-current', 'page'));
+    document.body.dataset.vista = nombre;
+    const activa = (nombre === 'editar' || nombre === 'nueva') ? 'noticias' : nombre;
+    $$('#nav a, #tabbar a').forEach((a) => {
+      if (a.dataset.ruta === activa) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
     const vistas = { hoy: vistaHoy, noticias: vistaNoticias, editar: () => vistaEditor(decodeURIComponent(arg || '')),
       nueva: () => vistaEditor(null), portada: vistaPortada, momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios };
     const f = vistas[nombre] || vistaHoy;
+    vista.onclick = null; vista.oninput = null;   // los que deja puestos la vista anterior
     try {
       await f();
     } catch (e) {
       if (yo) vista.innerHTML = `<div class="vacio"><b>No se ha podido cargar.</b>${esc(e.message)}</div>`;
     }
+    scrollTo(0, 0);
     vista.focus({ preventScroll: true });
   }
   addEventListener('hashchange', navegar);
 
   // ---------- 4. Hoy: la edición del agente ----------
 
+  // Lo que te toca ahora, de más a menos urgente. Sale en Hoy y en el contador del menú.
+  const ENTREGAS = ['06:30', '13:30', '20:30'];   // cuándo suele llegar cada edición del agente
+  function cuentaRedes(r) {
+    if (!r?.piezas) return 0;
+    const porRevisar = puedePublicar() ? r.piezas.filter((p) => p.estado === 'revisar').length : 0;
+    const enX = r.piezas.filter((p) => p.red === 'x' && p.estado === 'aprobada').length;
+    return porRevisar + enX;
+  }
+  function tareas(e, r) {
+    const t = [];
+    const hoy = hoyMadrid(), ya = ahoraMadrid();
+    if (e?.dia && e.autoEn) {
+      const marcadas = e.noticias.filter((n) => n.situacion === 'visible' || n.situacion === 'programada').length;
+      t.push({
+        tipo: 'edicion', cuando: hora(e.autoEn), urgente: e.autoEn - Date.now() < 30 * 60000,
+        titulo: `Revisa la edición ${e.nombre || ''}`.trim(),
+        detalle: `${marcadas} ${marcadas === 1 ? 'noticia sale sola' : 'noticias salen solas'} ${dentroDe(e.autoEn)}${e.sinRevisar ? `. ${e.sinRevisar} sin revisar` : ''}.`,
+        boton: 'Revisar edición', ir: '#edicion'
+      });
+    }
+    if (r?.piezas && r.dia === hoy) {
+      const porRevisar = r.piezas.filter((p) => p.estado === 'revisar');
+      if (porRevisar.length && puedePublicar()) {
+        const primera = porRevisar.map((p) => p.hora).filter(Boolean).sort()[0];
+        t.push({
+          tipo: 'escaleta', cuando: primera || '', urgente: primera && primera <= ya,
+          titulo: 'Confirma la escaleta de redes',
+          detalle: `${porRevisar.length} ${porRevisar.length === 1 ? 'pieza por revisar' : 'piezas por revisar'}. Al confirmar, Bluesky sale solo a su hora.`,
+          boton: 'Ir a la escaleta', ir: '#/redes'
+        });
+      }
+      const enX = r.piezas.filter((p) => p.red === 'x' && p.estado === 'aprobada').sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+      if (enX.length) {
+        const tocan = enX.filter((p) => p.hora && p.hora <= ya).length;
+        t.push({
+          tipo: 'x', cuando: enX[0].hora || '', urgente: tocan > 0,
+          titulo: `Publica en X (${enX.length})`,
+          detalle: tocan ? `${tocan} ${tocan === 1 ? 'ya toca' : 'ya tocan'}. Se comparten con su imagen desde la escaleta.` : `La primera, a las ${enX[0].hora}.`,
+          boton: 'Ver lo que falta', ir: '#/redes'
+        });
+      }
+    }
+    return t.sort((a, b) => (b.urgente - a.urgente) || (a.cuando || '99').localeCompare(b.cuando || '99'));
+  }
+
   async function vistaHoy() {
-    const e = await api('admin/edicion');
+    const [e, r] = await Promise.all([api('admin/edicion'), api('admin/redes').catch(() => null)]);
     const hoy = hoyMadrid();
     const vivas = e.noticias.filter((n) => n.estado !== 'descartada');
     const marcadas = vivas.filter((n) => n.situacion === 'visible' || n.situacion === 'programada');
+    const lista = tareas(e, r);
+    ponerCuenta('hoy', lista.length);
+    if (r) ponerCuenta('redes', cuentaRedes(r));
+    const ya = ahoraMadrid();
+    const proxima = ENTREGAS.find((h) => h > ya);
     let estadoEd = '';
     if (!e.dia) estadoEd = '';
-    else if (e.autoEn) estadoEd = `Se publica sola a las <b>${hora(e.autoEn)}</b> (${dentroDe(e.autoEn)}) si nadie la publica antes.`;
+    else if (e.autoEn) estadoEd = `Sale sola a las <b>${hora(e.autoEn)}</b> (${dentroDe(e.autoEn)}) si nadie la publica antes.`;
     else if (e.yaPublicada) estadoEd = 'Ya está publicada. Puedes seguir quitando, añadiendo o corrigiendo noticias.';
     else estadoEd = 'No hay ninguna noticia marcada para publicar.';
 
     vista.innerHTML = `
       <div class="cabeza">
         <div><h1>Hoy</h1><p>${esc(diaLargo(hoy))}</p></div>
-        <div class="acciones"><a class="btn" href="#/nueva">Escribir una noticia</a></div>
       </div>
+
+      <section class="tareas" aria-labelledby="t-toca">
+        <h2 id="t-toca">${lista.length ? 'Lo que te toca' : 'Todo al día'}</h2>
+        ${lista.length ? `<ol class="lista-tareas">${lista.map((t) => `
+          <li class="tarea tarea-${t.tipo}${t.urgente ? ' urgente' : ''}">
+            <span class="tarea-hora">${esc(t.cuando || '—')}</span>
+            <div class="tarea-txt"><h3>${esc(t.titulo)}</h3><p>${esc(t.detalle)}</p></div>
+            <a class="btn ${t === lista[0] ? 'btn-principal' : ''}" href="${t.ir}" ${t.ir.startsWith('#/') ? '' : `data-bajar="${t.ir}"`}>${esc(t.boton)}</a>
+          </li>`).join('')}</ol>`
+        : `<p class="al-dia">No tienes nada pendiente.${proxima ? ` La próxima edición del agente llega sobre las ${proxima}.` : ' La edición de mañana llega sobre las 6:30.'}</p>`}
+      </section>
+
       ${!e.dia ? `<div class="vacio"><b>Todavía no ha llegado ninguna edición del agente.</b>Llegan tres al día (sobre las 6:30, 13:30 y 20:30) y con cada una te llega un email.</div>` : `
-      <section class="bloque">
-        <div class="cabeza" style="margin-bottom:8px">
+      <section class="bloque" id="edicion">
+        <div class="cabeza cabeza-bloque">
           <div>
             <h2>Edición ${esc(e.nombre || '')} del ${esc(diaLargo(e.dia))}</h2>
+            <p>${estadoEd}</p>
             ${e.dia !== hoy ? '<p class="nota">Es la última que ha llegado. La de hoy suele llegar sobre las 6:30.</p>' : ''}
             ${e.tipo && e.tipo !== 'manana' ? '<p class="nota">Es una actualización: solo trae lo nuevo. Lo demás sigue en la web.</p>' : ''}
           </div>
           ${e.autoEn && puedePublicar() ? `<button class="btn btn-principal" id="publicar-ed" type="button">Publicar ahora (${marcadas.length})</button>` : ''}
         </div>
-        <p>${estadoEd}</p>
         <div class="resumen">
           <div><b>${marcadas.length}</b>para publicar</div>
-          <div><b>${vivas.length}</b>propuestas en total</div>
+          <div><b>${vivas.length}</b>propuestas</div>
           <div><b>${e.sinRevisar}</b>sin revisar</div>
           <div><b>${e.enPortada}</b>en la web ahora</div>
         </div>
-        <p class="nota" style="margin-bottom:12px">El interruptor decide si una noticia sale con la edición. Pulsa el titular para revisarla o corregirla.</p>
+        <p class="nota ayuda-lista">El interruptor decide si una noticia sale con la edición. Toca el titular para revisarla o corregirla.</p>
         <ul class="lista">${e.noticias.map(filaEdicion).join('')}</ul>
-      </section>`}
-      <section class="bloque">
-        <h2>Visitas</h2>
-        <p class="nota">Las estadísticas están en Cloudflare Web Analytics: sin cookies y gratis.</p>
-        <p style="margin-top:10px"><a class="btn" href="https://dash.cloudflare.com/?to=/:account/web-analytics" target="_blank" rel="noopener">Abrir estadísticas</a></p>
-      </section>`;
+      </section>`}`;
 
+    $$('[data-bajar]').forEach((a) => a.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      $(a.dataset.bajar)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
     $$('.lista input[data-id]').forEach((i) => i.addEventListener('change', async () => {
       const n = e.noticias.find((x) => x.id === i.dataset.id);
       i.disabled = true;
@@ -218,7 +311,9 @@
         if (i.checked) accion = e.autoEn ? { accion: 'programar', cuando: e.autoEn } : { accion: 'publicar' };
         else accion = n.situacion === 'visible' ? { accion: 'retirar' } : { accion: 'borrador' };
         await api(`admin/noticias/${encodeURIComponent(n.id)}`, { metodo: 'POST', cuerpo: accion });
+        const y = scrollY;
         await vistaHoy();
+        scrollTo(0, y);
       } catch (err) {
         avisar(err.message, true);
         i.checked = !i.checked;
@@ -884,63 +979,96 @@
     x.fillText('pulso.com.es', 146, H - 80);
     return new Promise((ok) => c.toBlob(ok, 'image/png'));
   }
+  const recorte = (t, n) => { const s = String(t || '').replace(/\s+/g, ' '); return s.length > n ? `${s.slice(0, n - 1)}…` : s; };
   const nombreImagen = (p) => `pulso-${p.noticia || p.id}.png`;
   function descargar(blob, nombre) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
-  // "07:45" de ahora mismo en Madrid, para saber qué va con retraso
-  const ahoraMadrid = () => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', hour12: false }).format(Date.now());
+
+  // Pestañas de la escaleta: lo que queda por hacer va primero
+  const PESTANAS = {
+    hacer: ['Por hacer', (p) => ['revisar', 'cambiar', 'aprobada'].includes(p.estado)],
+    hechas: ['Publicadas', (p) => p.estado === 'publicada'],
+    descartadas: ['Descartadas', (p) => p.estado === 'descartada'],
+    todas: ['Todas', () => true]
+  };
+  let pestana = 'hacer';
 
   async function vistaRedes(diaPedido) {
     const d = await api(`admin/redes${/^\d{4}-\d{2}-\d{2}$/.test(diaPedido || '') ? `?dia=${diaPedido}` : ''}`);
     const pub = puedePublicar();
+    const hoy = hoyMadrid(), esHoy = d.dia === hoy, ya = ahoraMadrid();
+    if (esHoy) ponerCuenta('redes', cuentaRedes(d));
     const cuenta = (e) => d.piezas.filter((p) => p.estado === e).length;
     const esc_ = d.escaleta || {};
-    const tandas = Object.keys(TANDAS).filter((t) => esc_[t] && (esc_[t].resumen || esc_[t].alertas?.length || esc_[t].video || esc_[t].comunidad || esc_[t].ideas));
+    const tandas = Object.keys(TANDAS).filter((t) => esc_[t] && (esc_[t].resumen || esc_[t].video || esc_[t].comunidad || esc_[t].ideas));
+    const alertas = [...new Set(Object.keys(TANDAS).flatMap((t) => esc_[t]?.alertas || []))];
+    const tarde = (p) => d.dia < hoy || (esHoy && p.hora && p.hora <= ya);
+    const enX = d.piezas.filter((p) => p.red === 'x' && p.estado === 'aprobada').sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+    const porRevisar = cuenta('revisar');
+    const visibles = d.piezas.filter(PESTANAS[pestana][1]);
+
+    // Lista de piezas por hora, con una raya en «ahora» si es hoy
+    let raya = !esHoy || pestana === 'hechas' || pestana === 'descartadas';
+    const filas = visibles.map((p) => {
+      let antes = '';
+      if (!raya && p.hora && p.hora > ya) { raya = true; antes = `<li class="ahora" aria-label="Ahora"><span>Ahora, ${ya}</span></li>`; }
+      return antes + pieza(p);
+    }).join('');
+
     vista.innerHTML = `
       <div class="cabeza">
-        <div><h1>Redes</h1><p>La escaleta del community manager: nada sale sin tu aprobación. Lo aprobado de Bluesky sale solo a su hora; X lo publicas tú.</p></div>
-        <div class="acciones">
-          <a class="btn btn-fino" href="#/redes/${sumarDias(d.dia, -1)}" aria-label="Día anterior">←</a>
-          <span class="dia-redes">${esc(diaLargo(d.dia))}</span>
-          <a class="btn btn-fino" href="#/redes/${sumarDias(d.dia, 1)}" aria-label="Día siguiente">→</a>
-          ${d.dia !== hoyMadrid() ? '<a class="btn btn-fino" href="#/redes">Hoy</a>' : ''}
+        <div><h1>Redes</h1><p>Nada sale sin tu visto bueno. Bluesky sale solo a su hora; X lo compartes tú.</p></div>
+        <div class="dia-nav">
+          <a class="btn btn-fino btn-icono" href="#/redes/${sumarDias(d.dia, -1)}" aria-label="Día anterior">←</a>
+          <span class="dia-redes">${esHoy ? 'Hoy, ' : ''}${esc(diaLargo(d.dia))}</span>
+          <a class="btn btn-fino btn-icono" href="#/redes/${sumarDias(d.dia, 1)}" aria-label="Día siguiente">→</a>
+          ${!esHoy ? '<a class="btn btn-fino" href="#/redes">Volver a hoy</a>' : ''}
         </div>
       </div>
       ${!d.piezas.length && !tandas.length ? `<div class="vacio"><b>No hay escaleta para este día.</b>El community manager la prepara cada mañana sobre las 7:15 y añade piezas a las 14:15 y a las 21:15. Te llega un email con cada una.</div>` : `
-      ${pub && cuenta('revisar') ? `<div class="bloque confirmar">
-        <p><b>${cuenta('revisar')} ${cuenta('revisar') === 1 ? 'pieza' : 'piezas'} por revisar.</b> Corrige o descarta lo que no te convenza y confirma el resto de una vez: Bluesky saldrá solo, cada pieza a su hora.</p>
-        <button class="btn btn-principal" type="button" id="confirmar">Confirmar escaleta</button>
-      </div>` : ''}
-      ${!d.bluesky ? '<p class="nota aviso-bluesky">Bluesky todavía no publica solo: falta el secreto BSKY_CLAVE_APP en Cloudflare.</p>' : ''}
-      ${(() => {
-        const faltan = d.piezas.filter((p) => p.red === 'x' && (p.estado === 'aprobada' || p.estado === 'revisar'));
-        if (!faltan.length) return d.piezas.some((p) => p.red === 'x') ? '<div class="bloque faltan-x listo"><b>X: todo publicado.</b></div>' : '';
-        const hoy = d.dia === hoyMadrid(), ya = ahoraMadrid();
-        return `<div class="bloque faltan-x"><h2>Te falta en X: ${faltan.length}</h2><ul>${faltan.map((p) => {
-          const tarde = (hoy && p.hora && p.hora <= ya) || d.dia < hoyMadrid();
-          return `<li class="${tarde ? 'tarde' : ''}"><a href="#pieza-${p.id}" data-ir="${p.id}"><b>${esc(p.hora || '--:--')}</b> ${esc(p.texto.slice(0, 70))}${p.texto.length > 70 ? '…' : ''}</a>${tarde ? ' <span class="nota">ya toca</span>' : ''}${p.estado === 'revisar' ? ' <span class="nota">sin revisar</span>' : ''}</li>`;
-        }).join('')}</ul></div>`;
-      })()}
-      <div class="resumen">
-        <div><b>${cuenta('revisar')}</b>por revisar</div>
-        <div><b>${cuenta('aprobada')}</b>aprobadas</div>
-        <div><b>${cuenta('publicada')}</b>publicadas</div>
-        <div><b>${cuenta('cambiar') + cuenta('descartada')}</b>con cambios o descartadas</div>
+
+      ${alertas.length ? `<div class="alertas" role="note"><b>Ojo hoy</b><ul>${alertas.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+
+      <div class="pasos">
+        ${pub && porRevisar ? `<section class="paso paso-principal">
+          <span class="paso-num">${porRevisar}</span>
+          <div class="paso-txt"><h2>${porRevisar === 1 ? 'Pieza por revisar' : 'Piezas por revisar'}</h2>
+            <p>Corrige o descarta lo que no te convenza y confirma el resto de una vez. Bluesky saldrá solo, cada pieza a su hora.</p></div>
+          <button class="btn btn-principal" type="button" id="confirmar">Confirmar escaleta</button>
+        </section>` : ''}
+        ${enX.length ? `<section class="paso paso-x">
+          <h2>Te falta en X <span class="cuenta">${enX.length}</span></h2>
+          <ul class="faltan">${enX.map((p) => `<li class="${tarde(p) ? 'tarde' : ''}" data-id="${p.id}">
+            <b class="faltan-hora">${esc(p.hora || '--:--')}</b>
+            <a href="#pieza-${p.id}" data-ir="${p.id}">${esc(recorte(p.texto, 80))}</a>
+            ${tarde(p) ? '<span class="nota">ya toca</span>' : ''}
+            <button class="btn btn-fino btn-principal" type="button" data-compartir>Compartir</button>
+          </li>`).join('')}</ul>
+        </section>` : ''}
+        ${!(pub && porRevisar) && !enX.length && d.piezas.length ? `<p class="al-dia">${cuenta('aprobada') ? 'Todo confirmado. Bluesky irá saliendo solo a su hora.' : 'Escaleta al día: no queda nada por hacer.'}</p>` : ''}
+        ${!d.bluesky ? '<p class="nota aviso-bluesky">Bluesky todavía no publica solo: falta el secreto BSKY_CLAVE_APP en Cloudflare.</p>' : ''}
       </div>
-      ${tandas.map((t) => {
-        const x = esc_[t];
-        return `<section class="bloque">
-          <h2>${TANDAS[t]}</h2>
-          ${x.resumen ? `<p class="texto-libre">${esc(x.resumen)}</p>` : ''}
-          ${x.alertas?.length ? `<ul class="alertas">${x.alertas.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
-          ${[['video', 'Vídeo del día'], ['comunidad', 'Comunidad'], ['ideas', 'Ideas para mañana']].filter(([k]) => x[k]).map(([k, tit]) =>
-            `<details class="desplegable"><summary>${tit}</summary><p class="texto-libre">${esc(x[k])}</p></details>`).join('')}
-        </section>`;
-      }).join('')}`}
-      <ul class="piezas" id="piezas">${d.piezas.map(pieza).join('')}</ul>
-      <details class="bloque desplegable" style="margin-top:20px">
+
+      ${tandas.length ? `<details class="bloque notas-cm">
+        <summary><b>Notas del community manager</b> <span class="nota">resumen, vídeo, comunidad e ideas</span></summary>
+        ${tandas.map((t) => {
+          const x = esc_[t];
+          return `<div class="tanda"><h3>${TANDAS[t]}</h3>
+            ${x.resumen ? `<p class="texto-libre">${esc(x.resumen)}</p>` : ''}
+            ${[['video', 'Vídeo del día'], ['comunidad', 'Comunidad'], ['ideas', 'Ideas para mañana']].filter(([k]) => x[k]).map(([k, tit]) =>
+              `<p class="texto-libre"><b>${tit}.</b> ${esc(x[k])}</p>`).join('')}
+          </div>`;
+        }).join('')}
+      </details>` : ''}
+
+      <div class="pestanas" role="group" aria-label="Qué piezas ver">
+        ${Object.entries(PESTANAS).map(([k, [t, f]]) => `<button type="button" data-pestana="${k}" aria-pressed="${k === pestana}">${t} <span>${d.piezas.filter(f).length}</span></button>`).join('')}
+      </div>
+      <ul class="piezas" id="piezas">${filas || `<li class="vacio"><b>${pestana === 'hacer' ? 'Nada por hacer.' : 'No hay ninguna.'}</b>${pestana === 'hacer' ? 'Lo publicado está en «Publicadas».' : ''}</li>`}</ul>`}
+
+      <details class="bloque desplegable anadir">
         <summary>Añadir una pieza a mano</summary>
         <form id="f-pieza" style="margin-top:12px">
           <div class="dos">
@@ -952,77 +1080,103 @@
         </form>
       </details>`;
 
+    // Una pieza: lo importante arriba, UNA acción principal y el resto en «Más»
     function pieza(p) {
-      const n = largo(p.texto, p.red);
-      return `<li class="pieza pieza-${esc(p.estado)}" data-id="${p.id}" id="pieza-${p.id}">
+      const n = largo(p.texto, p.red), lim = LIMITE[p.red];
+      const b = (attrs, txt, clase = '') => `<button class="btn btn-fino ${clase}" type="button" ${attrs}>${txt}</button>`;
+      const m = (attrs, txt, clase = '') => `<button type="button" class="${clase}" ${attrs}>${txt}</button>`;
+      const abrir = componer(p);
+      let principal = '', otras = [], mas = [];
+      const editar = b('data-editar', 'Editar texto');
+      const copiar = m('data-copiar', 'Copiar texto'), imagen = m('data-imagen', 'Descargar imagen');
+      const cambio = p.estado !== 'cambiar' ? m('data-estado="cambiar"', 'Pedir un cambio') : '';
+      const descartar = pub ? m('data-estado="descartada"', 'Descartar', 'peligro') : '';
+      const yaPub = pub ? m('data-estado="publicada"', 'Marcar como publicada') : '';
+      if (p.estado === 'revisar' || p.estado === 'cambiar') {
+        if (pub) principal = b('data-estado="aprobada"', 'Aprobar', 'btn-principal');
+        otras = [editar];
+        mas = [copiar, imagen, cambio, descartar];
+      } else if (p.estado === 'aprobada') {
+        if (p.red === 'x') { principal = b('data-compartir', 'Compartir en X', 'btn-principal'); otras = [pub ? b('data-estado="publicada"', 'Ya está publicada') : '']; mas = [m('data-editar', 'Editar texto'), copiar, imagen, cambio, descartar]; }
+        else if (p.red === 'bluesky' && (p.momento === 'pronto' || p.momento === 'toca')) { otras = [editar]; mas = [abrir ? `<a href="${esc(abrir)}" target="_blank" rel="noopener">Publicar a mano en Bluesky</a>` : '', yaPub, copiar, imagen, cambio, descartar]; }
+        else { principal = abrir ? `<a class="btn btn-fino btn-principal" href="${esc(abrir)}" target="_blank" rel="noopener">Abrir en ${esc(REDES[p.red])}</a>` : b('data-copiar', 'Copiar texto', 'btn-principal'); otras = [pub ? b('data-estado="publicada"', 'Ya está publicada') : '']; mas = [m('data-editar', 'Editar texto'), abrir ? copiar : '', imagen, cambio, descartar]; }
+      } else if (p.estado === 'publicada') {
+        if (p.enlace) otras = [`<a class="btn btn-fino" href="${esc(p.enlace)}" target="_blank" rel="noopener">Ver la publicación</a>`];
+        mas = [copiar, imagen, pub ? m('data-estado="revisar"', 'Volver a revisar') : ''];
+      } else if (p.estado === 'descartada') {
+        if (pub) otras = [b('data-estado="revisar"', 'Recuperar')];
+        mas = [copiar];
+      }
+      mas = mas.filter(Boolean); otras = otras.filter(Boolean);
+      const info = [];
+      if (p.momento) info.push(`<p class="sale-sola sale-${esc(p.momento)}">${{
+        pronto: `Sale sola en Bluesky a las ${esc(p.hora)}.`,
+        toca: 'Sale sola en Bluesky en unos minutos.',
+        tarde: 'Pasó su hora hace más de 2 horas: ya no sale sola. Publícala a mano o cámbiale la hora.',
+        'sin-hora': 'No tiene hora: ponle una para que salga sola.'
+      }[p.momento]}</p>`);
+      if (p.nota) info.push(`<p class="nota-cambio"><b>Cambio pedido:</b> ${esc(p.nota)}</p>`);
+      return `<li class="pieza pieza-${esc(p.estado)}${tarde(p) && p.estado === 'aprobada' && p.red !== 'bluesky' ? ' pieza-tarde' : ''}" data-id="${p.id}" id="pieza-${p.id}">
         <div class="pieza-cab">
           <b class="pieza-hora">${esc(p.hora || '--:--')}</b>
           <span class="red red-${esc(p.red)}">${esc(REDES[p.red])}</span>
-          ${p.serie ? `<span class="nota">${esc(p.serie)}</span>` : ''}
+          ${p.serie ? `<span class="serie">${esc(p.serie)}</span>` : ''}
           <span class="situ situ-pieza-${esc(p.estado)}">${esc(ESTADO_PIEZA[p.estado])}</span>
         </div>
-        ${p.noticia ? `<p class="nota">Noticia: <a href="#/editar/${encodeURIComponent(p.noticia)}">${esc(p.titular_noticia || p.noticia)}</a></p>` : ''}
-        <div class="campo" style="margin:8px 0">
+        <p class="pieza-texto" data-ver>${esc(p.texto)}</p>
+        ${n > lim ? `<p class="contador pasado">${n}/${lim}: se pasa del límite de ${esc(REDES[p.red])}</p>` : ''}
+        <div class="pieza-editor" data-editor hidden>
           <label class="oculto" for="t-${p.id}">Texto</label>
-          <textarea id="t-${p.id}" data-texto rows="${Math.min(10, Math.max(3, Math.ceil(p.texto.length / 70)))}">${esc(p.texto)}</textarea>
-          <span class="contador${n > LIMITE[p.red] ? ' pasado' : ''}" data-contador>${n}/${LIMITE[p.red]}</span>
+          <textarea id="t-${p.id}" data-texto rows="${Math.min(10, Math.max(3, Math.ceil(p.texto.length / 60)))}">${esc(p.texto)}</textarea>
+          <div class="pieza-editor-pie"><span class="contador" data-contador>${n}/${lim}</span>
+            <button class="btn btn-fino" type="button" data-cancelar>Cancelar</button>
+            <button class="btn btn-fino btn-principal" type="button" data-guardar>Guardar texto</button></div>
         </div>
-        ${p.visual || p.alt ? `<details class="desplegable"><summary>Imagen</summary>
-          ${p.visual ? `<p class="texto-libre"><b>Visual:</b> ${esc(p.visual)}</p>` : ''}
+        ${p.noticia ? `<p class="pieza-noticia">Noticia: <a href="#/editar/${encodeURIComponent(p.noticia)}">${esc(p.titular_noticia || p.noticia)}</a></p>` : ''}
+        ${p.visual || p.alt ? `<details class="desplegable"><summary>Imagen sugerida</summary>
+          ${p.visual ? `<p class="texto-libre">${esc(p.visual)}</p>` : ''}
           ${p.alt ? `<p class="texto-libre"><b>Texto alternativo:</b> ${esc(p.alt)} <button class="btn btn-fino" type="button" data-copiar-alt>Copiar</button></p>` : ''}
         </details>` : ''}
-        ${p.momento ? `<p class="nota sale-sola sale-${esc(p.momento)}">${{
-          pronto: `Saldrá sola en Bluesky a las ${esc(p.hora)}.`,
-          toca: 'Sale sola en Bluesky en unos minutos.',
-          tarde: 'Pasó su hora hace más de 2 horas: ya no sale sola. Cambia la hora o publícala a mano.',
-          'sin-hora': 'No tiene hora: ponle una para que salga sola.'
-        }[p.momento]}</p>` : ''}
-        ${p.red === 'x' && p.estado === 'aprobada' ? '<p class="nota">Aprobada: publícala tú con «Abrir en X» y márcala como publicada.</p>' : ''}
-        ${p.nota ? `<p class="nota"><b>Nota:</b> ${esc(p.nota)}</p>` : ''}
-        ${p.enlace ? `<p class="nota"><a href="${esc(p.enlace)}" target="_blank" rel="noopener">Ver la publicación</a></p>` : ''}
-        <div class="acciones">
-          <button class="btn btn-fino" type="button" data-copiar>Copiar texto</button>
-          ${p.red === 'x' && p.estado !== 'publicada' ? '<button class="btn btn-fino btn-principal" type="button" data-compartir>Compartir en X</button>'
-            : componer(p) ? `<a class="btn btn-fino" href="${esc(componer(p))}" target="_blank" rel="noopener">Abrir en ${esc(REDES[p.red])}</a>` : ''}
-          <button class="btn btn-fino" type="button" data-imagen>Descargar imagen</button>
-          ${pub && p.estado !== 'aprobada' && p.estado !== 'publicada' ? '<button class="btn btn-fino" type="button" data-estado="aprobada">Aprobar</button>' : ''}
-          ${pub && p.estado !== 'publicada' ? '<button class="btn btn-fino btn-principal" type="button" data-estado="publicada">Marcar publicada</button>' : ''}
-          ${p.estado !== 'cambiar' && p.estado !== 'publicada' ? '<button class="btn btn-fino" type="button" data-estado="cambiar">Pedir cambio</button>' : ''}
-          ${pub && p.estado !== 'descartada' && p.estado !== 'publicada' ? '<button class="btn btn-fino btn-peligro" type="button" data-estado="descartada">Descartar</button>' : ''}
-          ${pub && (p.estado === 'descartada' || p.estado === 'publicada') ? '<button class="btn btn-fino" type="button" data-estado="revisar">Volver a revisar</button>' : ''}
+        ${info.join('')}
+        <div class="acciones pieza-acciones">
+          ${principal}${otras.join('')}
+          ${mas.length ? `<details class="mas"><summary class="btn btn-fino" aria-label="Más acciones">Más</summary><div class="menu-mas">${mas.join('')}</div></details>` : ''}
         </div>
       </li>`;
     }
 
     // Las tarjetas de X se preparan ya: en el móvil, compartir tiene que ocurrir justo al tocar el botón
     const imagenes = {};
-    d.piezas.filter((p) => p.red === 'x' && p.estado !== 'publicada').forEach((p) => {
-      tarjetaPNG(p).then((b) => { imagenes[p.id] = new File([b], nombreImagen(p), { type: 'image/png' }); }).catch(() => null);
+    enX.concat(d.piezas.filter((p) => p.red === 'x' && p.estado === 'revisar')).forEach((p) => {
+      tarjetaPNG(p).then((bl) => { imagenes[p.id] = new File([bl], nombreImagen(p), { type: 'image/png' }); }).catch(() => null);
     });
+    const repintar = async () => { const y = scrollY; await vistaRedes(d.dia); scrollTo(0, y); };
 
-    const bConfirmar = $('#confirmar');
-    if (bConfirmar) bConfirmar.addEventListener('click', async () => {
-      if (!confirm('Se aprobarán todas las piezas por revisar. Las de Bluesky saldrán solas a su hora. ¿Seguimos?')) return;
-      bConfirmar.disabled = true;
+    $('#confirmar')?.addEventListener('click', async (ev) => {
+      if (!confirm('Se aprueban todas las piezas por revisar. Las de Bluesky saldrán solas a su hora. ¿Seguimos?')) return;
+      ev.target.disabled = true;
       try {
         const r = await api('admin/redes/confirmar', { metodo: 'POST', cuerpo: { dia: d.dia } });
         avisar(`${r.aprobadas} ${r.aprobadas === 1 ? 'pieza aprobada' : 'piezas aprobadas'}${r.bluesky ? '. Bluesky saldrá solo.' : ''}`);
-        await vistaRedes(d.dia);
-      } catch (err) { avisar(err.message, true); bConfirmar.disabled = false; }
+        await repintar();
+      } catch (err) { avisar(err.message, true); ev.target.disabled = false; }
     });
+    $$('[data-pestana]').forEach((bt) => bt.addEventListener('click', () => { pestana = bt.dataset.pestana; repintar(); }));
 
-    vista.querySelectorAll('[data-ir]').forEach((a) => a.addEventListener('click', (e) => {
-      e.preventDefault();
-      const li = $(`#pieza-${a.dataset.ir}`);
-      if (li) { li.scrollIntoView({ behavior: 'smooth', block: 'center' }); li.classList.add('resaltada'); setTimeout(() => li.classList.remove('resaltada'), 1600); }
-    }));
-
-    const lista = $('#piezas');
     const guardar = async (id, cuerpo, msg) => {
       try { await api(`admin/redes/${id}`, { metodo: 'PUT', cuerpo }); if (msg) avisar(msg); return true; }
       catch (e) { avisar(e.message, true); return false; }
     };
-    lista.addEventListener('input', (e) => {
+    const copiar = async (t, msg) => {
+      try { await navigator.clipboard.writeText(t); avisar(msg); } catch (err) { prompt('Copia el texto:', t); }
+    };
+    const irA = (id) => {
+      let li = $(`#pieza-${id}`);
+      if (!li && pestana !== 'todas') { pestana = 'todas'; return repintar().then(() => irA(id)); }
+      if (li) { li.scrollIntoView({ behavior: 'smooth', block: 'center' }); li.classList.add('resaltada'); setTimeout(() => li.classList.remove('resaltada'), 1600); }
+    };
+
+    vista.oninput = (e) => {
       if (!e.target.matches('[data-texto]')) return;
       const li = e.target.closest('.pieza');
       const red = d.piezas.find((p) => p.id === Number(li.dataset.id)).red;
@@ -1030,27 +1184,39 @@
       const c = $('[data-contador]', li);
       c.textContent = `${n}/${LIMITE[red]}`;
       c.classList.toggle('pasado', n > LIMITE[red]);
-    });
-    lista.addEventListener('change', async (e) => {
-      if (!e.target.matches('[data-texto]')) return;
-      const id = Number(e.target.closest('.pieza').dataset.id);
-      if (await guardar(id, { texto: e.target.value }, 'Texto guardado')) d.piezas.find((p) => p.id === id).texto = e.target.value.trim();
-    });
-    lista.addEventListener('click', async (e) => {
-      const li = e.target.closest('.pieza');
+    };
+    vista.onclick = async (e) => {
+      if (e.target.closest('[data-ir]')) { e.preventDefault(); return irA(e.target.closest('[data-ir]').dataset.ir); }
+      const li = e.target.closest('[data-id]');
       if (!li) return;
       const p = d.piezas.find((x) => x.id === Number(li.dataset.id));
-      const copiar = async (t, msg) => {
-        try { await navigator.clipboard.writeText(t); avisar(msg); } catch (err) { prompt('Copia el texto:', t); }
-      };
-      if (e.target.closest('[data-copiar]')) return copiar($('[data-texto]', li).value, 'Texto copiado');
+      if (!p) return;
+      const menuMas = e.target.closest('details.mas');
+      if (menuMas && !e.target.closest('summary')) menuMas.open = false;
+      const tarjeta = $(`#pieza-${p.id}`);
+      if (e.target.closest('[data-editar]')) {
+        $('[data-ver]', tarjeta).hidden = true; $('[data-editor]', tarjeta).hidden = false;
+        const t = $('[data-texto]', tarjeta); t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+        return;
+      }
+      if (e.target.closest('[data-cancelar]')) {
+        $('[data-texto]', tarjeta).value = p.texto;
+        $('[data-ver]', tarjeta).hidden = false; $('[data-editor]', tarjeta).hidden = true;
+        return;
+      }
+      if (e.target.closest('[data-guardar]')) {
+        const nuevo = $('[data-texto]', tarjeta).value;
+        if (await guardar(p.id, { texto: nuevo }, 'Texto guardado')) { p.texto = nuevo.trim(); await repintar(); }
+        return;
+      }
+      if (e.target.closest('[data-copiar]')) return copiar(p.texto, 'Texto copiado');
       if (e.target.closest('[data-copiar-alt]')) return copiar(p.alt, 'Texto alternativo copiado');
       if (e.target.closest('[data-imagen]')) {
         try { descargar(await tarjetaPNG(p), nombreImagen(p)); avisar('Imagen descargada'); } catch (err) { avisar('No se ha podido crear la imagen', true); }
         return;
       }
       if (e.target.closest('[data-compartir]')) {
-        const texto = $('[data-texto]', li).value;
+        const texto = p.texto;
         let compartida = false;
         try {
           const archivo = imagenes[p.id] || new File([await tarjetaPNG(p)], nombreImagen(p), { type: 'image/png' });
@@ -1070,15 +1236,15 @@
           window.open(`https://x.com/intent/post?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
           compartida = true;
         }
-        if (compartida) setTimeout(async () => {
+        if (compartida && pub) setTimeout(async () => {
           if (!confirm('¿La has publicado en X? La marco como publicada.')) return;
-          if (await guardar(p.id, { estado: 'publicada' }, 'Marcada como publicada')) await vistaRedes(d.dia);
+          if (await guardar(p.id, { estado: 'publicada' }, 'Marcada como publicada')) await repintar();
         }, 800);
         return;
       }
-      const b = e.target.closest('[data-estado]');
-      if (!b) return;
-      const estado = b.dataset.estado;
+      const bt = e.target.closest('[data-estado]');
+      if (!bt) return;
+      const estado = bt.dataset.estado;
       const cuerpo = { estado };
       if (estado === 'cambiar') {
         const nota = prompt('¿Qué hay que cambiar?', p.nota || '');
@@ -1091,19 +1257,25 @@
         if (enlace === null) return;
         cuerpo.enlace = enlace;
       }
-      b.disabled = true;
-      if (await guardar(p.id, cuerpo, ESTADO_PIEZA[estado] || 'Guardado')) await vistaRedes(d.dia);
-      else b.disabled = false;
-    });
+      if (estado === 'descartada' && !confirm('¿Descartar esta pieza? Podrás recuperarla en «Descartadas».')) return;
+      bt.disabled = true;
+      if (await guardar(p.id, cuerpo, ESTADO_PIEZA[estado] || 'Guardado')) await repintar();
+      else bt.disabled = false;
+    };
     $('#f-pieza').addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
         await api('admin/redes', { metodo: 'POST', cuerpo: { dia: d.dia, red: $('#p-red').value, hora: $('#p-hora').value, texto: $('#p-texto').value } });
         avisar('Pieza añadida');
-        await vistaRedes(d.dia);
+        await repintar();
       } catch (err) { avisar(err.message, true); }
     });
   }
+
+  // Los menús «Más» se cierran al tocar fuera o al abrir otro
+  document.addEventListener('click', (e) => {
+    $$('details.mas[open]').forEach((m) => { if (!m.contains(e.target)) m.open = false; });
+  });
 
   // ---------- 10. Usuarios ----------
 
@@ -1158,8 +1330,11 @@
     }
     try { ({ usuario: yo } = await api('admin/yo')); }
     catch (e) { if (!yo && !$('.entrar')) pintarEntrar(); return; }
-    $('#barra').hidden = false;
+    document.body.classList.add('dentro');
     $$('[data-solo="admin"]').forEach((a) => { a.hidden = yo.rol !== 'admin'; });
+    $('#yo-nombre').textContent = yo.nombre || yo.email;
+    $('#yo-rol').textContent = ROLES[yo.rol] || '';
+    actualizarCuentas();
     if (!location.hash) history.replaceState(null, '', '#/hoy');
     hashAnterior = location.hash;
     navegar();

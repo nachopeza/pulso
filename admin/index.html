@@ -10,24 +10,56 @@
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <!-- Panel de redacción de pulso. Todo lo pinta admin.js según la dirección (#/hoy, #/noticias…) -->
-  <header class="barra" id="barra" hidden>
-    <a class="marca" href="#/hoy"><span class="logo">pulso<span class="latido" aria-hidden="true"></span></span><span class="seccion-panel">Redacción</span></a>
-    <nav class="nav" id="nav" aria-label="Secciones del panel">
-      <a href="#/hoy" data-ruta="hoy">Hoy</a>
-      <a href="#/noticias" data-ruta="noticias">Noticias</a>
-      <a href="#/portada" data-ruta="portada">Portada</a>
-      <a href="#/momentos" data-ruta="momentos">Momentos</a>
-      <a href="#/redes" data-ruta="redes">Redes</a>
-      <a href="#/usuarios" data-ruta="usuarios" data-solo="admin">Usuarios</a>
-    </nav>
-    <div class="quien">
-      <a class="btn btn-fino" href="/" target="_blank" rel="noopener">Ver la web</a>
-      <button type="button" class="btn btn-fino" id="salir">Salir</button>
-    </div>
+  <!-- Panel de redacción de pulso. Todo lo pinta admin.js según la dirección (#/hoy, #/noticias…).
+       Ordenador: menú lateral fijo. Móvil: barra de abajo con lo diario; el menú lateral se abre con «Menú». -->
+
+  <!-- Cabecera solo del móvil -->
+  <header class="cab-movil">
+    <a class="marca" href="#/hoy"><span class="logo">pulso<span class="latido" aria-hidden="true"></span></span></a>
+    <a class="btn btn-fino btn-principal" href="#/nueva">Escribir</a>
   </header>
 
+  <!-- Menú lateral, agrupado por lo que haces -->
+  <aside class="lado" id="lado" aria-label="Menú del panel">
+    <a class="marca" href="#/hoy"><span class="logo">pulso<span class="latido" aria-hidden="true"></span></span><span class="seccion-panel">Redacción</span></a>
+    <a class="btn btn-principal escribir" href="#/nueva">Escribir una noticia</a>
+    <nav class="nav" id="nav">
+      <a href="#/hoy" data-ruta="hoy"><span>Hoy</span><span class="cuenta" data-cuenta="hoy" hidden></span></a>
+      <p class="grupo">Noticias</p>
+      <a href="#/noticias" data-ruta="noticias"><span>Todas las noticias</span></a>
+      <a href="#/portada" data-ruta="portada"><span>Orden de la portada</span></a>
+      <a href="#/momentos" data-ruta="momentos"><span>Mañana, tarde y noche</span></a>
+      <p class="grupo">Redes sociales</p>
+      <a href="#/redes" data-ruta="redes"><span>Escaleta del día</span><span class="cuenta" data-cuenta="redes" hidden></span></a>
+      <p class="grupo" data-solo="admin">Equipo</p>
+      <a href="#/usuarios" data-ruta="usuarios" data-solo="admin"><span>Quién entra al panel</span></a>
+    </nav>
+    <div class="lado-pie">
+      <a href="/" target="_blank" rel="noopener">Ver la web</a>
+      <a href="https://dash.cloudflare.com/?to=/:account/web-analytics" target="_blank" rel="noopener">Visitas (Cloudflare)</a>
+      <div class="yo"><span><b id="yo-nombre"></b><small id="yo-rol"></small></span>
+        <button type="button" class="btn btn-fino" id="salir">Salir</button></div>
+    </div>
+  </aside>
+  <div class="velo" id="velo" hidden></div>
+
   <main id="vista" tabindex="-1"><p class="cargando">Cargando…</p></main>
+
+  <!-- Barra de abajo en el móvil -->
+  <nav class="tabbar" id="tabbar" aria-label="Lo de cada día">
+    <a href="#/hoy" data-ruta="hoy">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+      <span>Hoy</span><span class="cuenta" data-cuenta="hoy" hidden></span></a>
+    <a href="#/noticias" data-ruta="noticias">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>
+      <span>Noticias</span></a>
+    <a href="#/redes" data-ruta="redes">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5 21 3Z"/></svg>
+      <span>Redes</span><span class="cuenta" data-cuenta="redes" hidden></span></a>
+    <button type="button" id="abrir-menu" aria-controls="lado" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <span>Menú</span></button>
+  </nav>
 
   <div class="avisos" id="avisos" role="status" aria-live="polite"></div>
 

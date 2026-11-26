@@ -15,10 +15,12 @@ jobs:
     steps:
       - name: Publicar lo que toca
         env:
-          CLAVE: ${{ secrets.PULSO_AGENTE_KEY }}
+          # REDES_KEY: clave propia del aviso (la misma que el secreto REDES_KEY de Cloudflare).
+          # Si no está, prueba con PULSO_AGENTE_KEY (la de los agentes).
+          CLAVE: ${{ secrets.REDES_KEY || secrets.PULSO_AGENTE_KEY }}
         run: |
           if [ -z "$CLAVE" ]; then
-            echo "::warning::Falta el secreto PULSO_AGENTE_KEY en GitHub: no se publica nada"
+            echo "::warning::Falta el secreto REDES_KEY en GitHub: no se publica nada"
             exit 0
           fi
           curl -sS --fail-with-body --max-time 60 -X POST \

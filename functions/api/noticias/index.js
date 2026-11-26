@@ -25,6 +25,14 @@ export async function onRequestGet({ env }) {
       fecha: d.fecha || isoMadrid(f.publicar_en) };
   });
   const ids = new Set(noticias.map((n) => n.id));
+  // Cuántos comentarios tiene cada una (para el botón «Comentar»)
+  if (noticias.length) {
+    const { results: cuentas } = await env.DB.prepare(
+      `SELECT noticia, count(*) AS n FROM comentarios WHERE estado = 'visible' AND noticia IN (${noticias.map(() => '?').join(',')}) GROUP BY noticia`
+    ).bind(...noticias.map((n) => n.id)).all();
+    const porId = Object.fromEntries(cuentas.map((c) => [c.noticia, c.n]));
+    for (const n of noticias) n.comentarios = porId[n.id] || 0;
+  }
 
   const mom = await env.DB.prepare('SELECT * FROM momentos WHERE desde <= ? ORDER BY desde DESC LIMIT 1').bind(ahora).first();
   let momentos = null;

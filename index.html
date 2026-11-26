@@ -65,9 +65,12 @@
       </div>
 
       <div class="top-der">
-        <!-- Atajos (solo en pantallas anchas; en el móvil están dentro del menú) -->
-        <button type="button" class="btn-top" data-abrir-menu="buscar" aria-label="Buscar noticias">
+        <!-- Atajos. En el móvil solo se ven buscar y la cuenta; lo demás está en el menú -->
+        <button type="button" class="btn-top btn-buscar" data-abrir-menu="buscar" aria-label="Buscar noticias">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        </button>
+        <button type="button" class="btn-top btn-cuenta" id="btn-cuenta" data-cuenta aria-label="Tu cuenta: iniciar sesión o registrarte">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.2-3.8 4.2-5.6 7.5-5.6s6.3 1.8 7.5 5.6"/></svg>
         </button>
         <button type="button" class="btn-top" data-abrir-menu="lectura" aria-label="Idioma, tema y tamaño de letra">
           <span aria-hidden="true">Aa</span>

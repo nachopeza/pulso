@@ -3,6 +3,7 @@
 // Ajustes que se pueden tocar desde aquí:
 //   cita    → la cuenta atrás de la cabecera (elecciones, un partido, lo que toque)
 //   banners → la publicidad de la web (de momento, solo en el ordenador)
+//   comentarios → abrir/cerrar los comentarios y una pausa con fechas (jornada de reflexión)
 import { json, fallo, leerJSON, puede, CATEGORIAS, aleatorio } from '../../../../servidor/comun.js';
 
 const txt = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -26,6 +27,17 @@ const LIMPIAR = {
     if (!c.antes) errores.push('Falta el texto de la cuenta atrás (por ejemplo «para el 29N»).');
     if (!c.hasta) c.hasta = c.fecha;
     if (c.fecha && c.hasta < c.fecha) errores.push('«Visible hasta» no puede ser antes de la fecha.');
+    return { valor: c, errores };
+  },
+  comentarios(v) {
+    const c = { activo: v?.activo !== false };
+    const errores = [];
+    if (v?.pausa && (v.pausa.desde || v.pausa.hasta)) {
+      const desde = txt(v.pausa.desde, 40);
+      const hasta = txt(v.pausa.hasta, 40);
+      if (Number.isNaN(Date.parse(desde)) || Number.isNaN(Date.parse(hasta)) || Date.parse(hasta) <= Date.parse(desde)) errores.push('Las fechas de la pausa no son válidas.');
+      c.pausa = { desde, hasta, motivo: txt(v.pausa.motivo, 160) };
+    }
     return { valor: c, errores };
   },
   banners(v) {

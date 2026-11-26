@@ -111,12 +111,23 @@ export const COOKIE_LECTOR = '__Host-pulso-lector';
 export const huellaCodigo = (email, codigo) => huella(`${email}:${codigo}`);
 export const DURA_LECTOR = 365 * 24 * 60 * 60 * 1000; // un año
 export const cookieLector = (valor, ms) => `${COOKIE_LECTOR}=${valor}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(ms / 1000)}`;
+// Comentarios: abiertos salvo en la pausa (por ejemplo, la jornada de reflexión). Ajuste «comentarios»:
+// { activo: true, pausa: { desde: ISO, hasta: ISO, motivo } }. Sin ajuste, abiertos.
+export async function estadoComentarios(env, ahora = Date.now()) {
+  const f = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'comentarios'").first();
+  const c = f?.valor ? JSON.parse(f.valor) : { activo: true };
+  if (c.activo === false) return { abiertos: false, motivo: 'Los comentarios están cerrados de momento.' };
+  const p = c.pausa;
+  if (p && ahora >= Date.parse(p.desde) && ahora < Date.parse(p.hasta)) return { abiertos: false, motivo: p.motivo || 'Los comentarios están en pausa.' };
+  return { abiertos: true, motivo: '' };
+}
+
 // Quién es el lector de esta petición (null si no ha entrado)
 export async function lectorDe(request, env) {
   const s = leerCookie(request, COOKIE_LECTOR);
   if (!s) return null;
   return env.DB.prepare(
-    `SELECT l.email FROM sesiones s JOIN lectores l ON l.email = s.email
+    `SELECT l.email, l.nombre FROM sesiones s JOIN lectores l ON l.email = s.email
      WHERE s.huella = ? AND s.para = 'lector' AND s.expira > ?`
   ).bind(await huella(s), Date.now()).first();
 }

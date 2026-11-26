@@ -973,7 +973,11 @@ body { top: 0 !important; }
 @media (max-width: 760px) {
   /* En el móvil la cabecera se queda en lo esencial: menú, logo y cuenta atrás.
      Buscar, lectura y el modo Flash/Lista están en el menú lateral. */
-  .top-der { display: none; }
+  /* En el móvil, de los atajos solo quedan buscar y la cuenta */
+  .top-der { gap: 0; }
+  .top-der > :not(.btn-buscar):not(.btn-cuenta) { display: none; }
+  .btn-top { width: 40px; height: 40px; }
+  .cuenta span { display: none; }
   .top-fila { gap: 6px; min-height: 54px; }
   .logo { font-size: 25px; }
   /* En el móvil la cuenta atrás va a la derecha, en una sola línea */
@@ -1090,3 +1094,37 @@ body { top: 0 !important; }
 .pie-flash-secciones { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .pie-flash-secciones button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--tinta); font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; }
 .pie-flash-secciones i { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
+
+/* Icono de cuenta de la cabecera: con sesión iniciada lleva el punto amarillo de pulso */
+.btn-cuenta { position: relative; }
+.btn-cuenta.dentro::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--marca); box-shadow: 0 0 0 2px var(--bg); }
+
+/* ---------- 15. Comentarios ---------- */
+.btn-com { position: relative; }
+.com-num { position: absolute; top: -4px; right: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--oscuro); color: #fff; font-size: 11px; font-weight: 800; line-height: 19px; text-align: center; }
+.comentarios { display: grid; gap: 14px; scroll-margin-top: 80px; }
+.com-cuerpo { display: grid; gap: 18px; }
+.com-aviso { display: grid; gap: 12px; padding: 16px; border-radius: var(--r-m); background: var(--sup); font-size: 15.5px; line-height: 1.45; }
+.com-botones { display: flex; flex-wrap: wrap; gap: 10px; }
+.f-txt .com-aviso .btn.lleno, .form-comentar .btn.lleno { background: var(--marca); color: var(--oscuro); border-color: var(--marca); }
+.form-comentar { display: grid; gap: 10px; }
+.form-comentar label { font-weight: 650; }
+.form-comentar input, .form-comentar textarea { width: 100%; padding: 12px 14px; border-radius: var(--r-m); border: 1.5px solid var(--linea); background: var(--bg); color: var(--tinta); font: inherit; font-size: 16px; line-height: 1.45; }
+.form-comentar textarea { resize: vertical; min-height: 96px; }
+.form-comentar input:focus-visible, .form-comentar textarea:focus-visible { outline: 2px solid var(--tinta); outline-offset: 2px; }
+.com-pie { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.com-cuenta { font-size: 13px; color: var(--suave); font-variant-numeric: tabular-nums; }
+.com-normas { font-size: 13px; color: var(--suave); line-height: 1.45; }
+.com-lista { display: grid; }
+.com { padding: 14px 0; border-top: 1px solid var(--linea); display: grid; gap: 6px; }
+.com-cab { display: flex; align-items: baseline; gap: 10px; font-size: 14px; }
+.com-cab b { font-weight: 800; color: var(--tinta); }
+.com-cab span { color: var(--suave); font-size: 13px; }
+.com-txt { font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.com-acc { font-size: 13px; color: var(--suave); }
+.com-vacio { color: var(--suave); font-size: 15px; }
+/* En la noticia abierta: Comentar · Guardar · Compartir, siempre en una fila */
+.f-txt .acciones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.f-txt .acciones .btn { justify-content: center; padding: 0 10px; min-width: 0; }
+.f-txt .acciones .btn span { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 380px) { .f-txt .acciones .btn svg { display: none; } }

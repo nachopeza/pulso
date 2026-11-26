@@ -423,3 +423,5 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--marca); out
 .banner-img { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .banner-img img { max-width: 100%; max-height: 120px; border-radius: var(--r-s); border: 1px solid var(--linea); }
 .banner-img span { color: var(--suave); font-size: 14px; }
+.com-texto { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.com-botones-panel { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }

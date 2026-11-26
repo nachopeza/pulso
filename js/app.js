@@ -124,6 +124,7 @@
   const ICONO_ABAJO = svg('<path d="M6 9l6 6 6-6"/>');
   const ICONO_X = svg('<path d="M6 6l12 12M18 6L6 18"/>');
   const ICONO_GUARDAR = svg('<path d="M6 3.5h12v17l-6-4.2-6 4.2z"/>');
+  const ICONO_COMENTAR = svg('<path d="M4 5.5h16v10.5h-9.5L6 20v-4H4z"/>');
   const ICONO_COMPARTIR = svg('<path d="M12 3v12M7 8l5-5 5 5M5 13v6.5h14V13"/>');
   const ICONO_FUENTES = svg('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>');
   const ICONO_COMPARA = svg('<path d="M4 6h16M4 12h10M4 18h13"/>');
@@ -234,6 +235,13 @@
       ? `<button type="button" class="btn icono" data-guardar="${esc(n.id)}" data-icono aria-pressed="${g}" aria-label="${txt}">${ICONO_GUARDAR}</button>`
       : `<button type="button" class="btn" data-guardar="${esc(n.id)}" aria-pressed="${g}">${ICONO_GUARDAR}<span>${txt}</span></button>`;
   };
+  // Comentar: lleva a los comentarios de la noticia (con cuántos hay)
+  const botonComentar = (n, soloIcono) => {
+    const k = n.comentarios || 0;
+    return soloIcono
+      ? `<button type="button" class="btn icono btn-com" data-comentar="${esc(n.id)}" aria-label="Comentar${k ? ` (${k} comentarios)` : ''}">${ICONO_COMENTAR}${k ? `<b class="com-num">${k > 99 ? '99+' : k}</b>` : ''}</button>`
+      : `<button type="button" class="btn" data-comentar="${esc(n.id)}">${ICONO_COMENTAR}<span>Comentar${k ? ` (${k})` : ''}</span></button>`;
+  };
   const botonCompartir = (n, soloIcono) => soloIcono
     ? `<button type="button" class="btn icono" data-compartir="${esc(n.id)}" aria-label="Compartir">${ICONO_COMPARTIR}</button>`
     : `<button type="button" class="btn" data-compartir="${esc(n.id)}">${ICONO_COMPARTIR}<span>Compartir</span></button>`;
@@ -279,6 +287,7 @@
           ${n.fuentes?.length ? `<p class="fuentes">Con información de ${fuentesHTML(n)}</p>` : ''}
           <div class="acciones">
             <button type="button" class="btn lleno" data-abrir="${esc(n.id)}">${n.titulares?.length ? 'Cómo lo titulan' : 'Leer más'}</button>
+            ${botonComentar(n, true)}
             ${botonGuardar(n, true)}
             ${botonCompartir(n, true)}
           </div>
@@ -593,9 +602,14 @@
         ${fuentes ? `<h3>Fuentes</h3><ul class="lista-fuentes">${fuentes}</ul>` : ''}
         <p class="firma">Redactado por pulso a partir de las fuentes citadas. Publicado el ${esc(fecha)}.${n.ejemplo ? ' Contenido de ejemplo.' : ''}</p>`}
         <div class="acciones">
+          ${botonComentar(n)}
           ${botonGuardar(n)}
           ${botonCompartir(n)}
         </div>
+        ${bloqueada(n) ? '' : `<section class="comentarios" id="comentarios" data-noticia="${esc(n.id)}" aria-labelledby="com-titulo">
+          <h3 id="com-titulo">Comentarios</h3>
+          <div class="com-cuerpo"><p class="com-vacio">Cargando…</p></div>
+        </section>`}
         ${relacionadas ? `<h3>Más de ${CATS[c]}</h3><div class="items">${relacionadas}</div>` : ''}
       </div>`;
   }
@@ -1012,6 +1026,7 @@
       ficha.querySelector('.cerrar').focus({ focusVisible: conTeclado });
     }
     ficha.scrollTop = 0;
+    if (fichaCuerpo.querySelector('#comentarios')) cargarComentarios(n.id);
   }
   function abrir(id) {
     if (location.hash === `#${id}`) abrirDesdeHash();
@@ -1201,6 +1216,12 @@
       salirCuenta();
     } else if ('borrarCuenta' in d) {
       borrarCuenta();
+    } else if (d.comentar) {
+      irAComentarios(d.comentar);
+    } else if (d.borrarCom) {
+      borrarComentario(d.borrarCom);
+    } else if (d.denunciar) {
+      denunciarComentario(d.denunciar, t);
     } else if (d.guardar) {
       guardar(d.guardar, t);
     } else if (d.compartir) {
@@ -1366,6 +1387,123 @@
     } else borrarCookieTraductor();
   })();
 
+  // ---------- 13. Comentarios ----------
+  // Los escriben lectores con cuenta y salen al momento. Se pueden denunciar (con 3 denuncias se
+  // ocultan hasta que la redacción los revisa) y cada cual puede borrar los suyos.
+  let comentariosAbiertos = null; // id de la noticia cuyos comentarios están pintados
+  let irAComentariosDe = null;
+
+  function irAComentarios(id) {
+    const enFicha = ficha.open && decodeURIComponent(location.hash.slice(1)) === id;
+    if (enFicha) { bajarAComentarios(); return; }
+    irAComentariosDe = id;
+    abrir(id);
+  }
+  function bajarAComentarios() {
+    const sec = $('#comentarios');
+    if (!sec) return;
+    sec.scrollIntoView({ behavior: suave, block: 'start' });
+  }
+  const fechaCom = (ms) => hace(new Date(ms).toISOString());
+  function comentarioHTML(c) {
+    const acc = c.mio
+      ? `<button type="button" class="enlace-txt" data-borrar-com="${c.id}">Borrar</button>`
+      : estado.lector
+        ? (c.denunciado ? '<span>Denunciado</span>' : `<button type="button" class="enlace-txt" data-denunciar="${c.id}">Denunciar</button>`)
+        : '';
+    return `<article class="com" id="com-${c.id}">
+        <p class="com-cab"><b class="notranslate" translate="no">${esc(c.nombre)}</b><span>${esc(fechaCom(c.creado))}</span></p>
+        <p class="com-txt">${esc(c.texto).replace(/\n/g, '<br>')}</p>
+        ${acc ? `<p class="com-acc">${acc}</p>` : ''}
+      </article>`;
+  }
+  function formComentarHTML(r, id) {
+    if (!r.abiertos) return `<p class="com-aviso">${esc(r.motivo)}</p>`;
+    if (!estado.lector) {
+      return `<div class="com-aviso">
+          <p>Para comentar necesitas una cuenta. Es gratis.</p>
+          <p class="com-botones"><button type="button" class="btn lleno" data-cuenta="${esc(id)}" data-modo="entrar">Iniciar sesión</button>
+          <button type="button" class="btn" data-cuenta="${esc(id)}" data-modo="crear">Crear cuenta</button></p>
+        </div>`;
+    }
+    return `<form id="form-comentar" class="form-comentar" data-noticia="${esc(id)}" novalidate>
+        ${r.nombre ? '' : `<label for="com-nombre">Tu nombre público</label>
+          <input type="text" id="com-nombre" maxlength="30" autocomplete="nickname" placeholder="Cómo quieres que te vean (tu email nunca se enseña)">`}
+        <label for="com-texto" class="oculto">Tu comentario</label>
+        <textarea id="com-texto" maxlength="800" rows="3" placeholder="${r.nombre ? `Comenta como ${esc(r.nombre)}…` : '¿Qué opinas?'}"></textarea>
+        <div class="com-pie"><span id="com-cuenta" class="com-cuenta">0/800</span><button type="submit" class="btn lleno">Publicar</button></div>
+        <p class="com-normas">Con respeto: sin insultos, sin datos personales y sin spam. Lo que no cumpla, se borra.</p>
+        <p id="com-msg" class="cuenta-msg" role="status" aria-live="polite"></p>
+      </form>`;
+  }
+  async function cargarComentarios(id) {
+    comentariosAbiertos = id;
+    const sec = $('#comentarios');
+    try {
+      const r = await (await fetch(`/api/comentarios?noticia=${encodeURIComponent(id)}`, { credentials: 'same-origin' })).json();
+      if (comentariosAbiertos !== id || !sec.isConnected) return;
+      sec.querySelector('#com-titulo').textContent = r.comentarios.length ? `Comentarios (${r.comentarios.length})` : 'Comentarios';
+      sec.querySelector('.com-cuerpo').innerHTML = formComentarHTML(r, id)
+        + `<div class="com-lista">${r.comentarios.map(comentarioHTML).join('') || '<p class="com-vacio">Todavía no hay comentarios. Abre tú la conversación.</p>'}</div>`;
+      ponerCuentaComentarios(id, r.comentarios.length);
+    } catch (e) {
+      sec.querySelector('.com-cuerpo').innerHTML = '<p class="com-vacio">No se han podido cargar los comentarios.</p>';
+    }
+    if (irAComentariosDe === id) {
+      irAComentariosDe = null;
+      bajarAComentarios();
+      if (conTeclado) $('#com-texto')?.focus({ preventScroll: true });
+    }
+  }
+  // Actualiza el número en los botones «Comentar» de esa noticia
+  function ponerCuentaComentarios(id, k) {
+    const n = buscar(id);
+    if (n) n.comentarios = k;
+    if (!n) return;
+    document.querySelectorAll(`[data-comentar="${CSS.escape(id)}"]`).forEach((b) => {
+      const solo = b.classList.contains('icono');
+      b.outerHTML = botonComentar(n, solo);
+    });
+  }
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'com-texto') $('#com-cuenta').textContent = `${e.target.value.length}/800`;
+  });
+  document.addEventListener('submit', async (e) => {
+    if (e.target.id !== 'form-comentar') return;
+    e.preventDefault();
+    const form = e.target;
+    const id = form.dataset.noticia;
+    const texto = $('#com-texto').value.trim();
+    const nombre = $('#com-nombre')?.value.trim();
+    const msg = $('#com-msg');
+    if (texto.length < 2) { msg.textContent = 'Escribe algo antes de publicar.'; $('#com-texto').focus(); return; }
+    if ($('#com-nombre') && (!nombre || nombre.length < 2)) { msg.textContent = 'Elige un nombre público (2 a 30 letras).'; $('#com-nombre').focus(); return; }
+    const boton = form.querySelector('button[type=submit]');
+    boton.disabled = true;
+    msg.textContent = 'Publicando…';
+    try {
+      await pedirJSON('/api/lector/comentarios', 'POST', { noticia: id, texto, nombre });
+      await cargarComentarios(id);
+      avisar('Comentario publicado');
+    } catch (err) { msg.textContent = err.message; boton.disabled = false; }
+  });
+  async function borrarComentario(cid) {
+    if (!confirm('¿Borrar tu comentario?')) return;
+    try {
+      await pedirJSON(`/api/lector/comentarios/${cid}`, 'DELETE');
+      if (comentariosAbiertos) await cargarComentarios(comentariosAbiertos);
+      avisar('Comentario borrado');
+    } catch (e) { avisar(e.message); }
+  }
+  async function denunciarComentario(cid, boton) {
+    if (!confirm('¿Denunciar este comentario? La redacción lo revisará.')) return;
+    try {
+      await pedirJSON(`/api/lector/comentarios/${cid}`, 'POST', { denunciar: true });
+      boton.outerHTML = '<span>Denunciado</span>';
+      avisar('Gracias. Lo revisaremos');
+    } catch (e) { avisar(e.message); }
+  }
+
   // ---------- 12. Cuenta de lector y límite de lectura ----------
   // La cuenta es gratis y sin contraseña: se entra con un enlace que llega al email.
   // Sirve para guardar noticias en todos los dispositivos y leer sin límite.
@@ -1525,7 +1663,10 @@
         ponerLector(r.lector);
         await arrancarCuenta();
         const volver = form.dataset.volver;
-        cerrarFicha();
+        // Cerrar sin animación y volver al inicio: en el iPhone, el teclado desplaza la página
+        // y al cerrar la ventana se quedaba la pantalla corrida (en blanco)
+        if (ficha.open) ficha.close();
+        irAlInicio();
         avisar('¡Dentro! Ya puedes leer sin límite');
         if (volver) setTimeout(() => abrir(volver), 300);
       } catch (err) { msg().textContent = err.message; boton.disabled = false; $('#cuenta-codigo').select(); }
@@ -1559,6 +1700,16 @@
     if (cifras.length === 6) e.target.form.requestSubmit();
   });
 
+  // Portada, arriba del todo y sin nada desplazado
+  function irAlInicio() {
+    document.activeElement?.blur?.();
+    estado.cat = 'todo';
+    pintar();
+    scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    main.scrollTo(0, 0);
+  }
+
   async function sincronizarGuardadas(cambios) {
     try {
       const r = await pedirJSON('/api/lector/guardadas', 'POST', cambios);
@@ -1587,6 +1738,9 @@
   function ponerLector(lector) {
     const antes = !!estado.lector;
     estado.lector = lector;
+    const icono = $('#btn-cuenta');
+    icono?.classList.toggle('dentro', !!lector);
+    icono?.setAttribute('aria-label', lector ? `Tu cuenta (${lector.email})` : 'Tu cuenta: iniciar sesión o registrarte');
     if (lector) escribir('pulso-lector', lector.email);
     else try { localStorage.removeItem('pulso-lector'); } catch (e) { /* nada */ }
     // Si cambia y hay límite, las tarjetas y la ficha abierta cambian (muro sí o no)
@@ -1636,7 +1790,8 @@
       try {
         const r = await pedirJSON('/api/lector/verificar', 'POST', { token });
         ponerLector(r.lector);
-        avisar('Ya has entrado. Tus guardadas, en todos tus dispositivos');
+        if (!location.hash) irAlInicio();
+        avisar('¡Dentro! Ya puedes leer sin límite');
       } catch (e) { avisar(e.message); }
     }
     // ¿Quién soy? Si hay cuenta, se juntan las guardadas de este dispositivo con las de la cuenta

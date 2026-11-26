@@ -6,6 +6,7 @@
 //    #/editar/<id>   editar una noticia     #/nueva  escribir una desde cero
 //    #/portada       orden de la portada y cuenta atrás de la cabecera
 //    #/publicidad    banners de la web (solo en el ordenador, de momento)
+//    #/comentarios   moderar los comentarios de los lectores
 //    #/momentos      "mañana, tarde y noche"
 //    #/redes         escaleta de redes sociales del community manager
 //    #/usuarios      quién entra al panel (solo administración)
@@ -187,7 +188,7 @@
       else a.removeAttribute('aria-current');
     });
     const vistas = { hoy: vistaHoy, noticias: vistaNoticias, editar: () => vistaEditor(decodeURIComponent(arg || '')),
-      nueva: () => vistaEditor(null), portada: vistaPortada, publicidad: vistaPublicidad, momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios };
+      nueva: () => vistaEditor(null), portada: vistaPortada, publicidad: vistaPublicidad, comentarios: () => vistaComentarios(arg), momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios };
     const f = vistas[nombre] || vistaHoy;
     vista.onclick = null; vista.oninput = null; vista.onchange = null; vista.onsubmit = null;   // los que deja puestos la vista anterior
     try {
@@ -963,6 +964,62 @@
       e.preventDefault();
       leer();
       await guardar('Publicidad guardada');
+    };
+  }
+
+  // ---------- 7 ter. Comentarios: moderar ----------
+  // Los comentarios salen al momento. Aquí se ven los denunciados primero; con 3 denuncias se
+  // ocultan solos hasta que alguien de la redacción decide.
+  async function vistaComentarios(ver = 'denunciados') {
+    const pub = puedePublicar();
+    const [d, aj] = await Promise.all([api(`admin/comentarios?ver=${encodeURIComponent(ver)}`), api('admin/ajustes/comentarios')]);
+    const cfg = aj.valor || { activo: true };
+    ponerCuenta('comentarios', d.pendientes);
+    const fechaHora = (ms) => new Date(ms).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' });
+    const pestana = (k, t) => `<a class="btn btn-fino ${ver === k ? 'btn-principal' : ''}" href="#/comentarios/${k}">${t}</a>`;
+    vista.innerHTML = `
+      <div class="cabeza">
+        <div><h1>Comentarios</h1><p>Los escriben lectores con cuenta y salen al momento. Con 3 denuncias se ocultan solos hasta que decidas.</p></div>
+      </div>
+      <section class="bloque">
+        <div class="banner-cab"><h2>${cfg.activo ? 'Comentarios abiertos' : 'Comentarios cerrados'}</h2>
+          <label class="banner-activo"><span>${cfg.activo ? 'Se puede comentar' : 'Nadie puede comentar'}</span><span class="interruptor"><input type="checkbox" role="switch" id="com-activo" ${cfg.activo ? 'checked' : ''} ${pub ? '' : 'disabled'}></span></label></div>
+        <p class="nota">${cfg.pausa ? `Pausa programada: del ${esc(fechaHora(Date.parse(cfg.pausa.desde)))} al ${esc(fechaHora(Date.parse(cfg.pausa.hasta)))}${cfg.pausa.motivo ? ` (${esc(cfg.pausa.motivo)})` : ''}.` : 'Sin pausas programadas.'}</p>
+      </section>
+      <p style="display:flex;gap:8px;margin:0 0 14px">${pestana('denunciados', `Denunciados${d.pendientes ? ` (${d.pendientes})` : ''}`)}${pestana('todos', 'Todos')}${pestana('ocultos', 'Ocultos')}</p>
+      <ul class="lista">${d.comentarios.map((c) => `<li class="fila com-fila${c.estado === 'oculto' ? ' fila-desc' : ''}">
+          <div class="fila-txt">
+            <div class="meta"><b>${esc(c.nombre)}</b><span>${esc(fechaHora(c.creado))}</span>${c.denuncias ? `<span class="estrella">${c.denuncias} ${c.denuncias === 1 ? 'denuncia' : 'denuncias'}</span>` : ''}${c.estado === 'oculto' ? '<span>Oculto</span>' : ''}</div>
+            <p class="com-texto">${esc(c.texto)}</p>
+            <div class="meta"><span>En: <a href="/#${encodeURIComponent(c.noticia)}" target="_blank" rel="noopener">${esc(c.titular || c.noticia)}</a></span></div>
+          </div>
+          ${pub ? `<span class="com-botones-panel">
+            ${c.estado === 'oculto' || c.denuncias ? `<button class="btn btn-fino" type="button" data-com="${c.id}" data-estado="visible">${c.estado === 'oculto' ? 'Mostrar' : 'Está bien'}</button>` : ''}
+            ${c.estado === 'visible' ? `<button class="btn btn-fino" type="button" data-com="${c.id}" data-estado="oculto">Ocultar</button>` : ''}
+            <button class="btn btn-fino" type="button" data-com="${c.id}" data-borrar>Borrar</button></span>` : ''}
+        </li>`).join('') || `<li class="vacio"><b>${ver === 'denunciados' ? 'Nada que revisar.' : 'No hay comentarios.'}</b></li>`}</ul>`;
+    vista.onclick = async (e) => {
+      const b = e.target.closest('[data-com]');
+      if (!b) return;
+      try {
+        if ('borrar' in b.dataset) {
+          if (!confirm('¿Borrar este comentario para siempre?')) return;
+          await api(`admin/comentarios/${b.dataset.com}`, { metodo: 'DELETE' });
+          avisar('Comentario borrado');
+        } else {
+          await api(`admin/comentarios/${b.dataset.com}`, { metodo: 'PUT', cuerpo: { estado: b.dataset.estado } });
+          avisar(b.dataset.estado === 'oculto' ? 'Comentario oculto' : 'Comentario visible');
+        }
+        await vistaComentarios(ver);
+      } catch (err) { avisar(err.message, true); }
+    };
+    vista.onchange = async (e) => {
+      if (e.target.id !== 'com-activo') return;
+      try {
+        await api('admin/ajustes/comentarios', { metodo: 'PUT', cuerpo: { valor: { ...cfg, activo: e.target.checked } } });
+        avisar(e.target.checked ? 'Comentarios abiertos' : 'Comentarios cerrados');
+        await vistaComentarios(ver);
+      } catch (err) { avisar(err.message, true); }
     };
   }
 

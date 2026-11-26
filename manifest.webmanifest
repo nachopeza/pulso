@@ -1,0 +1,15 @@
+{
+  "name": "pulso",
+  "short_name": "pulso",
+  "description": "Lo importante del día, en corto y con fuentes.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1c1d21",
+  "theme_color": "#1c1d21",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

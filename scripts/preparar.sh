@@ -5,7 +5,7 @@ set -e
 cd "$(dirname "$0")/.."
 rm -rf web
 mkdir web
-cp -R index.html aviso-legal.html privacidad.html cookies.html _headers favicon.svg apple-touch-icon.png \
+cp -R index.html aviso-legal.html privacidad.html cookies.html _headers favicon.svg apple-touch-icon.png manifest.webmanifest \
   css js data img fonts admin web/
 
 # Versión en los CSS y JS (?v=…): cada publicación cambia la dirección, así ningún navegador

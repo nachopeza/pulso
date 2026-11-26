@@ -124,6 +124,7 @@
   const ICONO_ABAJO = svg('<path d="M6 9l6 6 6-6"/>');
   const ICONO_X = svg('<path d="M6 6l12 12M18 6L6 18"/>');
   const ICONO_GUARDAR = svg('<path d="M6 3.5h12v17l-6-4.2-6 4.2z"/>');
+  const ICONO_CUENTA = svg('<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.2-3.8 4.2-5.6 7.5-5.6s6.3 1.8 7.5 5.6"/>');
   const ICONO_COMENTAR = svg('<path d="M4 5.5h16v10.5h-9.5L6 20v-4H4z"/>');
   const ICONO_COMPARTIR = svg('<path d="M12 3v12M7 8l5-5 5 5M5 13v6.5h14V13"/>');
   const ICONO_FUENTES = svg('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>');
@@ -624,17 +625,23 @@
     const tema = document.documentElement.dataset.tema || 'auto';
     const letra = document.documentElement.dataset.letra || 'normal';
     // Orden del menú, de lo que más se usa a lo que menos:
-    // buscar → secciones (y la cuenta atrás) → tu cuenta → ajustes de lectura.
+    // buscar (con la cuenta al lado) → cuenta atrás → secciones → ajustes de lectura.
     // Quiénes somos, redes y legal van en el pie (también en el modo Flash, en su última pantalla).
     return `<div class="menu-cab">
         <p class="logo-pie notranslate" translate="no">pulso<span class="latido" aria-hidden="true"></span></p>
         <button type="button" class="cerrar" data-cerrar-menu aria-label="Cerrar el menú">${ICONO_X}</button>
       </div>
       <div class="buscar" role="search">
-        <label for="buscar" class="oculto">Buscar noticias</label>
-        <input type="search" id="buscar" placeholder="Buscar noticias" autocomplete="off" enterkeyhint="search">
+        <div class="buscar-fila">
+          <label for="buscar" class="oculto">Buscar noticias</label>
+          <input type="search" id="buscar" placeholder="Buscar noticias" autocomplete="off" enterkeyhint="search">
+          <button type="button" class="btn-cuenta${estado.lector ? ' dentro' : ''}" data-cuenta aria-label="${estado.lector ? `Tu cuenta (${esc(estado.lector.email)})` : 'Tu cuenta: iniciar sesión o registrarte'}">${ICONO_CUENTA}</button>
+        </div>
         <div id="resultados" aria-live="polite"></div>
       </div>
+      ${c ? `<button type="button" class="menu-29n" ${c.seccion ? `data-filtro="${c.seccion}"` : 'tabindex="-1"'}>
+          <b>${esc(c.num)}</b><span><strong>${esc(c.txt)}</strong>${esc(c.detalle)}</span>
+        </button>` : ''}
       <nav class="menu-bloque" aria-labelledby="menu-tit-secciones">
         <h2 class="menu-tit" id="menu-tit-secciones">Secciones</h2>
         <ul class="menu-secciones">
@@ -642,11 +649,7 @@
           ${secciones}
           <li><button type="button" data-filtro="guardadas" aria-pressed="${estado.cat === 'guardadas'}"><i aria-hidden="true"></i>Guardadas</button></li>
         </ul>
-        ${c ? `<button type="button" class="menu-29n" ${c.seccion ? `data-filtro="${c.seccion}"` : 'tabindex="-1"'}>
-          <b>${esc(c.num)}</b><span><strong>${esc(c.txt)}</strong>${esc(c.detalle)}</span>
-        </button>` : ''}
       </nav>
-      ${menuCuentaHTML()}
       <section class="menu-bloque lectura" id="lectura" aria-labelledby="lectura-titulo">
         <h2 class="menu-tit" id="lectura-titulo">Lectura</h2>
         <div class="pref">
@@ -1571,17 +1574,6 @@
       </div>`;
   }
 
-  function menuCuentaHTML() {
-    return estado.lector
-      ? `<div class="menu-bloque menu-cuenta">
-          <h2 class="menu-tit">Tu cuenta</h2>
-          <button type="button" class="menu-cuenta-btn" data-cuenta><b class="notranslate" translate="no">${esc(estado.lector.email)}</b><span>Guardadas en todos tus dispositivos</span></button>
-        </div>`
-      : `<div class="menu-bloque menu-cuenta">
-          <h2 class="menu-tit">Tu cuenta</h2>
-          <button type="button" class="menu-cuenta-btn" data-cuenta><b>Regístrate o inicia sesión</b><span>Es gratis: guarda noticias en todos tus dispositivos y lee sin límite</span></button>
-        </div>`;
-  }
 
   function cuentaLectorHTML(volver, modo) {
     const tapa = `<div class="f-tapa cuenta-tapa">
@@ -1738,9 +1730,6 @@
   function ponerLector(lector) {
     const antes = !!estado.lector;
     estado.lector = lector;
-    const icono = $('#btn-cuenta');
-    icono?.classList.toggle('dentro', !!lector);
-    icono?.setAttribute('aria-label', lector ? `Tu cuenta (${lector.email})` : 'Tu cuenta: iniciar sesión o registrarte');
     if (lector) escribir('pulso-lector', lector.email);
     else try { localStorage.removeItem('pulso-lector'); } catch (e) { /* nada */ }
     // Si cambia y hay límite, las tarjetas y la ficha abierta cambian (muro sí o no)

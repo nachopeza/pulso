@@ -973,11 +973,7 @@ body { top: 0 !important; }
 @media (max-width: 760px) {
   /* En el móvil la cabecera se queda en lo esencial: menú, logo y cuenta atrás.
      Buscar, lectura y el modo Flash/Lista están en el menú lateral. */
-  /* En el móvil, de los atajos solo quedan buscar y la cuenta */
-  .top-der { gap: 0; }
-  .top-der > :not(.btn-buscar):not(.btn-cuenta) { display: none; }
-  .btn-top { width: 40px; height: 40px; }
-  .cuenta span { display: none; }
+  .top-der { display: none; }
   .top-fila { gap: 6px; min-height: 54px; }
   .logo { font-size: 25px; }
   /* En el móvil la cuenta atrás va a la derecha, en una sola línea */
@@ -1095,9 +1091,12 @@ body { top: 0 !important; }
 .pie-flash-secciones button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--tinta); font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; }
 .pie-flash-secciones i { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
 
-/* Icono de cuenta de la cabecera: con sesión iniciada lleva el punto amarillo de pulso */
-.btn-cuenta { position: relative; }
-.btn-cuenta.dentro::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--marca); box-shadow: 0 0 0 2px var(--bg); }
+/* Menú: buscador y, a su lado, el icono de la cuenta (con sesión iniciada lleva el punto amarillo) */
+.buscar-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.btn-cuenta { position: relative; width: 50px; height: 50px; border-radius: 50%; border: 0; background: var(--sup); color: var(--tinta); cursor: pointer; display: grid; place-items: center; }
+.btn-cuenta svg { width: 23px; height: 23px; }
+.btn-cuenta:hover { background: var(--sup-2); }
+.btn-cuenta.dentro::after { content: ""; position: absolute; top: 9px; right: 9px; width: 10px; height: 10px; border-radius: 50%; background: var(--marca); box-shadow: 0 0 0 2px var(--sup); }
 
 /* ---------- 15. Comentarios ---------- */
 .btn-com { position: relative; }

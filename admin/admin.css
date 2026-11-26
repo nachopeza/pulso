@@ -188,7 +188,7 @@ main:focus, main:focus-visible { outline: none; }
 label, .etiqueta { display: block; font-weight: 650; font-size: 14px; margin-bottom: 6px; }
 .campo { margin-bottom: 18px; }
 .ayuda { font-weight: 400; color: var(--suave); font-size: 13px; }
-input[type=text], input[type=email], input[type=url], input[type=search], input[type=datetime-local], select, textarea {
+input[type=text], input[type=email], input[type=url], input[type=search], input[type=datetime-local], input[type=date], select, textarea {
   width: 100%; font: inherit; color: var(--tinta); background: var(--bg);
   border: 1px solid var(--linea); border-radius: var(--r-s); padding: 10px 12px; min-height: 44px;
 }
@@ -415,3 +415,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--marca); out
   .pieza-acciones .mas { margin-left: auto; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Publicidad */
+.banner-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.banner-cab h2 { margin: 0; }
+.banner-activo { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 650; color: var(--suave); cursor: pointer; }
+.banner-img { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.banner-img img { max-width: 100%; max-height: 120px; border-radius: var(--r-s); border: 1px solid var(--linea); }
+.banner-img span { color: var(--suave); font-size: 14px; }

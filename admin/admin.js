@@ -4,7 +4,8 @@
 //    #/hoy           la edición que ha preparado el agente
 //    #/noticias      buscador de todas las noticias
 //    #/editar/<id>   editar una noticia     #/nueva  escribir una desde cero
-//    #/portada       orden de la portada y anuncio
+//    #/portada       orden de la portada y cuenta atrás de la cabecera
+//    #/publicidad    banners de la web (solo en el ordenador, de momento)
 //    #/momentos      "mañana, tarde y noche"
 //    #/redes         escaleta de redes sociales del community manager
 //    #/usuarios      quién entra al panel (solo administración)
@@ -186,9 +187,9 @@
       else a.removeAttribute('aria-current');
     });
     const vistas = { hoy: vistaHoy, noticias: vistaNoticias, editar: () => vistaEditor(decodeURIComponent(arg || '')),
-      nueva: () => vistaEditor(null), portada: vistaPortada, momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios };
+      nueva: () => vistaEditor(null), portada: vistaPortada, publicidad: vistaPublicidad, momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios };
     const f = vistas[nombre] || vistaHoy;
-    vista.onclick = null; vista.oninput = null;   // los que deja puestos la vista anterior
+    vista.onclick = null; vista.oninput = null; vista.onchange = null; vista.onsubmit = null;   // los que deja puestos la vista anterior
     try {
       await f();
     } catch (e) {
@@ -772,7 +773,51 @@
     return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error('No se ha podido leer la foto'))), 'image/jpeg', 0.82));
   }
 
-  // ---------- 7. Portada: orden y anuncio ----------
+  // ---------- 7. Portada: orden y cuenta atrás ----------
+
+  // La cuenta atrás de la cabecera ("3 días para el 29N"): sirve para unas elecciones,
+  // un partido, un examen… Desaparece sola pasado «Visible hasta».
+  async function pintarCita(caja, pub) {
+    const { valor: c } = await api('admin/ajustes/cita');
+    const v = c || { titulo: '', fecha: '', hasta: '', seccion: '', antes: '', hoy: '', despues: '', detalle: '' };
+    const opcionesSeccion = `<option value="">Ninguna (no lleva a ninguna sección)</option>${Object.entries(CATS).map(([k, t]) =>
+      `<option value="${k}" ${v.seccion === k ? 'selected' : ''}>${esc(t)}</option>`).join('')}`;
+    caja.innerHTML = `
+      <h2>Cuenta atrás de la cabecera</h2>
+      <p class="nota" style="margin-bottom:14px">La pastilla amarilla de arriba y el bloque grande de la portada. ${c ? 'Ahora está <b>activa</b>.' : 'Ahora <b>no hay ninguna</b>: la cabecera solo enseña la fecha.'} Se quita sola al pasar el día «Visible hasta».</p>
+      <form id="f-cita">
+        <fieldset ${pub ? '' : 'disabled'} style="border:0;padding:0;margin:0">
+        <div class="dos">
+          <div class="campo"><label for="c-titulo">Nombre corto</label><input type="text" id="c-titulo" maxlength="30" value="${esc(v.titulo)}" placeholder="29N"></div>
+          <div class="campo"><label for="c-seccion">Al tocarla, lleva a</label><select id="c-seccion">${opcionesSeccion}</select></div>
+        </div>
+        <div class="dos">
+          <div class="campo"><label for="c-fecha">Día señalado</label><input id="c-fecha" type="date" value="${esc(v.fecha)}"></div>
+          <div class="campo"><label for="c-hasta">Visible hasta</label><input id="c-hasta" type="date" value="${esc(v.hasta)}"></div>
+        </div>
+        <div class="dos">
+          <div class="campo"><label for="c-antes">Antes: «3 días …»</label><input type="text" id="c-antes" maxlength="40" value="${esc(v.antes)}" placeholder="para el 29N"></div>
+          <div class="campo"><label for="c-hoy">El mismo día: «Hoy …»</label><input type="text" id="c-hoy" maxlength="60" value="${esc(v.hoy)}" placeholder="se vota"></div>
+        </div>
+        <div class="dos">
+          <div class="campo"><label for="c-despues">Después</label><input type="text" id="c-despues" maxlength="40" value="${esc(v.despues)}" placeholder="Resultados del 29N"></div>
+          <div class="campo"><label for="c-detalle">Texto pequeño del bloque grande</label><input type="text" id="c-detalle" maxlength="90" value="${esc(v.detalle)}" placeholder="Elecciones generales, domingo 29 de noviembre"></div>
+        </div>
+        <button class="btn btn-principal" type="submit">Guardar cuenta atrás</button>
+        ${c ? '<button class="btn" type="button" id="quitar-cita">Quitarla ya</button>' : ''}
+        </fieldset>
+      </form>`;
+    $('#f-cita').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const valor = Object.fromEntries(['titulo', 'fecha', 'hasta', 'seccion', 'antes', 'hoy', 'despues', 'detalle'].map((k) => [k, $(`#c-${k}`).value.trim()]));
+      try { await api('admin/ajustes/cita', { metodo: 'PUT', cuerpo: { valor } }); avisar('Cuenta atrás guardada'); await pintarCita(caja, pub); }
+      catch (err) { avisar(err.message, true); }
+    });
+    $('#quitar-cita')?.addEventListener('click', async () => {
+      try { await api('admin/ajustes/cita', { metodo: 'PUT', cuerpo: { valor: null } }); avisar('Cuenta atrás quitada'); await pintarCita(caja, pub); }
+      catch (err) { avisar(err.message, true); }
+    });
+  }
 
   async function vistaPortada() {
     const d = await api('admin/portada');
@@ -789,19 +834,7 @@
         : 'Orden <b>automático</b>: cada noticia pesa según su importancia y va bajando con las horas; si se actualiza, vuelve a subir. Si lo cambias a mano, manda tu orden hasta la próxima edición.'}
         ${d.aMano && pub ? ' <button class="btn btn-fino" type="button" id="orden-auto">Volver al orden automático</button>' : ''}</p>
       <ul class="lista" id="orden"></ul>
-      <section class="bloque" style="margin-top:28px">
-        <h2>Anuncio</h2>
-        <p class="nota" style="margin-bottom:14px">Aparece como «Publicidad» en la portada. Déjalo vacío para mostrar «Espacio publicitario».</p>
-        <form id="f-anuncio">
-          <fieldset ${pub ? '' : 'disabled'} style="border:0;padding:0;margin:0">
-          <div class="dos">
-            <div class="campo"><label for="a-texto">Texto</label><input type="text" id="a-texto" maxlength="140" value="${esc(d.anuncio?.texto || '')}"></div>
-            <div class="campo"><label for="a-url">Enlace</label><input type="url" id="a-url" value="${esc(d.anuncio?.url || '')}" placeholder="https://…"></div>
-          </div>
-          <button class="btn" type="submit">Guardar anuncio</button>
-          </fieldset>
-        </form>
-      </section>`;
+      <section class="bloque" style="margin-top:28px" id="b-cita"></section>`;
     function pintar() {
       $('#orden').innerHTML = ids.map((id, i) => {
         const n = porId[id];
@@ -835,15 +868,102 @@
       try { await api('admin/portada', { metodo: 'PUT', cuerpo: { orden: 'automatico' } }); avisar('Vuelve el orden automático'); await vistaPortada(); }
       catch (err) { avisar(err.message, true); }
     });
-    $('#f-anuncio').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const texto = $('#a-texto').value.trim();
-      const url = $('#a-url').value.trim();
+    await pintarCita($('#b-cita'), pub);
+  }
+
+  // ---------- 7 bis. Publicidad: banners ----------
+  // Dos huecos: «portada» (a mitad de la portada) y «secciones» (cada 6 noticias dentro de una sección).
+  // Dos tipos: «de pulso» (texto con el diseño de la casa) o «imagen» (el banner que mande un anunciante).
+  // De momento solo se ven en el ordenador.
+  const BANNER_CASA = {
+    activo: true, hueco: 'portada', tipo: 'casa', anunciante: '',
+    titulo: 'Tu marca, delante de quien se informa cada día',
+    texto: 'pulso llega a gente de 16 a 30 años que quiere estar al día sin perder la tarde. Publicidad clara, sin cookies y sin seguir a nadie.',
+    boton: 'Anúnciate en pulso', enlace: 'mailto:hola@pulso.com.es?subject=Publicidad%20en%20pulso', imagen: '', alt: ''
+  };
+  async function vistaPublicidad() {
+    const pub = puedePublicar();
+    let { valor: lista } = await api('admin/ajustes/banners');
+    lista = lista || [];
+    const HUECOS = { portada: 'Portada (a mitad)', secciones: 'Dentro de las secciones' };
+    function pintar() {
+      vista.innerHTML = `
+        <div class="cabeza">
+          <div><h1>Publicidad</h1><p>Los banners de la web. De momento <b>solo se ven en el ordenador</b> y siempre llevan la etiqueta «Publicidad».</p></div>
+          ${pub ? '<button class="btn" type="button" id="nuevo-banner">Añadir banner</button>' : ''}
+        </div>
+        ${lista.length ? '' : `<div class="bloque"><p><b>No hay banners.</b> Puedes empezar con el de la casa, «Anúnciate en pulso», para que las empresas sepan que pueden anunciarse.</p>
+          ${pub ? '<p style="margin-top:12px"><button class="btn btn-principal" type="button" id="poner-casa">Poner el banner «Anúnciate en pulso»</button></p>' : ''}</div>`}
+        <form id="f-banners"><fieldset ${pub ? '' : 'disabled'} style="border:0;padding:0;margin:0">
+        ${lista.map((b, i) => `<section class="bloque banner-ed" data-i="${i}">
+          <div class="banner-cab">
+            <h2>Banner ${i + 1}${b.anunciante ? ` · ${esc(b.anunciante)}` : b.tipo === 'casa' ? ' · de pulso' : ''}</h2>
+            <label class="banner-activo"><span>${b.activo ? 'Se ve en la web' : 'Apagado'}</span><span class="interruptor"><input type="checkbox" role="switch" data-k="activo" aria-label="Activo" ${b.activo ? 'checked' : ''}></span></label>
+          </div>
+          <div class="dos">
+            <div class="campo"><label>Dónde</label><select data-k="hueco">${Object.entries(HUECOS).map(([k, t]) => `<option value="${k}" ${b.hueco === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+            <div class="campo"><label>Tipo</label><select data-k="tipo"><option value="casa" ${b.tipo === 'casa' ? 'selected' : ''}>Texto con el diseño de pulso</option><option value="imagen" ${b.tipo === 'imagen' ? 'selected' : ''}>Imagen del anunciante</option></select></div>
+          </div>
+          <div class="dos">
+            <div class="campo"><label>Anunciante (se ve junto a «Publicidad»)</label><input type="text" data-k="anunciante" maxlength="60" value="${esc(b.anunciante)}" placeholder="Vacío si es de pulso"></div>
+            <div class="campo"><label>Enlace (https:// o mailto:)</label><input type="text" data-k="enlace" maxlength="500" value="${esc(b.enlace)}"></div>
+          </div>
+          ${b.tipo === 'imagen' ? `
+          <div class="campo"><label>Imagen (ancha, por ejemplo 1200 × 250)</label>
+            <div class="banner-img">${b.imagen ? `<img src="${esc(rutaFoto(b.imagen))}" alt="">` : '<span>Sin imagen</span>'}
+            <label class="btn btn-fino" style="margin:0">Subir imagen<input type="file" accept="image/*" class="oculto" data-subir="${i}"></label></div></div>
+          <div class="campo"><label>Qué pone la imagen (texto alternativo)</label><input type="text" data-k="alt" maxlength="200" value="${esc(b.alt)}"></div>` : `
+          <div class="campo"><label>Titular</label><input type="text" data-k="titulo" maxlength="90" value="${esc(b.titulo)}"></div>
+          <div class="campo"><label>Texto</label><textarea data-k="texto" maxlength="220" rows="2">${esc(b.texto)}</textarea></div>
+          <div class="campo"><label>Botón</label><input type="text" data-k="boton" maxlength="30" value="${esc(b.boton)}"></div>`}
+          <button class="btn btn-fino" type="button" data-quitar="${i}">Quitar este banner</button>
+        </section>`).join('')}
+        ${lista.length ? '<button class="btn btn-principal" type="submit">Guardar publicidad</button>' : ''}
+        </fieldset></form>`;
+    }
+    // Copia lo escrito en los campos a la lista (antes de repintar o guardar)
+    function leer() {
+      $$('.banner-ed').forEach((sec) => {
+        const b = lista[Number(sec.dataset.i)];
+        sec.querySelectorAll('[data-k]').forEach((x) => { b[x.dataset.k] = x.type === 'checkbox' ? x.checked : x.value.trim(); });
+      });
+    }
+    async function guardar(mensaje) {
       try {
-        await api('admin/portada', { metodo: 'PUT', cuerpo: { anuncio: texto || url ? { texto, url } : null } });
-        avisar(texto ? 'Anuncio guardado' : 'Anuncio quitado');
+        const r = await api('admin/ajustes/banners', { metodo: 'PUT', cuerpo: { valor: lista } });
+        lista = r.valor || [];
+        pintar();
+        avisar(mensaje);
       } catch (err) { avisar(err.message, true); }
-    });
+    }
+    pintar();
+    vista.onclick = async (e) => {
+      if (e.target.id === 'poner-casa') { lista = [{ ...BANNER_CASA }]; await guardar('Banner «Anúnciate en pulso» puesto'); }
+      else if (e.target.id === 'nuevo-banner') { leer(); lista.push({ ...BANNER_CASA, activo: false, titulo: '', texto: '', boton: '', enlace: '' }); pintar(); }
+      else if (e.target.dataset.quitar) { leer(); lista.splice(Number(e.target.dataset.quitar), 1); pintar(); avisar('Quitado. Pulsa «Guardar publicidad» para que cuente.'); }
+    };
+    vista.onchange = async (e) => {
+      if (e.target.dataset.k === 'tipo') { leer(); pintar(); }
+      if (e.target.dataset.subir) {
+        const archivo = e.target.files?.[0];
+        if (!archivo) return;
+        leer();
+        avisar('Subiendo la imagen…');
+        try {
+          const blob = await reducir(archivo);
+          const r = await api('admin/fotos?nombre=banner', { metodo: 'POST', cuerpo: blob, tipo: 'image/jpeg' });
+          lista[Number(e.target.dataset.subir)].imagen = r.src;
+          pintar();
+          avisar('Imagen subida. Pulsa «Guardar publicidad».');
+        } catch (err) { avisar(err.message, true); }
+      }
+    };
+    vista.onsubmit = async (e) => {
+      if (e.target.id !== 'f-banners') return;
+      e.preventDefault();
+      leer();
+      await guardar('Publicidad guardada');
+    };
   }
 
   // ---------- 8. Momentos: mañana, tarde y noche ----------

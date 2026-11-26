@@ -174,8 +174,10 @@ q { quotes: "«" "»"; }
 
 /* Centro de la cabecera: fecha + cuenta atrás */
 .top-centro { display: flex; align-items: center; justify-content: center; gap: 14px; }
-.top-fecha { font-size: 14.5px; color: var(--suave); font-weight: 550; }
-.top-fecha::first-letter { text-transform: uppercase; }
+/* Fecha de la cabecera con jerarquía: "Jueves 26" fuerte, el mes suave y debajo la edición */
+.top-fecha { display: grid; line-height: 1.2; font-size: 14.5px; color: var(--suave); font-weight: 500; }
+.top-fecha b { color: var(--tinta); font-weight: 750; text-transform: capitalize; }
+.top-ed { font-size: 12.5px; font-weight: 600; color: var(--suave); }
 .cuenta {
   display: inline-flex;
   align-items: baseline;
@@ -192,7 +194,8 @@ q { quotes: "«" "»"; }
   cursor: pointer;
 }
 .cuenta strong { font-weight: 850; font-stretch: 112%; }
-.cuenta:empty { visibility: hidden; }   /* mientras cargan los datos */
+.cuenta:empty { visibility: hidden; }
+.cuenta[hidden] { display: none; }   /* mientras cargan los datos */
 
 /* Interruptor Flash / Lista: una pastilla que se desliza de un lado a otro */
 .modo { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: var(--sup); border-radius: 999px; padding: 3px; }
@@ -658,8 +661,23 @@ main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
 .rio .mini { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--suave); margin-bottom: 2px; }
 .rio .mini::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--c); }
 
-.publi { grid-column: 1 / -1; min-height: 90px; border: 1px dashed var(--linea); border-radius: var(--r-m); display: grid; place-items: center; padding: 16px; text-align: center; font-size: 13.5px; color: var(--suave); }
-.publi a { font-weight: 650; }
+/* Publicidad (banners del panel). De momento solo en el ordenador. Siempre con la etiqueta «Publicidad». */
+.publi { grid-column: 1 / -1; display: none; position: relative; }
+@media (min-width: 900px) { .publi { display: grid; } }
+.publi-etq { font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; }
+/* Banner «de la casa»: bloque de tinta con el amarillo de pulso */
+.publi-casa { grid-template-columns: 1fr auto; align-items: center; gap: 28px; padding: 34px 36px 30px; border-radius: var(--r-l); background: var(--oscuro); color: #fff; border: 1px solid var(--linea); }
+/* El titular acaba en el punto amarillo de pulso, como el logo */
+.publi-tit::after { content: ""; display: inline-block; width: 0.28em; height: 0.28em; margin-left: 0.1em; border-radius: 50%; background: var(--marca); }
+.publi-casa .publi-etq { position: absolute; top: 12px; left: 36px; color: rgb(255 255 255 / 0.55); }
+.publi-tit { font-size: clamp(22px, 2.2vw, 28px); font-weight: 850; font-stretch: 112%; letter-spacing: -0.02em; line-height: 1.1; text-wrap: balance; }
+.publi-txt p + p { margin-top: 8px; font-size: 15.5px; line-height: 1.5; color: rgb(255 255 255 / 0.75); max-width: 62ch; }
+.publi-btn { background: var(--marca); color: var(--oscuro); border-color: var(--marca); text-decoration: none; }
+.publi-btn:hover { filter: brightness(1.05); }
+/* Banner de imagen (de un anunciante) */
+.publi-img { gap: 6px; }
+.publi-img .publi-etq { color: var(--suave); }
+.publi-img img { display: block; width: 100%; height: auto; max-height: 250px; object-fit: cover; border-radius: var(--r-m); }
 
 .pie { border-top: 3px solid var(--tinta); padding-top: 26px; margin-top: 12px; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 5fr); gap: 28px; font-size: 15px; color: var(--suave); }
 .pie h2 { font-size: 15px; font-weight: 800; color: var(--tinta); margin-bottom: 10px; }

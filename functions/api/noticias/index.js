@@ -1,6 +1,6 @@
 // GET /api/noticias → lo que ve el lector, con el mismo formato que tenía data/noticias.json.
 // Las programadas aparecen solas al llegar su hora: no hace falta que nada "las publique".
-import { json, VISIBLE, PORTADA_HORAS, isoMadrid, ordenarPortada } from '../../../servidor/comun.js';
+import { json, VISIBLE, PORTADA_HORAS, isoMadrid, ordenarPortada, diaMadrid } from '../../../servidor/comun.js';
 
 export async function onRequestGet({ env }) {
   const ahora = Date.now();
@@ -33,6 +33,13 @@ export async function onRequestGet({ env }) {
     for (const m of Object.values(momentos)) m.puntos = (m.puntos || []).filter((p) => ids.has(p.id));
   }
   const anuncio = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'anuncio'").first();
+  // Cuenta atrás de la cabecera (se edita en el panel, en Portada): se deja de enviar pasado «hasta»
+  const ajCita = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'cita'").first();
+  let cita = ajCita?.valor ? JSON.parse(ajCita.valor) : null;
+  if (cita && diaMadrid(ahora) > (cita.hasta || cita.fecha)) cita = null;
+  // Banners activos (el panel, en Publicidad)
+  const ajBanners = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'banners'").first();
+  const banners = (ajBanners?.valor ? JSON.parse(ajBanners.valor) : []).filter((b) => b.activo);
   // Límite de lectura sin cuenta: { gratis: 5, dias: 7, desde: "2026-11-30T00:00:00+01:00" }
   // (sin ajuste, con gratis 0 o antes de "desde" → sin límite)
   const ajusteLectura = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'lectura'").first();
@@ -46,6 +53,8 @@ export async function onRequestGet({ env }) {
   return json({
     actualizado: isoMadrid(ultima || ahora),
     anuncio: anuncio?.valor ? JSON.parse(anuncio.valor) : null,
+    cita,
+    banners,
     lectura: lectura ? { gratis: lectura.gratis, dias: lectura.dias } : null,
     momentos,
     noticias

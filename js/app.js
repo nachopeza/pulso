@@ -22,7 +22,6 @@
     deportes: 'Deportes'
   };
   const MOMENTOS = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche' };
-  const DIA_29N = '2026-11-29';           // fecha de las elecciones (para la cuenta atrás)
   const ZONA = 'Europe/Madrid';
   const CADA_CUANTO = 5 * 60 * 1000;      // cada 5 minutos mira si hay noticias nuevas
   const PUBLI_CADA = 6;                   // en la lista, un espacio publicitario cada 6 noticias
@@ -93,15 +92,31 @@
     return h < 14 ? 'manana' : h < 20 ? 'tarde' : 'noche';
   }
 
-  // Cuenta atrás al 29N
+  // Cuenta atrás de la cabecera ("cita"): se edita en el panel (Portada) y sirve para
+  // unas elecciones, un partido o lo que toque. Sin cita, no aparece nada.
   //   num / txt: para el bloque amarillo (número grande + texto)
   //   fuerte / resto: para la cabecera, más corto ("5 días" + "para el 29N")
   function cuenta() {
-    const dias = Math.round((Date.parse(DIA_29N) - Date.parse(hoyISO())) / 86400000);
-    if (dias > 1) return { num: dias, txt: 'días para el 29N', fuerte: `${dias} días`, resto: 'para el 29N' };
-    if (dias === 1) return { num: 1, txt: 'día para el 29N', fuerte: '1 día', resto: 'para el 29N' };
-    if (dias === 0) return { num: 'Hoy', txt: 'se vota. Colegios abiertos de 9:00 a 20:00', fuerte: 'Hoy', resto: 'se vota' };
-    return { num: '29N', txt: 'resultados y lo que viene ahora', fuerte: 'Resultados', resto: 'del 29N' };
+    const ci = estado.datos?.cita;
+    if (!ci?.fecha) return null;
+    const dias = Math.round((Date.parse(ci.fecha) - Date.parse(hoyISO())) / 86400000);
+    const base = { seccion: CATS[ci.seccion] ? ci.seccion : '', detalle: ci.detalle || '' };
+    if (dias > 1) return { ...base, num: dias, txt: `días ${ci.antes}`, fuerte: `${dias} días`, resto: ci.antes };
+    if (dias === 1) return { ...base, num: 1, txt: `día ${ci.antes}`, fuerte: '1 día', resto: ci.antes };
+    if (dias === 0) return { ...base, num: 'Hoy', txt: ci.hoy || ci.titulo, fuerte: 'Hoy', resto: ci.hoy || ci.titulo };
+    return { ...base, num: ci.titulo, txt: ci.despues || ci.titulo, fuerte: ci.despues || ci.titulo, resto: '' };
+  }
+  // Qué edición se está leyendo, según la hora de Madrid (sale a las 7:00, 14:00 y 21:00)
+  function edicionActual() {
+    const h = Number(new Date().toLocaleString('es-ES', { hour: 'numeric', hour12: false, timeZone: ZONA }));
+    return h >= 7 && h < 14 ? 'de la mañana' : h >= 14 && h < 21 ? 'de la tarde' : 'de la noche';
+  }
+  // Fecha con jerarquía: "Jueves 26" fuerte, "de noviembre" suave
+  function fechaHTML() {
+    const ahora = new Date();
+    const dia = ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', timeZone: ZONA }).replace(',', '');
+    const mes = ahora.toLocaleDateString('es-ES', { month: 'long', timeZone: ZONA });
+    return `<b>${esc(dia)}</b> de ${esc(mes)}`;
   }
 
   // Iconos (SVG en línea: heredan el color del texto)
@@ -184,9 +199,10 @@
 
   function cuentaHTML() {
     const c = cuenta();
-    return `<button type="button" class="dia-num" data-filtro="elecciones">
+    if (!c) return '';
+    return `<button type="button" class="dia-num" ${c.seccion ? `data-filtro="${c.seccion}"` : 'tabindex="-1"'}>
       <b>${esc(c.num)}</b>
-      <span><strong>${esc(c.txt)}</strong>Elecciones generales, domingo 29 de noviembre</span>
+      <span><strong>${esc(c.txt)}</strong>${esc(c.detalle)}</span>
     </button>`;
   }
 
@@ -297,7 +313,6 @@
         <h2>Ya estás al día.</h2>
         <div style="display:grid;gap:14px;align-content:start">
           <p class="resumen">Has repasado ${lista.length} ${lista.length === 1 ? 'noticia' : 'noticias'}. Actualizamos por la mañana, por la tarde y por la noche.</p>
-          ${publiHTML()}
           <p class="como">${COMO_TRABAJAMOS}</p>
         </div>
         <div class="acciones"><button type="button" class="btn" data-arriba>Volver al principio</button></div>
@@ -396,16 +411,34 @@
     </section>`;
   }
 
-  function publiHTML() {
-    const a = estado.datos?.anuncio;
-    if (a && enlace(a.url)) {
-      return `<div class="publi"><p>Publicidad: <a href="${enlace(a.url)}" target="_blank" rel="sponsored noopener">${esc(a.texto)}</a></p></div>`;
+  // Publicidad: los banners se gestionan en el panel (Publicidad). De momento solo se ven en
+  // el ordenador (el CSS los oculta en pantallas pequeñas). Si hay varios para el mismo hueco,
+  // sale uno al azar. Siempre llevan la etiqueta «Publicidad»: la ley pide que se distinga.
+  const enlaceBanner = (u) => (/^(https:\/\/\S+|mailto:\S+)$/i.test(u || '') ? esc(u) : '');
+  function publiHTML(hueco) {
+    const posibles = (estado.datos?.banners || []).filter((b) => b.hueco === hueco);
+    if (!posibles.length) return '';
+    const b = posibles[Math.floor(Math.random() * posibles.length)];
+    const url = enlaceBanner(b.enlace);
+    const fuera = url.startsWith('https') ? ' target="_blank" rel="sponsored noopener"' : '';
+    if (b.tipo === 'imagen' && rutaImg(b.imagen) && url) {
+      return `<aside class="publi publi-img" aria-label="Publicidad">
+        <span class="publi-etq">Publicidad${b.anunciante ? ` · ${esc(b.anunciante)}` : ''}</span>
+        <a href="${url}"${fuera}><img src="${rutaImg(b.imagen)}" alt="${esc(b.alt)}" loading="lazy"></a>
+      </aside>`;
     }
-    return '<div class="publi"><p>Espacio publicitario</p></div>';
+    return `<aside class="publi publi-casa" aria-label="Publicidad">
+        <span class="publi-etq">Publicidad${b.anunciante ? ` · ${esc(b.anunciante)}` : ''}</span>
+        <div class="publi-txt">
+          <p class="publi-tit">${esc(b.titulo)}</p>
+          ${b.texto ? `<p>${esc(b.texto)}</p>` : ''}
+        </div>
+        ${url && b.boton ? `<a class="btn publi-btn" href="${url}"${fuera}>${esc(b.boton)}</a>` : ''}
+      </aside>`;
   }
 
   // Versión corta de "Cómo trabajamos" para la última pantalla del modo Flash y el menú
-  const COMO_TRABAJAMOS = '<b>Cómo trabajamos.</b> Resumimos cada noticia con nuestras palabras y enlazamos siempre a la fuente original. Solo usamos fotos propias, libres o compradas, con su autoría.';
+  const COMO_TRABAJAMOS = '<b>Cómo trabajamos.</b> Leemos varios medios, te lo contamos con nuestras palabras y siempre te dejamos el enlace al original, para que lo compruebes tú.';
 
   // Pie: marca, secciones, cómo trabajamos y (si están configuradas) redes y páginas legales
   const pieHTML = () => {
@@ -421,12 +454,12 @@
       </nav>
       <div class="pie-como">
         <h2>Cómo trabajamos</h2>
-        <p>Contamos cada noticia con nuestras palabras a partir de varias fuentes, y enlazamos siempre a la original. Cuando comparamos titulares de otros medios, los citamos tal cual, con su nombre y un enlace.</p>
-        <p>No usamos fotos sin permiso: solo imágenes propias, con licencia libre o compradas, siempre con su autoría. No tomamos partido: la sección del 29N va en amarillo, el color de pulso, y no en los colores de ningún partido.</p>
-        <p>Si nos equivocamos, lo corregimos y lo indicamos al final de la noticia.</p>
+        <p>Cada día leemos un montón de medios para que tú no tengas que hacerlo. Te contamos lo importante con nuestras palabras, en corto, y siempre con el enlace a la fuente: si quieres saber más, lo tienes a un toque.</p>
+        <p>En «Cómo lo titulan» ves titulares reales de otros medios, tal cual y con su enlace. Así compruebas cómo cambia una misma noticia según quién la cuente.</p>
+        <p>No somos de ningún partido ni vamos a decirte qué pensar. Las fotos son nuestras, libres o con permiso, y siempre llevan el nombre de quien las hizo.</p>
+        <p>¿Nos hemos equivocado? Puede pasar. Lo corregimos y lo contamos al final de la noticia. Y si ves algo raro, escríbenos a hola@pulso.com.es.</p>
       </div>
       <div class="pie-base">
-        <p>Actualizado el ${esc(actualizadoTxt())}</p>
         ${legalHTML('legal')}
       </div>
     </footer>`;
@@ -439,13 +472,6 @@
     return legales.length ? `<p class="${clase}">${legales.map((x) => `<a href="${enlacePropio(x.url)}">${esc(x.nombre)}</a>`).join('')}</p>` : '';
   };
 
-  // "24 de noviembre a las 19:15", a partir del campo "actualizado" del JSON
-  function actualizadoTxt() {
-    const f = new Date(estado.datos?.actualizado);
-    if (Number.isNaN(f.getTime())) return '';
-    const dia = f.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', timeZone: ZONA });
-    return `${dia} a las ${hora(f)}`;
-  }
 
   const redesHTML = () => {
     const r = REDES.filter((x) => enlace(x.url));
@@ -458,7 +484,7 @@
   const diaHTML = () => `<section class="dia">
       <div class="dia-izq">
         <h1>${esc(fechaLarga())}</h1>
-        <p class="lema">Lo importante de hoy, en corto y con fuentes. <span>Actualizado a las ${esc(hora(estado.datos?.actualizado || Date.now()))}</span></p>
+        <p class="lema">Lo importante de hoy, en corto y con fuentes. <span>Edición ${edicionActual()}</span></p>
         ${cuentaHTML()}
       </div>
       <div>${momentosHTML()}</div>
@@ -479,18 +505,18 @@
     const bloques = porSeccion.filter(([, ns]) => ns.length > 1);
     const breves = porSeccion.filter(([, ns]) => ns.length === 1).map(([, ns]) => ns[0]);
     const c = cuenta();
-    const extra29 = `<span class="bloque-extra">${esc(c.fuerte)} ${esc(c.resto)}</span>`;
+    const extraCita = c ? `<span class="bloque-extra">${esc(c.fuerte)} ${esc(c.resto)}</span>` : '';
 
     // Un único hueco de publicidad, a mitad de portada
     const html = bloques.map(([k, ns], i) =>
-      bloqueHTML(k, ns, k === 'elecciones' ? extra29 : '') + (i === 1 ? publiHTML() : '')).join('');
+      bloqueHTML(k, ns, c && k === c.seccion ? extraCita : '') + (i === 1 ? publiHTML('portada') : '')).join('');
 
     return `<div class="lista">
       ${cintaHTML()}
       ${diaHTML()}
       ${apertura ? `<div class="apertura">${tarjetaHTML(apertura, true)}${rioHTML()}</div>` : ''}
       ${html}
-      ${bloques.length < 2 ? publiHTML() : ''}
+      ${bloques.length < 2 ? publiHTML('portada') : ''}
       ${breves.length ? `<section class="bloque breves" aria-labelledby="b-breves">
         <div class="bloque-cab"><h2 id="b-breves">Breves</h2></div>
         <div class="items rejilla-items">${breves.map((n) => itemHTML(n, true)).join('')}</div>
@@ -506,11 +532,11 @@
     const vacio = `<p class="vacio-txt" style="padding:0">${k === 'guardadas' ? 'Aún no has guardado nada. Toca «Guardar» en cualquier noticia y la tendrás aquí.' : 'Todavía no hay noticias en esta sección.'}</p>`;
     const [primera, ...resto] = lista;
     const items = resto.map((n, i) => tarjetaHTML(n, false)
-      + ((i + 1) % PUBLI_CADA === 0 && i < resto.length - 1 ? publiHTML() : '')).join('');
+      + ((i + 1) % PUBLI_CADA === 0 && i < resto.length - 1 ? publiHTML('secciones') : '')).join('');
     return `<div class="lista">
       <header class="seccion-cab" ${k !== 'guardadas' ? `data-cat="${k}"` : ''}>
         <h1>${esc(titulo)}</h1>
-        <p>${lista.length} ${lista.length === 1 ? 'noticia' : 'noticias'}${k === 'elecciones' ? ` · ${esc(cuenta().fuerte)} ${esc(cuenta().resto)}` : ''}</p>
+        <p>${lista.length} ${lista.length === 1 ? 'noticia' : 'noticias'}${cuenta() && k === cuenta().seccion ? ` · ${esc(cuenta().fuerte)} ${esc(cuenta().resto)}` : ''}</p>
         <button type="button" class="ver-todo" data-filtro="todo">Volver a la portada</button>
       </header>
       ${primera ? `<div class="rejilla">${tarjetaHTML(primera, true)}${items}</div>` : vacio}
@@ -583,9 +609,9 @@
           ${secciones}
           <li><button type="button" data-filtro="guardadas" aria-pressed="${estado.cat === 'guardadas'}"><i aria-hidden="true"></i>Guardadas</button></li>
         </ul>
-        <button type="button" class="menu-29n" data-filtro="elecciones">
-          <b>${esc(c.num)}</b><span><strong>${esc(c.txt)}</strong>Todo sobre las elecciones generales</span>
-        </button>
+        ${c ? `<button type="button" class="menu-29n" ${c.seccion ? `data-filtro="${c.seccion}"` : 'tabindex="-1"'}>
+          <b>${esc(c.num)}</b><span><strong>${esc(c.txt)}</strong>${esc(c.detalle)}</span>
+        </button>` : ''}
       </nav>
       ${menuCuentaHTML()}
       <section class="menu-bloque lectura" id="lectura" aria-labelledby="lectura-titulo">
@@ -661,8 +687,13 @@
 
   function pintarCabecera() {
     const c = cuenta();
-    $('#cuenta').innerHTML = `<strong>${esc(c.fuerte)}</strong> <span>${esc(c.resto)}</span>`;
-    $('#top-fecha').textContent = fechaLarga();
+    const pastilla = $('#cuenta');
+    pastilla.hidden = !c;
+    if (c) {
+      pastilla.innerHTML = `<strong>${esc(c.fuerte)}</strong>${c.resto ? ` <span>${esc(c.resto)}</span>` : ''}`;
+      if (c.seccion) pastilla.dataset.filtro = c.seccion; else delete pastilla.dataset.filtro;
+    }
+    $('#top-fecha').innerHTML = `${fechaHTML()}<span class="top-ed">Edición ${edicionActual()}</span>`;
     $('#btn-flash').setAttribute('aria-pressed', estado.modo === 'flash');
     $('#btn-lista').setAttribute('aria-pressed', estado.modo === 'lista');
     $('#modo').dataset.modo = estado.modo;

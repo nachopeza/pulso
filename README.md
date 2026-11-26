@@ -3,7 +3,7 @@
 Medio de noticias cortas para gente joven (16-30 años) en España. Se lanza el sábado 28 de noviembre de 2026, víspera de las elecciones generales del **29N**: por eso el 29N tiene su sección, su cuenta atrás y su bloque en portada, aunque pulso cubre toda la actualidad.
 Cada noticia va resumida con nuestras palabras y enlaza siempre a su fuente original.
 
-La web de lectores es HTML, CSS y JavaScript puros, sin frameworks ni compilación. Las noticias viven en una base de datos de Cloudflare y se gestionan desde el **panel de redacción** (`pulsomedio.es/admin`). Está publicada en **https://pulsomedio.es** (Cloudflare Pages).
+La web de lectores es HTML, CSS y JavaScript puros, sin frameworks ni compilación. Las noticias viven en una base de datos de Cloudflare y se gestionan desde el **panel de redacción** (`pulso.com.es/admin`). Está publicada en **https://pulso.com.es** (Cloudflare Pages).
 
 ---
 
@@ -15,7 +15,7 @@ NWS/
 ├── css/estilos.css     Todo el diseño: colores, tipografía, modo Flash, modo Lista, animaciones
 ├── js/app.js           Lee las noticias de /api/noticias y pinta la web. No hace falta tocarlo para publicar
 ├── data/noticias.json  Copia de respaldo de las noticias (la web la usa si no hay servidor, por ejemplo en local)
-├── admin/              Panel de redacción (pulsomedio.es/admin): HTML, CSS y JS del panel
+├── admin/              Panel de redacción (pulso.com.es/admin): HTML, CSS y JS del panel
 ├── functions/          Servidor (Cloudflare Pages Functions): la API pública, la del panel y la del agente
 ├── servidor/comun.js   Piezas que comparten las funciones: horas de Madrid, validación, email, fotos
 ├── migraciones/        Tablas de la base de datos (Cloudflare D1)
@@ -57,7 +57,7 @@ Al elegir una sección se ve su cabecera, la primera noticia destacada y el rest
 tema Auto / Claro (versión en blanco) / Oscuro, y tamaño de letra normal, grande o muy grande. Se recuerdan en el navegador.
 En el ordenador también hay atajos en la cabecera: lupa (buscar) y «Aa» (lectura).
 
-- Cada noticia tiene su enlace propio: `https://pulsomedio.es/#id-de-la-noticia` abre directamente su ficha.
+- Cada noticia tiene su enlace propio: `https://pulso.com.es/#id-de-la-noticia` abre directamente su ficha.
 - Las guardadas y el modo elegido se recuerdan en el navegador (localStorage). No hay cuentas de usuario.
 - Cada 5 minutos la web mira si `actualizado` ha cambiado en el JSON. Si ha cambiado, muestra el aviso «Hay noticias nuevas».
 
@@ -70,7 +70,7 @@ En `js/app.js`, arriba del todo, están la fecha de las elecciones (`DIA_29N`), 
 - [ ] **Contacto** (correo o formulario), también en `LEGAL`.
 - [x] **Perfiles de Bluesky y X** en `REDES` (@pulsomedio en las dos).
 - [ ] **Imagen para redes** (`og:image`, 1200×630) en `index.html`, para que los enlaces compartidos lleven imagen.
-- [x] **Dominio propio**: pulsomedio.es.
+- [x] **Dominio propio**: pulso.com.es (pulsomedio.es redirige a él).
 - [ ] Si hay publicidad real, datos del anunciante en `anuncio`.
 - [ ] Limitación conocida: como las noticias se abren con `#id`, al compartir una noticia la vista previa en redes muestra el título general de pulso, no el de la noticia. Para tener vista previa por noticia haría falta generar una página por noticia.
 
@@ -108,7 +108,7 @@ Si no carga, mira si el cortafuegos del Mac está bloqueando Python (Ajustes del
 
 ### Cómo se publica
 
-- La web vive en **Cloudflare Pages** (proyecto `pulso`) con el dominio **pulsomedio.es**. El dominio se compró en Hostinger, pero sus DNS los gestiona Cloudflare. El correo sigue en Hostinger: sus registros (MX, SPF, DKIM, DMARC) están copiados en Cloudflare.
+- La web vive en **Cloudflare Pages** (proyecto `pulso`) con el dominio **pulso.com.es**; **pulsomedio.es** sigue conectado y redirige a él (301), salvo `/api/`, para que nada se rompa durante el cambio. El dominio se compró en Hostinger, pero sus DNS los gestiona Cloudflare. El correo sigue en Hostinger: sus registros (MX, SPF, DKIM, DMARC) están copiados en Cloudflare.
 - Cada `git push` a `main` lanza `.github/workflows/publicar.yml`: valida el JSON y sube la web a Cloudflare. Necesita dos secretos en el repositorio: `CLOUDFLARE_API_TOKEN` (con permiso *Cloudflare Pages: Edit*) y `CLOUDFLARE_ACCOUNT_ID`.
 - **Tres ediciones al día:** una rutina de Claude Code en la nube («pulso: edición diaria», a las 6:30, 13:30 y 20:30 de Madrid) sigue `AGENTE.md`. Por la mañana prepara 12 borradores; a mediodía y por la noche, de 2 a 4 noticias nuevas o actualizadas. Las entrega al panel con `scripts/enviar.py`, el panel manda un email al equipo, y si nadie revisa la edición, las propuestas se publican solas a las 7:00, 14:00 y 21:00.
 - **Orden de la portada:** cada noticia tiene una importancia del 1 al 5 que pierde la mitad cada 8 horas; si se actualiza, vuelve a subir. Se puede ordenar a mano en *Portada* hasta la siguiente edición.
@@ -117,7 +117,7 @@ Si no carga, mira si el cortafuegos del Mac está bloqueando Python (Ajustes del
 
 ### El panel de redacción
 
-- **Entrar:** `pulsomedio.es/admin`. Escribes tu email y te llega un enlace; no hay contraseñas. La sesión dura 30 días.
+- **Entrar:** `pulso.com.es/admin`. Escribes tu email y te llega un enlace; no hay contraseñas. La sesión dura 30 días.
 - **Perfiles:** Administración (todo, también usuarios), Edición (escribe y publica) y Redacción (escribe borradores; otra persona publica).
 - **Pantallas:**
   - *Hoy*: la edición del agente, con un interruptor por noticia y el botón «Publicar ahora».

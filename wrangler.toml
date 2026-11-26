@@ -17,5 +17,7 @@ binding = "FOTOS"
 bucket_name = "pulso-fotos"
 
 [vars]
-SITIO = "https://pulsomedio.es"
+SITIO = "https://pulso.com.es"
+# El correo sigue en pulsomedio.es hasta que exista el buzón hola@pulso.com.es
+# (y esté verificado en Brevo como remitente).
 REMITENTE = "hola@pulsomedio.es"

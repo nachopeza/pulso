@@ -253,7 +253,7 @@ export async function importarFoto(env, url, nombre) {
   let u;
   try { u = new URL(url); } catch (e) { return null; }
   if (u.protocol !== 'https:' || !['upload.wikimedia.org', 'thumb.wikimedia.org'].includes(u.hostname)) return null;
-  const r = await fetch(u.toString(), { headers: { 'User-Agent': 'pulso-noticias/1.0 (https://pulsomedio.es)' } });
+  const r = await fetch(u.toString(), { headers: { 'User-Agent': 'pulso-noticias/1.0 (https://pulso.com.es)' } });
   const tipo = r.headers.get('Content-Type') || '';
   if (!r.ok || !/^image\/(jpeg|png|webp)$/.test(tipo)) return null;
   const cuerpo = await r.arrayBuffer();

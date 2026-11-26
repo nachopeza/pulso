@@ -116,7 +116,7 @@
     const ahora = new Date();
     const dia = ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', timeZone: ZONA }).replace(',', '');
     const mes = ahora.toLocaleDateString('es-ES', { month: 'long', timeZone: ZONA });
-    return `<b>${esc(dia)}</b> de ${esc(mes)}`;
+    return `<b>${esc(dia)}</b><span>de ${esc(mes)}</span>`;
   }
 
   // Iconos (SVG en línea: heredan el color del texto)
@@ -319,7 +319,25 @@
       </div>
     </section>` : '';
 
-    return portada + lista.map((n, i) => cartaHTML(n, i, lista.length)).join('') + vacio + final;
+    // Última pantalla: el pie (quiénes somos, redes, legal), como en cualquier web
+    const pie = `<section class="slide" aria-label="Sobre pulso">
+      <footer class="carta pie-flash">
+        <div>
+          <p class="logo-pie notranslate" translate="no">pulso<span class="latido" aria-hidden="true"></span></p>
+          <p class="pie-lema">Lo importante del día, en corto y con fuentes.</p>
+        </div>
+        <p class="como">${COMO_TRABAJAMOS}</p>
+        ${redesHTML()}
+        <nav class="pie-flash-secciones" aria-label="Secciones">
+          ${presentes().map((k) => `<button type="button" data-filtro="${k}" data-cat="${k}"><i aria-hidden="true"></i>${CATS[k]}</button>`).join('')}
+        </nav>
+        <div class="pie-flash-base">
+          ${legalHTML('legal')}
+          <p class="pie-copy">© ${new Date().getFullYear()} pulso · <a href="mailto:hola@pulso.com.es">hola@pulso.com.es</a></p>
+        </div>
+      </footer>
+    </section>`;
+    return portada + lista.map((n, i) => cartaHTML(n, i, lista.length)).join('') + vacio + final + (lista.length ? pie : '');
   }
 
   // Metadatos de una noticia: número de fuentes y de titulares comparados
@@ -592,7 +610,8 @@
     const tema = document.documentElement.dataset.tema || 'auto';
     const letra = document.documentElement.dataset.letra || 'normal';
     // Orden del menú, de lo que más se usa a lo que menos:
-    // buscar → secciones (y el 29N) → tu cuenta → ajustes de lectura → quiénes somos, redes y legal
+    // buscar → secciones (y la cuenta atrás) → tu cuenta → ajustes de lectura.
+    // Quiénes somos, redes y legal van en el pie (también en el modo Flash, en su última pantalla).
     return `<div class="menu-cab">
         <p class="logo-pie notranslate" translate="no">pulso<span class="latido" aria-hidden="true"></span></p>
         <button type="button" class="cerrar" data-cerrar-menu aria-label="Cerrar el menú">${ICONO_X}</button>
@@ -642,12 +661,7 @@
             ${opcion('letra', 'normal', '<span class="a1">A</span><span class="oculto">Normal</span>', letra)}${opcion('letra', 'grande', '<span class="a2">A</span><span class="oculto">Grande</span>', letra)}${opcion('letra', 'enorme', '<span class="a3">A</span><span class="oculto">Muy grande</span>', letra)}
           </div>
         </div>
-      </section>
-      <div class="menu-bloque menu-info">
-        <p class="menu-como">${COMO_TRABAJAMOS}</p>
-        ${redesHTML()}
-        ${legalHTML('menu-legal')}
-      </div>`;
+      </section>`;
   }
 
   // ---------- Buscador ----------
@@ -693,7 +707,7 @@
       pastilla.innerHTML = `<strong>${esc(c.fuerte)}</strong>${c.resto ? ` <span>${esc(c.resto)}</span>` : ''}`;
       if (c.seccion) pastilla.dataset.filtro = c.seccion; else delete pastilla.dataset.filtro;
     }
-    $('#top-fecha').innerHTML = `${fechaHTML()}<span class="top-ed">Edición ${edicionActual()}</span>`;
+    $('#top-fecha').innerHTML = fechaHTML();
     $('#btn-flash').setAttribute('aria-pressed', estado.modo === 'flash');
     $('#btn-lista').setAttribute('aria-pressed', estado.modo === 'lista');
     $('#modo').dataset.modo = estado.modo;
@@ -1177,6 +1191,10 @@
       else abrir(d.ir);
     } else if (d.abrir) {
       abrir(d.abrir);
+    } else if (d.cuentaModo) {
+      const actual = $('#form-cuenta')?.dataset.modo;
+      fichaCuerpo.innerHTML = cuentaLectorHTML($('#form-cuenta')?.dataset.volver, d.cuentaModo === 'otra' ? actual : d.cuentaModo);
+      $('#cuenta-email')?.focus();
     } else if ('cuenta' in d) {
       abrirCuenta(d.cuenta, d.modo);
     } else if ('salir' in d) {
@@ -1410,7 +1428,7 @@
     const periodo = l.dias === 7 ? 'esta semana' : l.dias === 1 ? 'hoy' : `en ${l.dias} días`;
     return `<div class="muro">
         <p><b>Ya has leído tus ${l.gratis} noticias sin cuenta de ${periodo}.</b> Regístrate o inicia sesión para seguir leyendo sin límite. Es gratis.</p>
-        <button type="button" class="btn lleno" data-cuenta="${esc(n.id)}">Registrarme gratis</button>
+        <button type="button" class="btn lleno" data-cuenta="${esc(n.id)}" data-modo="crear">Registrarme gratis</button>
         <p class="muro-ya">¿Ya tienes cuenta? <button type="button" data-cuenta="${esc(n.id)}" data-modo="entrar">Inicia sesión</button></p>
       </div>`;
   }
@@ -1445,21 +1463,36 @@
           <p class="cuenta-nota"><button type="button" class="enlace-txt" data-borrar-cuenta>Borrar mi cuenta</button> (se borran tu email y tus guardadas).</p>
         </div>`;
     }
+    // Sin cuenta: dos pestañas (Iniciar sesión / Crear cuenta) y dos pasos (email → código de 6 cifras)
+    const entrar = modo !== 'crear';
     return `${tapa}<div class="f-txt f-cuenta">
-        <h2 id="ficha-titulo">${modo === 'entrar' ? 'Inicia sesión' : 'Regístrate gratis'}</h2>
-        <p class="entradilla">${modo === 'entrar'
-          ? 'Escribe tu email y te mandamos un enlace para entrar. Sin contraseña.'
-          : 'Guarda noticias en todos tus dispositivos y lee sin límite. Sin contraseña: te mandamos un enlace al correo y entras con un toque. Si ya tienes cuenta, es el mismo paso.'}</p>
-        <form id="form-cuenta" class="form-cuenta" data-volver="${esc(volver || '')}" novalidate>
+        <div class="seg cuenta-pestanas" role="tablist" aria-label="Tu cuenta">
+          <button type="button" role="tab" data-cuenta-modo="entrar" aria-selected="${entrar}" aria-pressed="${entrar}">Iniciar sesión</button>
+          <button type="button" role="tab" data-cuenta-modo="crear" aria-selected="${!entrar}" aria-pressed="${!entrar}">Crear cuenta</button>
+        </div>
+        <h2 id="ficha-titulo">${entrar ? 'Entra en tu cuenta' : 'Crea tu cuenta gratis'}</h2>
+        <p class="entradilla">${entrar
+          ? 'Escribe tu email y te mandamos un código de 6 cifras. Sin contraseñas, y este dispositivo te recuerda durante un año.'
+          : 'Guarda noticias en todos tus dispositivos y lee sin límite. Te mandamos un código al email y listo.'}</p>
+        <form id="form-cuenta" class="form-cuenta" data-volver="${esc(volver || '')}" data-modo="${entrar ? 'entrar' : 'crear'}" novalidate>
           <label for="cuenta-email">Tu email</label>
-          <input type="email" id="cuenta-email" autocomplete="email" inputmode="email" required placeholder="tu@email.com">
-          <label class="casilla"><input type="checkbox" id="cuenta-acepto" required>
-            <span>Tengo 14 años o más y acepto la <a href="privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
-          <button type="submit" class="btn lleno">Mandarme el enlace</button>
+          <input type="email" id="cuenta-email" autocomplete="email" inputmode="email" required placeholder="tu@email.com" value="${esc(leer('pulso-ultimo-email') || '')}">
+          ${entrar ? '' : `<label class="casilla"><input type="checkbox" id="cuenta-acepto" required>
+            <span>Tengo 14 años o más y acepto la <a href="privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</span></label>`}
+          <button type="submit" class="btn lleno">Mandarme el código</button>
           <p id="cuenta-msg" class="cuenta-msg" role="status" aria-live="polite"></p>
         </form>
-        <p class="cuenta-nota">pulso es gratis y sin publicidad. Solo usamos tu email para que entres.</p>
+        <p class="cuenta-nota">pulso es gratis. Solo usamos tu email para que entres.</p>
       </div>`;
+  }
+  // Segundo paso: escribir el código que ha llegado al email
+  function pasoCodigoHTML(email) {
+    return `<p class="cuenta-ok"><b>Mira tu correo.</b> Te hemos mandado un código a <b class="notranslate" translate="no">${esc(email)}</b>. Si no llega en un minuto, busca en spam.</p>
+      <label for="cuenta-codigo">Código de 6 cifras</label>
+      <input type="text" id="cuenta-codigo" class="campo-codigo" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="000 000" required>
+      <button type="submit" class="btn lleno">Entrar</button>
+      <p id="cuenta-msg" class="cuenta-msg" role="status" aria-live="polite"></p>
+      <p class="cuenta-nota"><button type="button" class="enlace-txt" data-cuenta-modo="otra">Usar otro email o pedir otro código</button></p>`;
   }
 
   function abrirCuenta(volver, modo) {
@@ -1478,20 +1511,52 @@
     if (e.target.id !== 'form-cuenta') return;
     e.preventDefault();
     const form = e.target;
-    const msg = $('#cuenta-msg');
-    const email = $('#cuenta-email').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Escribe un email válido.'; $('#cuenta-email').focus(); return; }
-    if (!$('#cuenta-acepto').checked) { msg.textContent = 'Marca la casilla para seguir.'; return; }
+    const msg = () => $('#cuenta-msg');
     const boton = form.querySelector('button[type=submit]');
+
+    // Paso 2: comprobar el código
+    if (form.dataset.paso === 'codigo') {
+      const codigo = $('#cuenta-codigo').value.replace(/\D/g, '');
+      if (codigo.length !== 6) { msg().textContent = 'Escribe las 6 cifras.'; $('#cuenta-codigo').focus(); return; }
+      boton.disabled = true;
+      msg().textContent = 'Comprobando…';
+      try {
+        const r = await pedirJSON('/api/lector/verificar', 'POST', { email: form.dataset.email, codigo });
+        ponerLector(r.lector);
+        await arrancarCuenta();
+        const volver = form.dataset.volver;
+        cerrarFicha();
+        avisar('¡Dentro! Ya puedes leer sin límite');
+        if (volver) setTimeout(() => abrir(volver), 300);
+      } catch (err) { msg().textContent = err.message; boton.disabled = false; $('#cuenta-codigo').select(); }
+      return;
+    }
+
+    // Paso 1: pedir el código
+    const email = $('#cuenta-email').value.trim().toLowerCase();
+    const crear = form.dataset.modo === 'crear';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg().textContent = 'Escribe un email válido.'; $('#cuenta-email').focus(); return; }
+    if (crear && !$('#cuenta-acepto').checked) { msg().textContent = 'Marca la casilla para seguir.'; return; }
     boton.disabled = true;
-    msg.textContent = 'Enviando…';
+    msg().textContent = 'Enviando…';
     try {
-      const r = await pedirJSON('/api/lector/pedir', 'POST', { email, acepto: true, volver: form.dataset.volver || undefined });
-      form.innerHTML = `<p class="cuenta-ok"><b>Mira tu correo.</b> ${esc(r.mensaje)} Si no llega en un par de minutos, busca en spam.</p>`;
+      await pedirJSON('/api/lector/pedir', 'POST', { email, modo: crear ? 'crear' : 'entrar', acepto: crear || undefined, volver: form.dataset.volver || undefined });
+      escribir('pulso-ultimo-email', email);
+      form.dataset.paso = 'codigo';
+      form.dataset.email = email;
+      form.innerHTML = pasoCodigoHTML(email);
+      $('#cuenta-codigo').focus();
     } catch (err) {
-      msg.textContent = err.message;
+      msg().textContent = err.message;
       boton.disabled = false;
     }
+  });
+  // Al pegar o escribir 6 cifras, se envía solo
+  document.addEventListener('input', (e) => {
+    if (e.target.id !== 'cuenta-codigo') return;
+    const cifras = e.target.value.replace(/\D/g, '').slice(0, 6);
+    e.target.value = cifras.length > 3 ? `${cifras.slice(0, 3)} ${cifras.slice(3)}` : cifras;
+    if (cifras.length === 6) e.target.form.requestSubmit();
   });
 
   async function sincronizarGuardadas(cambios) {
@@ -1558,6 +1623,12 @@
   async function arrancarCuenta() {
     // ¿Venimos del enlace del email? (?entrar=…)
     const url = new URL(location.href);
+    // ?cuenta=crear (viene del email «No tienes cuenta»): abre directamente el registro
+    if (url.searchParams.get('cuenta') === 'crear') {
+      url.searchParams.delete('cuenta');
+      try { history.replaceState(null, '', url.pathname + url.search + url.hash); } catch (e) { /* nada */ }
+      setTimeout(() => abrirCuenta(null, 'crear'), 400);
+    }
     const token = url.searchParams.get('entrar');
     if (token) {
       url.searchParams.delete('entrar');

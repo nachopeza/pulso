@@ -107,6 +107,8 @@ export const COOKIE = '__Host-pulso';
 
 // Cuentas de lectores (gratis): su propia cookie y sus propias sesiones, separadas del panel
 export const COOKIE_LECTOR = '__Host-pulso-lector';
+// Huella del código de 6 cifras: va unida al email, así el mismo código no sirve para otra cuenta
+export const huellaCodigo = (email, codigo) => huella(`${email}:${codigo}`);
 export const DURA_LECTOR = 365 * 24 * 60 * 60 * 1000; // un año
 export const cookieLector = (valor, ms) => `${COOKIE_LECTOR}=${valor}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(ms / 1000)}`;
 // Quién es el lector de esta petición (null si no ha entrado)
@@ -313,15 +315,20 @@ function parrafoHTML(p) {
     .replace(/\n/g, '<br>');
   return `<p style="margin:0 0 14px;font:400 16px/1.55 ${FUENTE};color:${MARCA.tinta}">${html}</p>`;
 }
-export function emailHTML({ asunto, texto, boton }) {
-  const partes = String(texto || '').split(/\n{2,}/).map((x) => x.trim()).filter(Boolean);
+export function emailHTML({ asunto, texto, boton, codigo }) {
+  let partes = String(texto || '').split(/\n{2,}/).map((x) => x.trim()).filter(Boolean);
+  // En HTML sobran las líneas que ya están dibujadas: el código y el enlace del botón
+  if (codigo) partes = partes.filter((p) => !p.startsWith('Código: '));
+  if (boton?.url) partes = partes.filter((p) => !p.includes(boton.url));
   // La firma «pulso» del final la pone el pie
   if (partes.at(-1) === 'pulso') partes.pop();
   const resumen = escHTML((partes[1] || partes[0] || '').slice(0, 140));
   const btn = boton?.url ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 22px"><tr><td style="background:${MARCA.amarillo};border-radius:999px">
       <a href="${escHTML(boton.url)}" style="display:inline-block;padding:14px 26px;font:800 16px/1 ${FUENTE};color:${MARCA.tinta};text-decoration:none">${escHTML(boton.texto)}</a></td></tr></table>` : '';
-  // El botón va después del primer párrafo que lo menciona (el saludo y la explicación), o tras el segundo
-  const cuerpo = partes.map((p, i) => parrafoHTML(p) + (i === Math.min(1, partes.length - 1) ? btn : '')).join('');
+  // Código para entrar: grande, espaciado y fácil de copiar
+  const cod = codigo ? `<p style="margin:6px 0 22px;padding:18px 0;text-align:center;background:${MARCA.fondo};border-radius:14px;font:900 38px/1 ${FUENTE};letter-spacing:.18em;color:${MARCA.tinta}">${escHTML(codigo)}</p>` : '';
+  // El código y el botón van después del segundo párrafo (el saludo y la explicación)
+  const cuerpo = partes.map((p, i) => parrafoHTML(p) + (i === Math.min(1, partes.length - 1) ? cod + btn : '')).join('');
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${escHTML(asunto)}</title></head>
 <body style="margin:0;padding:0;background:${MARCA.fondo}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${resumen}</div>
@@ -340,7 +347,7 @@ export function emailHTML({ asunto, texto, boton }) {
 </body></html>`;
 }
 
-export async function enviarEmail(env, { para, asunto, texto: cuerpo, boton }) {
+export async function enviarEmail(env, { para, asunto, texto: cuerpo, boton, codigo }) {
   if (env.DEV === '1') {
     console.log(`\n=== EMAIL a ${para.join(', ')} ===\n${asunto}\n\n${cuerpo}\n`);
     return true;
@@ -357,7 +364,7 @@ export async function enviarEmail(env, { para, asunto, texto: cuerpo, boton }) {
         to: para.map((email) => ({ email })),
         subject: asunto,
         textContent: cuerpo,
-        htmlContent: emailHTML({ asunto, texto: cuerpo, boton })
+        htmlContent: emailHTML({ asunto, texto: cuerpo, boton, codigo })
       })
     });
     if (!r.ok) console.log('Brevo no ha enviado el email:', r.status, await r.text());

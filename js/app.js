@@ -856,6 +856,21 @@
   }
   medirCabecera();
 
+  // Guardada como app en el iPhone (barra de la hora transparente), el «100 %» de alto se queda corto:
+  // descuenta la barra de la hora y deja una franja vacía abajo y las tarjetas descuadradas.
+  // Medimos el alto real de la pantalla y se lo damos a la página.
+  const comoApp = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (comoApp) {
+    const ajustarAlto = () => {
+      const alto = `${Math.max(innerHeight, document.documentElement.clientHeight)}px`;
+      document.documentElement.style.height = alto;
+      document.body.style.height = alto;
+    };
+    ajustarAlto();
+    addEventListener('resize', ajustarAlto);
+    addEventListener('orientationchange', () => setTimeout(ajustarAlto, 300));
+  }
+
   // Detecta qué tarjeta está en pantalla: le pone la clase .activa (lanza su animación)
   // y mueve la barra de progreso.
   let observador;

@@ -341,14 +341,20 @@ main.entrada .slide:first-child .carta { animation: sube-txt 0.6s var(--nativa) 
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* ---------- 6. Modo Flash ---------- */
-main.flash { scroll-snap-type: y mandatory; scroll-padding-top: var(--cab); }
+/* Cada tarjeta encaja justo debajo de la cabecera. Va como margen de la tarjeta (no como
+   relleno del contenedor) para que también encaje al saltar a una noticia desde la portada */
+main.flash { scroll-snap-type: y mandatory; }
+main.flash .slide { scroll-margin-top: var(--cab); }
+/* En la tarjeta: «Leer más» a la izquierda; comentar, guardar y compartir juntos a la derecha */
+.carta .acciones .btn-com { margin-left: auto; }
 .slide {
   height: 100%;
   scroll-snap-align: start;
   scroll-snap-stop: always;
   display: grid;
   justify-items: center;
-  padding: 10px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  /* Un poco de aire entre la cabecera y la tarjeta */
+  padding: 18px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
 }
 
 /* La tarjeta flash: un campo de color a pantalla completa */
@@ -1138,3 +1144,9 @@ body { top: 0 !important; }
   :root[data-tema="oscuro"] .top::before { display: none; }
   :root[data-tema="claro"] .top::before { display: block; }
 }
+
+/* El logo y el botón del menú, nítidos sobre el cristal: en el iPhone, lo que se anima dentro de una
+   capa con desenfoque a veces se pinta borroso. En su propia capa y con un borde de sombra muy fino
+   se ven tan definidos como la pastilla amarilla. */
+.logo, .btn-menu { transform: translateZ(0); -webkit-font-smoothing: antialiased; }
+.logo { text-shadow: 0 1px 1px light-dark(rgb(255 255 255 / 0.5), rgb(0 0 0 / 0.35)); }

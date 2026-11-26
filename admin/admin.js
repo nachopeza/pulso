@@ -1101,8 +1101,10 @@
         else if (p.red === 'bluesky' && (p.momento === 'pronto' || p.momento === 'toca')) { otras = [editar]; mas = [abrir ? `<a href="${esc(abrir)}" target="_blank" rel="noopener">Publicar a mano en Bluesky</a>` : '', yaPub, copiar, imagen, cambio, descartar]; }
         else { principal = abrir ? `<a class="btn btn-fino btn-principal" href="${esc(abrir)}" target="_blank" rel="noopener">Abrir en ${esc(REDES[p.red])}</a>` : b('data-copiar', 'Copiar texto', 'btn-principal'); otras = [pub ? b('data-estado="publicada"', 'Ya está publicada') : '']; mas = [m('data-editar', 'Editar texto'), abrir ? copiar : '', imagen, cambio, descartar]; }
       } else if (p.estado === 'publicada') {
-        if (p.enlace) otras = [`<a class="btn btn-fino" href="${esc(p.enlace)}" target="_blank" rel="noopener">Ver la publicación</a>`];
-        mas = [copiar, imagen, pub ? m('data-estado="revisar"', 'Volver a revisar') : ''];
+        // Por si se marcó sin querer: vuelve a «aprobada» y se puede compartir otra vez
+        if (pub) otras.push(b('data-deshacer', 'No se publicó'));
+        if (p.enlace) otras.push(`<a class="btn btn-fino" href="${esc(p.enlace)}" target="_blank" rel="noopener">Ver la publicación</a>`);
+        mas = [p.red === 'x' ? m('data-compartir', 'Compartir en X otra vez') : '', copiar, imagen, pub ? m('data-estado="revisar"', 'Volver a revisar') : ''];
       } else if (p.estado === 'descartada') {
         if (pub) otras = [b('data-estado="revisar"', 'Recuperar')];
         mas = [copiar];
@@ -1240,6 +1242,14 @@
           if (!confirm('¿La has publicado en X? La marco como publicada.')) return;
           if (await guardar(p.id, { estado: 'publicada' }, 'Marcada como publicada')) await repintar();
         }, 800);
+        return;
+      }
+      if (e.target.closest('[data-deshacer]')) {
+        const aviso = p.red === 'bluesky' && p.enlace
+          ? 'Esta pieza tiene enlace de Bluesky: si vuelve a pendiente, puede salir otra vez sola. ¿La devuelvo a pendiente?'
+          : `Vuelve a «Por hacer» como aprobada para que la publiques${p.red === 'x' ? ' con «Compartir en X»' : ''}. ¿Seguimos?`;
+        if (!confirm(aviso)) return;
+        if (await guardar(p.id, { estado: 'aprobada', enlace: '' }, 'Vuelve a estar pendiente')) { pestana = 'hacer'; await repintar(); irA(p.id); }
         return;
       }
       const bt = e.target.closest('[data-estado]');

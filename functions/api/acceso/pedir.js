@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
 
   // Como mucho 5 enlaces por hora para el mismo email
   const ahora = Date.now();
-  const { n } = await env.DB.prepare('SELECT count(*) AS n FROM enlaces WHERE email = ? AND creado > ?')
+  const { n } = await env.DB.prepare('SELECT count(*) AS n FROM enlaces WHERE email = ? AND para = \'panel\' AND creado > ?')
     .bind(email, ahora - 60 * 60 * 1000).first();
   if (n >= 5) return fallo('Has pedido demasiados enlaces. Espera un rato y vuelve a intentarlo.', 429);
 

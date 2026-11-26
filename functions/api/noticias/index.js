@@ -33,6 +33,8 @@ export async function onRequestGet({ env }) {
     for (const m of Object.values(momentos)) m.puntos = (m.puntos || []).filter((p) => ids.has(p.id));
   }
   const anuncio = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'anuncio'").first();
+  // Límite de lectura sin cuenta: { gratis: 5, dias: 7 } (sin ajuste o con gratis 0 → sin límite)
+  const lectura = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'lectura'").first();
 
   // "Actualizado": lo último que ha cambiado de lo que se ve
   const ultima = Math.max(0, mom?.desde || 0, mom?.actualizado || 0,
@@ -41,6 +43,7 @@ export async function onRequestGet({ env }) {
   return json({
     actualizado: isoMadrid(ultima || ahora),
     anuncio: anuncio?.valor ? JSON.parse(anuncio.valor) : null,
+    lectura: lectura?.valor ? JSON.parse(lectura.valor) : null,
     momentos,
     noticias
   }, 200, { 'Cache-Control': 'no-cache' });

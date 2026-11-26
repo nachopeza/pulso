@@ -41,7 +41,7 @@ export async function onRequestPut({ request, env, data }) {
   }
   const stmts = [env.DB.prepare('UPDATE usuarios SET nombre = ?, rol = ?, activo = ? WHERE email = ?').bind(nombre, rol, activo, u.email)];
   // Si se le quita el acceso, se cierran sus sesiones abiertas
-  if (!activo) stmts.push(env.DB.prepare('DELETE FROM sesiones WHERE email = ?').bind(u.email));
+  if (!activo) stmts.push(env.DB.prepare('DELETE FROM sesiones WHERE email = ? AND para = \'panel\'').bind(u.email));
   await env.DB.batch(stmts);
   return json({ ok: true, yo: u.email === data.usuario.email });
 }

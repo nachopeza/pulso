@@ -13,7 +13,7 @@ export async function onRequestPost({ request, env }) {
   const h = await huella(token);
   // Se marca como usado en el mismo paso: un enlace solo sirve una vez
   const enlace = await env.DB.prepare(
-    'UPDATE enlaces SET usado = 1 WHERE huella = ? AND usado = 0 AND expira > ? RETURNING email'
+    'UPDATE enlaces SET usado = 1 WHERE huella = ? AND para = \'panel\' AND usado = 0 AND expira > ? RETURNING email'
   ).bind(h, ahora).first();
   if (!enlace) return fallo('El enlace ha caducado o ya se ha usado. Pide otro.', 401);
   const u = await env.DB.prepare('SELECT * FROM usuarios WHERE email = ? AND activo = 1').bind(enlace.email).first();

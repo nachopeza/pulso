@@ -1016,3 +1016,35 @@ body { top: 0 !important; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .cinta-pista { overflow-x: auto; }
 }
+
+/* ---------- 14. Cuenta de lector y límite de lectura ---------- */
+/* El aviso que sustituye a los puntos cuando se acaban las noticias gratis.
+   En la tarjeta Flash va sobre el color de la sección; en la ficha, sobre la superficie. */
+.muro { display: grid; gap: 12px; justify-items: start; padding: 16px; border-radius: var(--r-m); background: rgb(20 20 20 / 0.08); border: 1.5px dashed currentColor; }
+.f-txt .muro { background: var(--sup); border-color: var(--linea); }
+.muro p { font-size: 16px; line-height: 1.45; }
+.muro .btn.lleno, .f-cuenta .btn.lleno { background: var(--marca); color: var(--oscuro); border-color: var(--marca); }
+.muro-ya { font-size: 14px !important; }
+.muro-ya button, .enlace-txt { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Bloque «Tu cuenta» del menú */
+.menu-cuenta { display: grid; gap: 8px; margin: 4px 0 14px; }
+.menu-cuenta > p { font-weight: 650; }
+.menu-cuenta-btn { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border-radius: var(--r-m); border: 1.5px solid var(--linea); background: var(--sup); color: var(--tinta); cursor: pointer; font: inherit; }
+.menu-cuenta-btn b { font-weight: 800; font-stretch: 110%; overflow-wrap: anywhere; }
+.menu-cuenta-btn span { font-size: 13.5px; color: var(--suave); }
+.menu-cuenta-btn:hover { border-color: var(--tinta); }
+
+/* Ficha de la cuenta */
+.cuenta-tapa { --c: var(--marca); }
+.form-cuenta { display: grid; gap: 10px; }
+.form-cuenta label { font-weight: 650; }
+.form-cuenta input[type=email] { min-height: 48px; padding: 0 14px; border-radius: var(--r-m); border: 1.5px solid var(--linea); background: var(--bg); color: var(--tinta); font: inherit; font-size: 17px; }
+.form-cuenta input[type=email]:focus-visible { outline: 2px solid var(--tinta); outline-offset: 2px; }
+.form-cuenta .casilla { display: flex; gap: 10px; align-items: flex-start; font-weight: 450; font-size: 15px; line-height: 1.4; }
+.form-cuenta .casilla input { width: 20px; height: 20px; margin-top: 1px; flex: none; accent-color: var(--tinta); }
+.form-cuenta .btn { justify-self: start; margin-top: 4px; }
+.cuenta-msg { min-height: 1.4em; font-size: 15px; }
+.cuenta-ok { padding: 14px 16px; border-radius: var(--r-m); background: var(--sup); line-height: 1.45; }
+.cuenta-nota { font-size: 14px; color: var(--suave); line-height: 1.45; }
+.f-cuenta .acciones { display: flex; flex-wrap: wrap; gap: 10px; }

@@ -8,7 +8,7 @@ export async function onRequest(context) {
   if (!s) return fallo('Tienes que entrar de nuevo.', 401);
   const u = await env.DB.prepare(
     `SELECT u.email, u.nombre, u.rol FROM sesiones s JOIN usuarios u ON u.email = s.email
-     WHERE s.huella = ? AND s.expira > ? AND u.activo = 1`
+     WHERE s.huella = ? AND s.para = 'panel' AND s.expira > ? AND u.activo = 1`
   ).bind(await huella(s), Date.now()).first();
   if (!u) return fallo('Tu sesión ha caducado. Entra de nuevo.', 401);
 

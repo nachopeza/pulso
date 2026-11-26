@@ -39,7 +39,7 @@
     { nombre: 'Aviso legal', url: 'aviso-legal.html' },
     { nombre: 'Privacidad', url: 'privacidad.html' },
     { nombre: 'Cookies', url: 'cookies.html' },
-    { nombre: 'Contacto', url: 'mailto:hola@pulsomedio.es' }
+    { nombre: 'Contacto', url: 'mailto:hola@pulso.com.es' }
   ];
 
   // ---------- 2. Pequeñas herramientas ----------
@@ -123,7 +123,9 @@
     // Si el lector lo cambia, se respeta hasta que cierre la pestaña.
     modo: leerSesion('pulso-modo') || (innerWidth < 900 ? 'flash' : 'lista'),
     momento: momentoActual(),
-    guardadas: new Set((() => { try { return JSON.parse(leer('pulso-guardadas') || '[]'); } catch (e) { return []; } })())
+    guardadas: new Set((() => { try { return JSON.parse(leer('pulso-guardadas') || '[]'); } catch (e) { return []; } })()),
+    // Cuenta de lector: mientras se comprueba, damos por buena la del último día (así no parpadea el límite)
+    lector: leer('pulso-lector') ? { email: leer('pulso-lector') } : null
   };
 
   const main = $('#main');
@@ -144,7 +146,7 @@
   function visibles() {
     const todas = ordenadas();
     if (estado.cat === 'todo') return todas;
-    if (estado.cat === 'guardadas') return todas.filter((n) => estado.guardadas.has(n.id));
+    if (estado.cat === 'guardadas') return [...estado.guardadas].reverse().map(buscar).filter(Boolean);
     return todas.filter((n) => cat(n) === estado.cat);
   }
   // Solo por fecha (para "Última hora" y "Lo último")
@@ -254,8 +256,8 @@
         ${imagenHTML(n, 'foto') || `<div class="hueco">${gigante(c)}</div>`}
         <div class="cuerpo">
           <h2>${esc(n.titular)}</h2>
-          ${puntos ? `<ul class="puntos">${puntos}</ul>` : ''}
-          ${n.porque ? `<p class="porque"><b>Por qué te importa.</b> ${esc(n.porque)}</p>` : ''}
+          ${bloqueada(n) ? muroHTML(n) : `${puntos ? `<ul class="puntos">${puntos}</ul>` : ''}
+          ${n.porque ? `<p class="porque"><b>Por qué te importa.</b> ${esc(n.porque)}</p>` : ''}`}
         </div>
         <div class="pie-carta">
           ${n.fuentes?.length ? `<p class="fuentes">Con información de ${fuentesHTML(n)}</p>` : ''}
@@ -539,12 +541,13 @@
         <h2 id="ficha-titulo">${esc(n.titular)}</h2>
         ${n.entradilla ? `<p class="entradilla">${esc(n.entradilla)}</p>` : ''}
         ${imagenHTML(n, 'foto')}
+        ${bloqueada(n) ? muroHTML(n) : `
         ${puntos ? `<ul class="puntos">${puntos}</ul>` : ''}
         ${n.porque ? `<p class="porque"><b>Por qué te importa.</b> ${esc(n.porque)}</p>` : ''}
         ${n.correccion ? `<p class="correccion"><b>Corrección.</b> ${esc(n.correccion)}</p>` : ''}
         ${titulares ? `<h3>Cómo lo titulan</h3><ul class="titulares">${titulares}</ul>` : ''}
         ${fuentes ? `<h3>Fuentes</h3><ul class="lista-fuentes">${fuentes}</ul>` : ''}
-        <p class="firma">Redactado por pulso a partir de las fuentes citadas. Publicado el ${esc(fecha)}.${n.ejemplo ? ' Contenido de ejemplo.' : ''}</p>
+        <p class="firma">Redactado por pulso a partir de las fuentes citadas. Publicado el ${esc(fecha)}.${n.ejemplo ? ' Contenido de ejemplo.' : ''}</p>`}
         <div class="acciones">
           ${botonGuardar(n)}
           ${botonCompartir(n)}
@@ -571,6 +574,7 @@
         <input type="search" id="buscar" placeholder="Buscar noticias" autocomplete="off" enterkeyhint="search">
         <div id="resultados" aria-live="polite"></div>
       </div>
+      ${menuCuentaHTML()}
       <div class="menu-modo">
         <p>Leer en modo</p>
         <div class="modo modo-menu" data-modo="${estado.modo}" role="group" aria-label="Cómo quieres leer">
@@ -792,6 +796,7 @@
       entradas.forEach((en) => {
         if (!en.isIntersecting) { en.target.classList.remove('activa'); return; }
         en.target.classList.add('activa');
+        if (en.target.id.startsWith('s-')) contarLectura(en.target.id.slice(2));
         const i = slides.indexOf(en.target);
         if (barra) barra.style.setProperty('--p', slides.length > 1 ? i / (slides.length - 1) : 1);
       });
@@ -948,6 +953,7 @@
       return;
     }
     if (menu.open) menu.close();
+    contarLectura(n.id);
     ficha.classList.remove('saliendo');
     fichaCuerpo.innerHTML = fichaHTML(n);
     if (!ficha.open) {
@@ -972,6 +978,7 @@
     else estado.guardadas.add(id);
     escribir('pulso-guardadas', JSON.stringify([...estado.guardadas]));
     const g = estado.guardadas.has(id);
+    if (estado.lector) sincronizarGuardadas(g ? { anadir: [id] } : { quitar: [id] });
     // Actualiza todos los botones de esa noticia (tarjeta y ficha) sin repintar la página
     document.querySelectorAll(`[data-guardar="${CSS.escape(id)}"]`).forEach((b) => {
       b.setAttribute('aria-pressed', g);
@@ -983,7 +990,7 @@
     void boton?.offsetWidth;
     if (g) boton?.classList.add('pop');
     pintarChips(false);
-    avisar(g ? 'Guardada' : 'Quitada de guardadas');
+    avisar(g ? (estado.lector ? 'Guardada en tu cuenta' : 'Guardada en este dispositivo') : 'Quitada de guardadas');
   }
 
   async function compartir(id) {
@@ -1121,8 +1128,10 @@
       cerrarMenu();
     } else if (d.filtro) {
       if (menu.open) cerrarMenu();
+      if (ficha.open) cerrarFicha();
       estado.cat = d.filtro;
       cambiar(pintar);
+      if (d.filtro === 'guardadas') traerGuardadas();
     } else if (d.momento) {
       estado.momento = d.momento;
       pintarMomentos();
@@ -1132,6 +1141,12 @@
       else abrir(d.ir);
     } else if (d.abrir) {
       abrir(d.abrir);
+    } else if ('cuenta' in d) {
+      abrirCuenta(d.cuenta);
+    } else if ('salir' in d) {
+      salirCuenta();
+    } else if ('borrarCuenta' in d) {
+      borrarCuenta();
     } else if (d.guardar) {
       guardar(d.guardar, t);
     } else if (d.compartir) {
@@ -1297,7 +1312,242 @@
     } else borrarCookieTraductor();
   })();
 
+  // ---------- 12. Cuenta de lector y límite de lectura ----------
+  // La cuenta es gratis y sin contraseña: se entra con un enlace que llega al email.
+  // Sirve para guardar noticias en todos los dispositivos y leer sin límite.
+  // Sin cuenta se pueden leer unas cuantas noticias completas cada semana (lo decide el ajuste
+  // "lectura" del servidor: { gratis: 5, dias: 7 }; sin ajuste no hay límite). Los titulares
+  // se ven siempre, y una noticia ya leída se puede volver a abrir.
+
+  const pedirJSON = async (url, metodo = 'GET', cuerpo) => {
+    const r = await fetch(url, {
+      method: metodo,
+      credentials: 'same-origin',
+      headers: cuerpo ? { 'Content-Type': 'application/json' } : {},
+      body: cuerpo ? JSON.stringify(cuerpo) : undefined
+    });
+    const datos = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(datos.error || 'No se ha podido conectar. Inténtalo de nuevo.');
+    return datos;
+  };
+
+  // Límite: null si no hay
+  const limite = () => {
+    const l = estado.datos?.lectura;
+    return l && l.gratis > 0 ? { gratis: l.gratis, dias: l.dias || 7 } : null;
+  };
+  // Noticias leídas sin cuenta dentro del periodo: { id: cuándo }
+  function leidas() {
+    const l = limite();
+    let todas = {};
+    try { todas = JSON.parse(leer('pulso-leidas') || '{}'); } catch (e) { /* empezamos de cero */ }
+    if (!l) return todas;
+    const desde = Date.now() - l.dias * 86400000;
+    return Object.fromEntries(Object.entries(todas).filter(([, t]) => t > desde));
+  }
+  function bloqueada(n) {
+    const l = limite();
+    if (!l || estado.lector) return false;
+    const ya = leidas();
+    return !(n.id in ya) && Object.keys(ya).length >= l.gratis;
+  }
+  function contarLectura(id) {
+    const l = limite();
+    if (!l || estado.lector) return;
+    const ya = leidas();
+    if (id in ya || Object.keys(ya).length >= l.gratis) return;
+    ya[id] = Date.now();
+    escribir('pulso-leidas', JSON.stringify(ya));
+    // Con la última gratis, las tarjetas que aún no has visto pasan a pedir la cuenta
+    if (Object.keys(ya).length >= l.gratis) aplicarMuro();
+  }
+  function aplicarMuro() {
+    main.querySelectorAll('.slide[id^="s-"]').forEach((s) => {
+      const n = buscar(s.id.slice(2));
+      const cuerpo = s.querySelector('.cuerpo');
+      if (!n || !cuerpo || !bloqueada(n) || cuerpo.querySelector('.muro')) return;
+      cuerpo.innerHTML = `<h2>${esc(n.titular)}</h2>${muroHTML(n)}`;
+    });
+  }
+  function muroHTML(n) {
+    const l = limite();
+    const periodo = l.dias === 7 ? 'esta semana' : l.dias === 1 ? 'hoy' : `en ${l.dias} días`;
+    return `<div class="muro">
+        <p><b>Ya has leído tus ${l.gratis} noticias gratis de ${periodo}.</b> Crea tu cuenta, también gratis, y sigue leyendo sin límite.</p>
+        <button type="button" class="btn lleno" data-cuenta="${esc(n.id)}">Crear cuenta gratis</button>
+        <p class="muro-ya">¿Ya tienes cuenta? <button type="button" data-cuenta="${esc(n.id)}">Entrar</button></p>
+      </div>`;
+  }
+
+  function menuCuentaHTML() {
+    return estado.lector
+      ? `<div class="menu-cuenta">
+          <p>Tu cuenta</p>
+          <button type="button" class="menu-cuenta-btn" data-cuenta><b class="notranslate" translate="no">${esc(estado.lector.email)}</b><span>Guardadas en todos tus dispositivos</span></button>
+        </div>`
+      : `<div class="menu-cuenta">
+          <p>Tu cuenta</p>
+          <button type="button" class="menu-cuenta-btn" data-cuenta><b>Crear cuenta gratis</b><span>Guarda noticias en todos tus dispositivos y lee sin límite</span></button>
+        </div>`;
+  }
+
+  function cuentaLectorHTML(volver) {
+    const tapa = `<div class="f-tapa cuenta-tapa">
+        <span class="etq"><b>Tu cuenta</b></span>
+        <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">${ICONO_X}</button>
+      </div>`;
+    if (estado.lector) {
+      const n = estado.guardadas.size;
+      return `${tapa}<div class="f-txt f-cuenta">
+          <h2 id="ficha-titulo">Tu cuenta de pulso</h2>
+          <p class="entradilla">Has entrado como <b class="notranslate" translate="no">${esc(estado.lector.email)}</b>. Lo que guardes aparece en todos los dispositivos donde entres con este email.</p>
+          <div class="acciones">
+            <button type="button" class="btn lleno" data-filtro="guardadas">${ICONO_GUARDAR}<span>Tus guardadas (${n})</span></button>
+            <button type="button" class="btn" data-salir>Cerrar sesión</button>
+          </div>
+          <p class="cuenta-nota">Es gratis y sin publicidad. No mandamos correos salvo los enlaces para entrar.</p>
+          <p class="cuenta-nota"><button type="button" class="enlace-txt" data-borrar-cuenta>Borrar mi cuenta</button> (se borran tu email y tus guardadas).</p>
+        </div>`;
+    }
+    return `${tapa}<div class="f-txt f-cuenta">
+        <h2 id="ficha-titulo">Crea tu cuenta gratis</h2>
+        <p class="entradilla">Guarda noticias en todos tus dispositivos y lee sin límite. Sin contraseña: te mandamos un enlace al correo y entras con un toque. Si ya tienes cuenta, es el mismo paso.</p>
+        <form id="form-cuenta" class="form-cuenta" data-volver="${esc(volver || '')}" novalidate>
+          <label for="cuenta-email">Tu email</label>
+          <input type="email" id="cuenta-email" autocomplete="email" inputmode="email" required placeholder="tu@email.com">
+          <label class="casilla"><input type="checkbox" id="cuenta-acepto" required>
+            <span>Tengo 14 años o más y acepto la <a href="privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
+          <button type="submit" class="btn lleno">Mandarme el enlace</button>
+          <p id="cuenta-msg" class="cuenta-msg" role="status" aria-live="polite"></p>
+        </form>
+        <p class="cuenta-nota">pulso es gratis y sin publicidad. Solo usamos tu email para que entres.</p>
+      </div>`;
+  }
+
+  function abrirCuenta(volver) {
+    if (menu.open) menu.close();
+    if (ficha.open) quitarHash();
+    ficha.classList.remove('saliendo');
+    fichaCuerpo.innerHTML = cuentaLectorHTML(volver);
+    if (!ficha.open) ficha.showModal();
+    ficha.scrollTop = 0;
+    const campo = $('#cuenta-email');
+    if (campo && conTeclado) campo.focus();
+    else ficha.querySelector('.cerrar').focus({ focusVisible: conTeclado });
+  }
+
+  document.addEventListener('submit', async (e) => {
+    if (e.target.id !== 'form-cuenta') return;
+    e.preventDefault();
+    const form = e.target;
+    const msg = $('#cuenta-msg');
+    const email = $('#cuenta-email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Escribe un email válido.'; $('#cuenta-email').focus(); return; }
+    if (!$('#cuenta-acepto').checked) { msg.textContent = 'Marca la casilla para seguir.'; return; }
+    const boton = form.querySelector('button[type=submit]');
+    boton.disabled = true;
+    msg.textContent = 'Enviando…';
+    try {
+      const r = await pedirJSON('/api/lector/pedir', 'POST', { email, acepto: true, volver: form.dataset.volver || undefined });
+      form.innerHTML = `<p class="cuenta-ok"><b>Mira tu correo.</b> ${esc(r.mensaje)} Si no llega en un par de minutos, busca en spam.</p>`;
+    } catch (err) {
+      msg.textContent = err.message;
+      boton.disabled = false;
+    }
+  });
+
+  async function sincronizarGuardadas(cambios) {
+    try {
+      const r = await pedirJSON('/api/lector/guardadas', 'POST', cambios);
+      estado.guardadas = new Set([...r.guardadas].reverse());
+      escribir('pulso-guardadas', JSON.stringify([...estado.guardadas]));
+      pintarChips(false);
+    } catch (e) { avisar(e.message); }
+  }
+
+  // Las guardadas que ya no están en portada se piden al servidor
+  async function traerGuardadas() {
+    const faltan = [...estado.guardadas].filter((id) => !buscar(id));
+    if (!faltan.length) return;
+    try {
+      if (estado.lector) {
+        const r = await pedirJSON('/api/lector/guardadas');
+        r.noticias.forEach((n) => { if (!buscar(n.id)) estado.sueltas[n.id] = n; });
+      } else {
+        await Promise.all(faltan.slice(0, 30).map((id) => fetch(`/api/noticias/${encodeURIComponent(id)}`)
+          .then((r) => (r.ok ? r.json() : null)).then((n) => { if (n) estado.sueltas[id] = n; }).catch(() => {})));
+      }
+    } catch (e) { return; }
+    if (estado.cat === 'guardadas') pintar();
+  }
+
+  function ponerLector(lector) {
+    const antes = !!estado.lector;
+    estado.lector = lector;
+    if (lector) escribir('pulso-lector', lector.email);
+    else try { localStorage.removeItem('pulso-lector'); } catch (e) { /* nada */ }
+    // Si cambia y hay límite, las tarjetas y la ficha abierta cambian (muro sí o no)
+    if (antes !== !!lector && limite()) {
+      pintar();
+      if (ficha.open && location.hash) abrirDesdeHash();
+    }
+  }
+
+  async function salirCuenta() {
+    try { await pedirJSON('/api/lector/yo', 'POST', { salir: true }); } catch (e) { /* la cerramos igual aquí */ }
+    ponerLector(null);
+    // En un dispositivo compartido, lo guardado se va con la cuenta
+    estado.guardadas = new Set();
+    escribir('pulso-guardadas', '[]');
+    cerrarFicha();
+    pintar();
+    avisar('Has cerrado sesión');
+  }
+
+  async function borrarCuenta() {
+    if (!confirm('¿Borrar tu cuenta? Se borran tu email y tus noticias guardadas. No se puede deshacer.')) return;
+    try {
+      await pedirJSON('/api/lector/yo', 'DELETE');
+      ponerLector(null);
+      estado.guardadas = new Set();
+      escribir('pulso-guardadas', '[]');
+      cerrarFicha();
+      pintar();
+      avisar('Cuenta borrada');
+    } catch (e) { avisar(e.message); }
+  }
+
+  async function arrancarCuenta() {
+    // ¿Venimos del enlace del email? (?entrar=…)
+    const url = new URL(location.href);
+    const token = url.searchParams.get('entrar');
+    if (token) {
+      url.searchParams.delete('entrar');
+      try { history.replaceState(null, '', url.pathname + url.search + url.hash); } catch (e) { /* nada */ }
+      try {
+        const r = await pedirJSON('/api/lector/verificar', 'POST', { token });
+        ponerLector(r.lector);
+        avisar('Ya has entrado. Tus guardadas, en todos tus dispositivos');
+      } catch (e) { avisar(e.message); }
+    }
+    // ¿Quién soy? Si hay cuenta, se juntan las guardadas de este dispositivo con las de la cuenta
+    try {
+      const r = await pedirJSON('/api/lector/yo');
+      ponerLector(r.lector);
+      if (r.lector) {
+        const nuevas = [...estado.guardadas].filter((id) => !r.guardadas.includes(id));
+        if (nuevas.length) await sincronizarGuardadas({ anadir: nuevas });
+        else {
+          estado.guardadas = new Set([...r.guardadas].reverse());
+          escribir('pulso-guardadas', JSON.stringify([...estado.guardadas]));
+          pintarChips(false);
+        }
+      }
+    } catch (e) { /* sin servidor (archivo local): la web funciona sin cuentas */ }
+  }
+
   setInterval(comprobarNovedades, CADA_CUANTO);
   setInterval(() => { if (estado.datos) pintarCabecera(); }, 60 * 1000);
   cargar();
+  arrancarCuenta();
 }

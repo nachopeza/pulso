@@ -103,6 +103,20 @@ export function leerCookie(request, nombre) {
 }
 export const COOKIE = '__Host-pulso';
 
+// Cuentas de lectores (gratis): su propia cookie y sus propias sesiones, separadas del panel
+export const COOKIE_LECTOR = '__Host-pulso-lector';
+export const DURA_LECTOR = 365 * 24 * 60 * 60 * 1000; // un año
+export const cookieLector = (valor, ms) => `${COOKIE_LECTOR}=${valor}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(ms / 1000)}`;
+// Quién es el lector de esta petición (null si no ha entrado)
+export async function lectorDe(request, env) {
+  const s = leerCookie(request, COOKIE_LECTOR);
+  if (!s) return null;
+  return env.DB.prepare(
+    `SELECT l.email FROM sesiones s JOIN lectores l ON l.email = s.email
+     WHERE s.huella = ? AND s.para = 'lector' AND s.expira > ?`
+  ).bind(await huella(s), Date.now()).first();
+}
+
 export const puede = {
   publicar: (u) => u.rol === 'admin' || u.rol === 'editor',
   usuarios: (u) => u.rol === 'admin'

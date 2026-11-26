@@ -82,7 +82,7 @@ async function llamar(metodo, cuerpo, token, tipo = 'application/json') {
   return d;
 }
 
-async function entrar(env) {
+export async function entrar(env) {
   const d = await llamar('com.atproto.server.createSession', { identifier: env.BSKY_USUARIO, password: env.BSKY_CLAVE_APP });
   return { token: d.accessJwt, did: d.did, handle: d.handle };
 }

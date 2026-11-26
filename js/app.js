@@ -1142,7 +1142,7 @@
     } else if (d.abrir) {
       abrir(d.abrir);
     } else if ('cuenta' in d) {
-      abrirCuenta(d.cuenta);
+      abrirCuenta(d.cuenta, d.modo);
     } else if ('salir' in d) {
       salirCuenta();
     } else if ('borrarCuenta' in d) {
@@ -1373,9 +1373,9 @@
     const l = limite();
     const periodo = l.dias === 7 ? 'esta semana' : l.dias === 1 ? 'hoy' : `en ${l.dias} días`;
     return `<div class="muro">
-        <p><b>Ya has leído tus ${l.gratis} noticias gratis de ${periodo}.</b> Crea tu cuenta, también gratis, y sigue leyendo sin límite.</p>
-        <button type="button" class="btn lleno" data-cuenta="${esc(n.id)}">Crear cuenta gratis</button>
-        <p class="muro-ya">¿Ya tienes cuenta? <button type="button" data-cuenta="${esc(n.id)}">Entrar</button></p>
+        <p><b>Ya has leído tus ${l.gratis} noticias sin cuenta de ${periodo}.</b> Regístrate o inicia sesión para seguir leyendo sin límite. Es gratis.</p>
+        <button type="button" class="btn lleno" data-cuenta="${esc(n.id)}">Registrarme gratis</button>
+        <p class="muro-ya">¿Ya tienes cuenta? <button type="button" data-cuenta="${esc(n.id)}" data-modo="entrar">Inicia sesión</button></p>
       </div>`;
   }
 
@@ -1387,11 +1387,11 @@
         </div>`
       : `<div class="menu-cuenta">
           <p>Tu cuenta</p>
-          <button type="button" class="menu-cuenta-btn" data-cuenta><b>Crear cuenta gratis</b><span>Guarda noticias en todos tus dispositivos y lee sin límite</span></button>
+          <button type="button" class="menu-cuenta-btn" data-cuenta><b>Regístrate o inicia sesión</b><span>Es gratis: guarda noticias en todos tus dispositivos y lee sin límite</span></button>
         </div>`;
   }
 
-  function cuentaLectorHTML(volver) {
+  function cuentaLectorHTML(volver, modo) {
     const tapa = `<div class="f-tapa cuenta-tapa">
         <span class="etq"><b>Tu cuenta</b></span>
         <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">${ICONO_X}</button>
@@ -1410,8 +1410,10 @@
         </div>`;
     }
     return `${tapa}<div class="f-txt f-cuenta">
-        <h2 id="ficha-titulo">Crea tu cuenta gratis</h2>
-        <p class="entradilla">Guarda noticias en todos tus dispositivos y lee sin límite. Sin contraseña: te mandamos un enlace al correo y entras con un toque. Si ya tienes cuenta, es el mismo paso.</p>
+        <h2 id="ficha-titulo">${modo === 'entrar' ? 'Inicia sesión' : 'Regístrate gratis'}</h2>
+        <p class="entradilla">${modo === 'entrar'
+          ? 'Escribe tu email y te mandamos un enlace para entrar. Sin contraseña.'
+          : 'Guarda noticias en todos tus dispositivos y lee sin límite. Sin contraseña: te mandamos un enlace al correo y entras con un toque. Si ya tienes cuenta, es el mismo paso.'}</p>
         <form id="form-cuenta" class="form-cuenta" data-volver="${esc(volver || '')}" novalidate>
           <label for="cuenta-email">Tu email</label>
           <input type="email" id="cuenta-email" autocomplete="email" inputmode="email" required placeholder="tu@email.com">
@@ -1424,11 +1426,11 @@
       </div>`;
   }
 
-  function abrirCuenta(volver) {
+  function abrirCuenta(volver, modo) {
     if (menu.open) menu.close();
     if (ficha.open) quitarHash();
     ficha.classList.remove('saliendo');
-    fichaCuerpo.innerHTML = cuentaLectorHTML(volver);
+    fichaCuerpo.innerHTML = cuentaLectorHTML(volver, modo);
     if (!ficha.open) ficha.showModal();
     ficha.scrollTop = 0;
     const campo = $('#cuenta-email');

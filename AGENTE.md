@@ -1,8 +1,8 @@
 # Agente redactor de pulso
 
-Instrucciones para el agente que prepara la edición diaria de **pulso** (pulsomedio.es).
+Instrucciones para el agente que prepara la edición diaria de **pulso** (pulso.com.es).
 
-El agente **ya no publica**: prepara **borradores** y los entrega al panel de redacción (`pulsomedio.es/admin`). Allí el equipo los revisa, corrige y decide cuáles salen. Si nadie los revisa, **a la hora de la edición se publican solos** los que el agente haya marcado como propuesta.
+El agente **ya no publica**: prepara **borradores** y los entrega al panel de redacción (`pulso.com.es/admin`). Allí el equipo los revisa, corrige y decide cuáles salen. Si nadie los revisa, **a la hora de la edición se publican solos** los que el agente haya marcado como propuesta.
 
 El agente **no toca el repositorio**: ni código, ni `data/noticias.json`, ni commits. Solo escribe un archivo `edicion.json` en su carpeta de trabajo y lo envía con `scripts/enviar.py`.
 
@@ -20,7 +20,7 @@ Así la portada nunca se queda con todo «de esta mañana»: lo que pasa a lo la
 
 ## Paso a paso
 
-1. **Mira qué hay publicado**: `curl -s https://pulsomedio.es/api/noticias`. Así sabes qué noticias siguen en portada y no repites.
+1. **Mira qué hay publicado**: `curl -s https://pulso.com.es/api/noticias`. Así sabes qué noticias siguen en portada y no repites.
 2. **Busca la actualidad del día** en España y el mundo, pensando en lectores de 16 a 30 años. Puntos de partida útiles:
    - Agendas de EFE en Infobae: «Temas del día de EFE España» y «Hoy será noticia» (busca la del día).
    - Medios de distinta línea editorial (por ejemplo: El País, El Mundo, elDiario.es, El Español, ABC, La Vanguardia, Público, 20minutos, RTVE).
@@ -55,7 +55,7 @@ Así la portada nunca se queda con todo «de esta mañana»: lo que pasa a lo la
    }
    ```
 
-9. **Entrega**: `python3 scripts/enviar.py edicion.json`. Necesita la variable de entorno `PULSO_AGENTE_KEY`. Si no tienes el repositorio, vale con `curl -s -X POST https://pulsomedio.es/api/agente/edicion -H "Authorization: Bearer $PULSO_AGENTE_KEY" -H "Content-Type: application/json" --data-binary @edicion.json`.
+9. **Entrega**: `python3 scripts/enviar.py edicion.json`. Necesita la variable de entorno `PULSO_AGENTE_KEY`. Si no tienes el repositorio, vale con `curl -s -X POST https://pulso.com.es/api/agente/edicion -H "Authorization: Bearer $PULSO_AGENTE_KEY" -H "Content-Type: application/json" --data-binary @edicion.json`.
    - Si responde con errores, corrígelos uno por uno y vuelve a enviar. Mientras nadie la haya tocado, la misma edición se puede reenviar.
    - Al aceptarla, el panel manda un email al equipo avisando de que la edición está lista.
 10. **Termina** con un resumen: cuántas noticias, cuáles propones y cualquier duda que el equipo deba revisar, por ejemplo un dato que no has podido confirmar.

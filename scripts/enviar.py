@@ -4,7 +4,7 @@ Uso:  python3 scripts/enviar.py edicion.json
       python3 scripts/enviar.py escaleta.json     (si el archivo trae "piezas", es una escaleta)
 
 Necesita la variable de entorno PULSO_AGENTE_KEY (la clave del agente).
-PULSO_URL cambia la web de destino (por defecto https://pulsomedio.es; en local http://localhost:8788).
+PULSO_URL cambia la web de destino (por defecto https://pulso.com.es; en local http://localhost:8788).
 Si el servidor encuentra errores, los lista uno por uno y no guarda nada: corrígelos y vuelve a enviar.
 """
 import json
@@ -29,7 +29,7 @@ except Exception as e:  # JSON roto: mejor saberlo antes de enviar
     sys.exit(1)
 
 es_escaleta = isinstance(edicion, dict) and "piezas" in edicion
-url = os.environ.get("PULSO_URL", "https://pulsomedio.es").rstrip("/") + ("/api/agente/escaleta" if es_escaleta else "/api/agente/edicion")
+url = os.environ.get("PULSO_URL", "https://pulso.com.es").rstrip("/") + ("/api/agente/escaleta" if es_escaleta else "/api/agente/edicion")
 peticion = urllib.request.Request(
     url,
     data=json.dumps(edicion, ensure_ascii=False).encode("utf-8"),

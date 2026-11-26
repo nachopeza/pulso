@@ -2,7 +2,7 @@
 // POST /api/admin/commons { url, nombre } → copia la elegida a nuestro almacén
 import { json, fallo, leerJSON, importarFoto } from '../../../servidor/comun.js';
 
-const AGENTE = { 'User-Agent': 'pulso-noticias/1.0 (https://pulsomedio.es)' };
+const AGENTE = { 'User-Agent': 'pulso-noticias/1.0 (https://pulso.com.es)' };
 // Commons devuelve autor y licencia con HTML dentro: nos quedamos con el texto
 const sinHTML = (s) => String(s || '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
   .replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();

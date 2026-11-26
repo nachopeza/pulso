@@ -409,7 +409,7 @@
   const pieHTML = () => {
     return `<footer class="pie" id="como-trabajamos">
       <div class="pie-marca">
-        <p class="logo-pie">pulso<span class="latido" aria-hidden="true"></span></p>
+        <p class="logo-pie notranslate" translate="no">pulso<span class="latido" aria-hidden="true"></span></p>
         <p>Noticias cortas para estar al día sin perder la tarde.</p>
         ${redesHTML()}
       </div>
@@ -522,8 +522,8 @@
     const c = cat(n);
     const puntos = (n.puntos || []).map((p) => `<li>${esc(p)}</li>`).join('');
     const titulares = (n.titulares || []).map((t) => `<li>
-        <span class="medio">${esc(t.medio)}</span>
-        <q>${esc(t.titular)}</q>
+        <span class="medio notranslate" translate="no">${esc(t.medio)}</span>
+        <q class="notranslate" translate="no" lang="es">${esc(t.titular)}</q>
         ${enlace(t.url) ? `<a href="${enlace(t.url)}" target="_blank" rel="noopener">Leer en ${esc(t.medio)}</a>` : ''}
       </li>`).join('');
     const fuentes = (n.fuentes || []).map((f) =>
@@ -563,7 +563,7 @@
     const tema = document.documentElement.dataset.tema || 'auto';
     const letra = document.documentElement.dataset.letra || 'normal';
     return `<div class="menu-cab">
-        <p class="logo-pie">pulso<span class="latido" aria-hidden="true"></span></p>
+        <p class="logo-pie notranslate" translate="no">pulso<span class="latido" aria-hidden="true"></span></p>
         <button type="button" class="cerrar" data-cerrar-menu aria-label="Cerrar el menú">${ICONO_X}</button>
       </div>
       <div class="buscar" role="search">
@@ -578,6 +578,13 @@
           <button type="button" data-poner-modo="lista" aria-pressed="${estado.modo === 'lista'}">Lista</button>
         </div>
       </div>
+      <div class="menu-modo menu-idioma notranslate" translate="no">
+        <p id="pref-idioma">Idioma</p>
+        <div class="seg" role="group" aria-labelledby="pref-idioma">
+          ${Object.entries(IDIOMAS).map(([k, t]) => `<button type="button" data-idioma="${k}" lang="${k}" aria-label="${t}" title="${t}" aria-pressed="${idiomaGuardado() === k}">${k.toUpperCase()}</button>`).join('')}
+        </div>
+      </div>
+      ${idiomaGuardado() === 'es' ? '' : '<p class="pref-nota notranslate" translate="no">Traducción automática de Google. El original está en castellano.</p>'}
       <nav aria-label="Ir a una sección">
         <ul class="menu-secciones">
           <li><button type="button" data-filtro="todo" aria-pressed="${estado.cat === 'todo'}"><i aria-hidden="true"></i>Portada</button></li>
@@ -1105,6 +1112,8 @@
       ponerPref('tema', d.tema);
     } else if (d.letra && t.tagName === 'BUTTON') {
       ponerPref('letra', d.letra);
+    } else if (d.idioma && t.tagName === 'BUTTON') {
+      if (d.idioma !== idiomaGuardado()) ponerIdioma(d.idioma);
     } else if ('saltar' in d) {
       e.preventDefault();
       main.focus();
@@ -1213,6 +1222,80 @@
       if (nuevo.actualizado && nuevo.actualizado !== estado.datos.actualizado) avisar('Hay noticias nuevas', 'Actualizar');
     } catch (e) { /* sin conexión: ya lo intentaremos luego */ }
   }
+
+  // ---------- 11. Idiomas (traductor de Google) ----------
+  // pulso se escribe en castellano. Para leerlo en catalán, euskera o gallego usamos,
+  // de momento, el traductor de Google. Su código solo se carga si alguien elige otro idioma
+  // y acepta el aviso: hasta entonces Google no recibe nada.
+  // Google recuerda el idioma con la cookie "googtrans" (/es/ca); nosotros, con "pulso-idioma".
+  const IDIOMAS = { es: 'Castellano', ca: 'Català', eu: 'Euskara', gl: 'Galego' };
+  const idiomaGuardado = () => (IDIOMAS[leer('pulso-idioma')] ? leer('pulso-idioma') : 'es');
+  function borrarCookieTraductor() {
+    const partes = location.hostname.split('.');
+    const dominios = ['', location.hostname, `.${location.hostname}`];
+    for (let i = 1; i < partes.length - 1; i++) dominios.push(`.${partes.slice(i).join('.')}`);
+    for (const d of dominios) document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${d ? `; domain=${d}` : ''}`;
+  }
+  function cargarTraductor() {
+    if (window.google?.translate || document.getElementById('gt-script')) return;
+    const caja = document.createElement('div');
+    caja.id = 'gt-caja';
+    caja.hidden = true;
+    document.body.append(caja);
+    window.iniciarTraductorPulso = () => new window.google.translate.TranslateElement(
+      { pageLanguage: 'es', includedLanguages: 'ca,eu,gl', autoDisplay: false }, 'gt-caja');
+    const sc = document.createElement('script');
+    sc.id = 'gt-script';
+    sc.src = 'https://translate.google.com/translate_a/element.js?cb=iniciarTraductorPulso';
+    document.head.append(sc);
+  }
+  // Barra fina bajo la cabecera: avisa de que es una traducción y deja volver al original
+  function barraTraduccion(idioma) {
+    if (document.getElementById('barra-idioma')) return;
+    const b = document.createElement('div');
+    b.id = 'barra-idioma';
+    b.className = 'barra-idioma notranslate';
+    b.setAttribute('translate', 'no');
+    const aviso = { ca: 'Traducció automàtica de Google', eu: 'Google-ren itzulpen automatikoa', gl: 'Tradución automática de Google' }[idioma];
+    b.innerHTML = `<span lang="${idioma}">${aviso}</span>
+      <button type="button" data-idioma="es">Ver en castellano</button>`;
+    $('#top').append(b);
+    requestAnimationFrame(() => medirCabecera());
+  }
+  function ponerIdioma(idioma, { preguntar = true } = {}) {
+    if (!IDIOMAS[idioma]) return;
+    if (idioma === 'es') {
+      escribir('pulso-idioma', 'es');
+      borrarCookieTraductor();
+      const u = new URL(location.href);
+      u.searchParams.delete('lang');
+      location.replace(u.toString());
+      return;
+    }
+    if (preguntar && leer('pulso-traductor') !== 'si' && !confirm(
+      `Para leer pulso en ${IDIOMAS[idioma]} usamos el traductor de Google: el texto de la página se envía a Google, ` +
+      'que lo traduce automáticamente y puede usar sus propias cookies. Las noticias originales están en castellano. ¿Seguimos?')) return;
+    escribir('pulso-traductor', 'si');
+    escribir('pulso-idioma', idioma);
+    borrarCookieTraductor();
+    document.cookie = `googtrans=/es/${idioma}; path=/; max-age=31536000; SameSite=Lax`;
+    location.reload();
+  }
+  // Al entrar: ?lang=ca en la dirección (enlace compartido) o el idioma que elegiste otra vez
+  (function arrancarIdioma() {
+    const pedido = new URL(location.href).searchParams.get('lang');
+    if (pedido && IDIOMAS[pedido] && pedido !== idiomaGuardado()) {
+      if (pedido === 'es') { escribir('pulso-idioma', 'es'); borrarCookieTraductor(); return; }
+      ponerIdioma(pedido);
+      return;
+    }
+    const idioma = idiomaGuardado();
+    if (idioma !== 'es' && leer('pulso-traductor') === 'si') {
+      if (!document.cookie.includes(`googtrans=/es/${idioma}`)) document.cookie = `googtrans=/es/${idioma}; path=/; max-age=31536000; SameSite=Lax`;
+      barraTraduccion(idioma);
+      cargarTraductor();
+    } else borrarCookieTraductor();
+  })();
 
   setInterval(comprobarNovedades, CADA_CUANTO);
   setInterval(() => { if (estado.datos) pintarCabecera(); }, 60 * 1000);

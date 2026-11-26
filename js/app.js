@@ -625,23 +625,25 @@
     const tema = document.documentElement.dataset.tema || 'auto';
     const letra = document.documentElement.dataset.letra || 'normal';
     // Orden del menú, de lo que más se usa a lo que menos:
-    // buscar (con la cuenta al lado) → cuenta atrás → secciones → ajustes de lectura.
+    // buscar (con tu cuenta al lado si has entrado) → cuenta atrás → «Regístrate» (si no has entrado)
+    // → secciones → ajustes de lectura.
     // Quiénes somos, redes y legal van en el pie (también en el modo Flash, en su última pantalla).
     return `<div class="menu-cab">
         <p class="logo-pie notranslate" translate="no">pulso<span class="latido" aria-hidden="true"></span></p>
         <button type="button" class="cerrar" data-cerrar-menu aria-label="Cerrar el menú">${ICONO_X}</button>
       </div>
       <div class="buscar" role="search">
-        <div class="buscar-fila">
+        <div class="buscar-fila${estado.lector ? '' : ' sin-cuenta'}">
           <label for="buscar" class="oculto">Buscar noticias</label>
           <input type="search" id="buscar" placeholder="Buscar noticias" autocomplete="off" enterkeyhint="search">
-          <button type="button" class="btn-cuenta${estado.lector ? ' dentro' : ''}" data-cuenta aria-label="${estado.lector ? `Tu cuenta (${esc(estado.lector.email)})` : 'Tu cuenta: iniciar sesión o registrarte'}">${ICONO_CUENTA}</button>
+          ${estado.lector ? `<button type="button" class="btn-cuenta dentro" data-cuenta aria-label="Tu cuenta (${esc(estado.lector.email)})">${ICONO_CUENTA}</button>` : ''}
         </div>
         <div id="resultados" aria-live="polite"></div>
       </div>
       ${c ? `<button type="button" class="menu-29n" ${c.seccion ? `data-filtro="${c.seccion}"` : 'tabindex="-1"'}>
           <b>${esc(c.num)}</b><span><strong>${esc(c.txt)}</strong>${esc(c.detalle)}</span>
         </button>` : ''}
+      ${estado.lector ? '' : `<button type="button" class="menu-cuenta-btn" data-cuenta><b>Regístrate o inicia sesión</b><span>Es gratis: guarda noticias en todos tus dispositivos, comenta y lee sin límite</span></button>`}
       <nav class="menu-bloque" aria-labelledby="menu-tit-secciones">
         <h2 class="menu-tit" id="menu-tit-secciones">Secciones</h2>
         <ul class="menu-secciones">

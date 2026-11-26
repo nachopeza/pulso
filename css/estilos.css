@@ -1093,6 +1093,7 @@ body { top: 0 !important; }
 
 /* Menú: buscador y, a su lado, el icono de la cuenta (con sesión iniciada lleva el punto amarillo) */
 .buscar-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.buscar-fila.sin-cuenta { grid-template-columns: minmax(0, 1fr); }
 .btn-cuenta { position: relative; width: 50px; height: 50px; border-radius: 50%; border: 0; background: var(--sup); color: var(--tinta); cursor: pointer; display: grid; place-items: center; }
 .btn-cuenta svg { width: 23px; height: 23px; }
 .btn-cuenta:hover { background: var(--sup-2); }

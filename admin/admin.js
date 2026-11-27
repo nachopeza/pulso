@@ -1397,23 +1397,33 @@
       if (e.target.closest('[data-compartir]')) {
         const texto = p.texto;
         let compartida = false;
+        // Safari del Mac también tiene menú de compartir con archivos, pero sin X: solo lo usamos en pantallas táctiles
+        const tactil = matchMedia('(pointer: coarse)').matches;
+        if (!tactil) {
+          // Ordenador: X se abre ya (tras un await Safari bloquea la ventana), y la imagen se descarga para arrastrarla al post
+          window.open(`https://x.com/intent/post?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+          compartida = true;
+        }
         try {
           const archivo = imagenes[p.id] || new File([await tarjetaPNG(p)], nombreImagen(p), { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+          if (tactil && navigator.canShare && navigator.canShare({ files: [archivo] })) {
             // Móvil: menú de compartir con el texto y la imagen juntos → elige X
             await navigator.share({ text: texto, files: [archivo] });
             compartida = true;
-          } else {
-            // Ordenador: se descarga la imagen y se abre X con el texto escrito; arrastra la imagen al post
+          } else if (!tactil) {
             descargar(archivo, archivo.name);
+            avisar('Imagen descargada: arrástrala al post de X');
+          } else {
             window.open(`https://x.com/intent/post?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
             compartida = true;
-            avisar('Imagen descargada: arrástrala al post de X');
           }
         } catch (err) {
-          if (err && err.name === 'AbortError') return; // cancelado en el menú de compartir
-          window.open(`https://x.com/intent/post?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
-          compartida = true;
+          if (compartida) { avisar('No se ha podido crear la imagen', true); }
+          else {
+            if (err && err.name === 'AbortError') return; // cancelado en el menú de compartir
+            window.open(`https://x.com/intent/post?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+            compartida = true;
+          }
         }
         if (compartida && pub) setTimeout(async () => {
           if (!confirm('¿La has publicado en X? La marco como publicada.')) return;

@@ -188,7 +188,7 @@
       else a.removeAttribute('aria-current');
     });
     const vistas = { hoy: vistaHoy, noticias: vistaNoticias, editar: () => vistaEditor(decodeURIComponent(arg || '')),
-      nueva: () => vistaEditor(null), portada: vistaPortada, publicidad: vistaPublicidad, comentarios: () => vistaComentarios(arg), momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios };
+      nueva: () => vistaEditor(null), portada: vistaPortada, publicidad: vistaPublicidad, comentarios: () => vistaComentarios(arg), momentos: vistaMomentos, redes: () => vistaRedes(arg), usuarios: vistaUsuarios, estadisticas: () => vistaEstadisticas(arg) };
     const f = vistas[nombre] || vistaHoy;
     vista.onclick = null; vista.oninput = null; vista.onchange = null; vista.onsubmit = null;   // los que deja puestos la vista anterior
     try {
@@ -1475,6 +1475,83 @@
   });
 
   // ---------- 10. Usuarios ----------
+
+  // ---------- 10b. Estadísticas ----------
+
+  const ORIGEN_NOMBRE = { directo: 'Directo o app', bluesky: 'Bluesky', x: 'X', google: 'Google', instagram: 'Instagram',
+    tiktok: 'TikTok', whatsapp: 'WhatsApp', facebook: 'Facebook', telegram: 'Telegram', otros: 'Otras webs' };
+  const num = (n) => Number(n || 0).toLocaleString('es-ES');
+  const fechaPost = (ms) => new Date(ms).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' });
+  const diaCorto = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+
+  async function vistaEstadisticas(diasPedidos) {
+    const dias = ['7', '30', '90'].includes(diasPedidos) ? diasPedidos : '7';
+    vista.innerHTML = '<p class="cargando">Cargando…</p>';
+    const e = await api(`admin/estadisticas?dias=${dias}`);
+    const suma = (k) => e.serie.reduce((t, d) => t + (d[k] || 0), 0);
+    const max = Math.max(1, ...e.serie.map((d) => d.unicos));
+    const sinDatos = suma('pagina') === 0;
+    const l = e.lectores || {}, a = e.actividad || {};
+    const red = (r, est) => e.redes.filter((x) => x.red === r && (!est || x.estado === est)).reduce((t, x) => t + x.n, 0);
+    const b = e.bluesky;
+
+    // Avisos: lo que no va bien, en una frase y con qué hacer
+    const avisos = [];
+    const sinSalir = e.atascadas || 0;
+    if (sinSalir) avisos.push(`<b>${sinSalir} ${sinSalir === 1 ? 'post aprobado de Bluesky se quedó sin salir' : 'posts aprobados de Bluesky se quedaron sin salir'}.</b> Pasó su hora y el reloj automático no los publicó: publícalos a mano o cámbiales la hora en la escaleta.`);
+    if (b && !b.error && b.posts.length) {
+      const inter = b.posts.reduce((t, p) => t + p.gusta + p.reposts + p.respuestas, 0);
+      if (b.seguidores < 10) avisos.push(`<b>Bluesky: ${b.seguidores} seguidores.</b> Publicar solo no basta: hay que responder a otras cuentas, entrar en conversaciones y estar en feeds y starter packs de noticias en español.`);
+      if (inter === 0) avisos.push(`<b>Los últimos ${b.posts.length} posts tienen 0 interacciones.</b> Casi nadie los está viendo todavía: es un problema de alcance, no de los textos.`);
+    }
+    if (!sinDatos && suma('lectura') / Math.max(1, suma('pagina')) < 0.5) avisos.push('<b>Pocas lecturas por visita.</b> La gente entra pero no abre noticias: mira la portada en el móvil.');
+
+    const tile = (t, v, sub) => `<div class="cifra"><span>${t}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+    const barras = (filas, total) => `<ul class="barras">${filas.map((f) => `<li><span>${esc(f.nombre)}</span>
+      <i style="--p:${Math.round((f.n / Math.max(1, total)) * 100)}%"></i><b>${num(f.n)}</b></li>`).join('')}</ul>`;
+    const totOrigen = e.origenes.reduce((t, o) => t + o.n, 0);
+    const totDisp = e.dispositivos.reduce((t, o) => t + o.n, 0);
+
+    vista.innerHTML = `
+      <div class="cabeza"><div><h1>Estadísticas</h1><p>Visitas, lectores y redes. Sin cookies: solo contamos, no seguimos a nadie.</p></div>
+        <div class="segmento" role="group" aria-label="Periodo">${['7', '30', '90'].map((d) => `<a class="btn btn-fino" href="#/estadisticas/${d}" ${d === dias ? 'aria-current="true"' : ''}>${d} días</a>`).join('')}</div></div>
+      ${avisos.length ? `<div class="bloque avisos-est"><h2>Lo que no está funcionando</h2><ul>${avisos.map((x) => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+      <div class="cifras">
+        ${tile('Personas', num(suma('unicos')), 'distintas cada día, sumadas')}
+        ${tile('Visitas', num(suma('pagina')))}
+        ${tile('Noticias leídas', num(suma('lectura')), sinDatos ? '' : `${(suma('lectura') / Math.max(1, suma('pagina'))).toLocaleString('es-ES', { maximumFractionDigits: 1 })} por visita`)}
+        ${tile('Compartidas', num(suma('compartir')))}
+        ${tile('Lectores con cuenta', num(l.total), `${num(l.nuevos)} nuevos · ${num(l.activos)} activos`)}
+        ${tile('Comentarios', num(a.comentarios), a.ocultos ? `${num(a.ocultos)} ocultos` : '')}
+        ${tile('Guardadas', num(a.guardadas), `${num(a.guardadasTotal)} en total`)}
+      </div>
+      <section class="bloque">
+        <h2>Personas por día</h2>
+        ${sinDatos ? '<p class="nota">Aún no hay datos: se cuentan desde que se activó esta página. Vuelve en unas horas.</p>' : ''}
+        <div class="grafico" role="img" aria-label="Personas distintas por día">${e.serie.map((d) => `
+          <div class="col" tabindex="0"><i style="--h:${(d.unicos / max) * 100}%"></i>
+            <span class="tip"><b>${diaCorto(d.dia)}</b>${num(d.unicos)} personas · ${num(d.pagina)} visitas · ${num(d.lectura)} lecturas</span></div>`).join('')}</div>
+        <div class="eje"><span>${diaCorto(e.serie[0].dia)}</span><span>Hoy</span></div>
+        <details class="tabla-est"><summary>Ver como tabla</summary><table><thead><tr><th>Día</th><th>Personas</th><th>Visitas</th><th>Lecturas</th><th>Compartidas</th></tr></thead>
+          <tbody>${e.serie.slice().reverse().map((d) => `<tr><td>${diaCorto(d.dia)}</td><td>${num(d.unicos)}</td><td>${num(d.pagina)}</td><td>${num(d.lectura)}</td><td>${num(d.compartir)}</td></tr>`).join('')}</tbody></table></details>
+      </section>
+      <div class="dos-est">
+        <section class="bloque"><h2>De dónde llegan</h2>${totOrigen ? barras(e.origenes.map((o) => ({ nombre: ORIGEN_NOMBRE[o.clave] || o.clave, n: o.n })), totOrigen) : '<p class="nota">Sin datos todavía.</p>'}
+          ${totDisp ? `<h3>Desde</h3>${barras(e.dispositivos.map((o) => ({ nombre: o.clave === 'movil' ? 'Móvil' : 'Ordenador', n: o.n })), totDisp)}` : ''}</section>
+        <section class="bloque"><h2>Lo más leído</h2>${e.top.length ? `<ol class="top-est">${e.top.map((n) => `<li><a href="#/editar/${encodeURIComponent(n.id)}">${esc(n.titular || n.id)}</a>
+          <span class="meta"><span>${num(n.lecturas)} ${n.lecturas === 1 ? 'lectura' : 'lecturas'}</span>${n.compartida ? `<span>${num(n.compartida)} compartida${n.compartida === 1 ? '' : 's'}</span>` : ''}</span></li>`).join('')}</ol>` : '<p class="nota">Sin datos todavía.</p>'}</section>
+      </div>
+      <section class="bloque">
+        <h2>Bluesky</h2>
+        ${!b ? '<p class="nota">No hay cuenta configurada.</p>' : b.error ? `<p class="nota">${esc(b.error)}</p>` : `
+        <div class="cifras">${tile('Seguidores', num(b.seguidores))}${tile('Sigue a', num(b.siguiendo))}${tile('Posts', num(b.publicados))}
+          ${tile('Publicados este periodo', num(red('bluesky', 'publicada')), `${num(red('x', 'publicada'))} en X`)}</div>
+        <ul class="lista posts-est">${b.posts.map((p) => `<li class="fila fila-sin-interruptor"><div class="fila-txt" style="grid-column:span 2">
+          <a href="${esc(p.enlace)}" target="_blank" rel="noopener">${esc(p.texto)}</a>
+          <div class="meta"><span>${p.fecha ? fechaPost(Date.parse(p.fecha)) : ''}</span><span>${p.gusta} me gusta</span><span>${p.reposts} reposts</span><span>${p.respuestas} respuestas</span></div></div></li>`).join('')}</ul>
+        <p class="nota" style="margin-top:10px">X no da estos datos gratis: míralos en x.com/pulsomedio → Analíticas.</p>`}
+      </section>`;
+  }
 
   async function vistaUsuarios() {
     if (yo.rol !== 'admin') { vista.innerHTML = '<div class="vacio"><b>Solo administración puede ver esta página.</b></div>'; return; }

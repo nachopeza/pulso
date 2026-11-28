@@ -37,7 +37,12 @@ ${src ? '' : '<meta property="og:image:width" content="1200"><meta property="og:
 <meta http-equiv="refresh" content="0; url=${esc(destino)}">
 </head><body>
 <p><a href="${esc(destino)}">${esc(f.titular)}</a></p>
-<script>location.replace(${JSON.stringify(destino)})</script>
+<script>
+// Pasa a la web de dónde venía la persona (?ref= o la página anterior), para las estadísticas
+var ref = new URLSearchParams(location.search).get('ref') || '';
+try { if (!ref && document.referrer) ref = new URL(document.referrer).hostname; } catch (e) {}
+location.replace(ref ? ${JSON.stringify(`${sitio}/?ref=`)} + encodeURIComponent(ref) + ${JSON.stringify(`#${f.id}`)} : ${JSON.stringify(destino)});
+</script>
 </body></html>`;
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
 }

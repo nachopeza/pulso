@@ -1,0 +1,10 @@
+# Worker aparte (no es parte de la web): solo tiene el reloj de Bluesky.
+# Publicarlo: cd reloj && npx wrangler deploy
+# Su clave: npx wrangler secret put CLAVE < ~/.pulso-agente-key
+name = "pulso-reloj"
+main = "reloj.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+[triggers]
+crons = ["*/5 * * * *"]

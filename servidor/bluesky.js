@@ -104,6 +104,16 @@ async function publicarPieza(env, sesion, p) {
   return `https://bsky.app/profile/${sesion.handle}/post/${clave}`;
 }
 
+// Los enlaces a pulso llevan ?ref=bsky (no se ve en el post): así las estadísticas saben que vienen de Bluesky
+function conRef(uri) {
+  try {
+    const u = new URL(uri);
+    if (!/(^|\.)pulso(medio)?\.(com\.)?es$/i.test(u.hostname)) return uri;
+    u.searchParams.set('ref', 'bsky');
+    return u.toString();
+  } catch (e) { return uri; }
+}
+
 // Enlaces y hashtags del texto, con sus posiciones en bytes UTF-8 (así las pide Bluesky)
 export function facetasDe(texto) {
   const bytes = (s) => new TextEncoder().encode(s).length;
@@ -114,7 +124,7 @@ export function facetasDe(texto) {
     const inicio = bytes(texto.slice(0, m.index));
     facetas.push({
       index: { byteStart: inicio, byteEnd: inicio + bytes(t) },
-      features: [{ $type: 'app.bsky.richtext.facet#link', uri: /^https?:\/\//i.test(t) ? t : `https://${t}` }]
+      features: [{ $type: 'app.bsky.richtext.facet#link', uri: conRef(/^https?:\/\//i.test(t) ? t : `https://${t}`) }]
     });
   }
   for (const m of texto.matchAll(/(^|\s)#([\p{L}\p{N}_]+)/gu)) {

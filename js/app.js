@@ -893,7 +893,7 @@
       entradas.forEach((en) => {
         if (!en.isIntersecting) { en.target.classList.remove('activa'); return; }
         en.target.classList.add('activa');
-        if (en.target.id.startsWith('s-')) contarLectura(en.target.id.slice(2));
+        if (en.target.id.startsWith('s-')) { contarLectura(en.target.id.slice(2)); medir('lectura', en.target.id.slice(2)); }
         const i = slides.indexOf(en.target);
         if (barra) barra.style.setProperty('--p', slides.length > 1 ? i / (slides.length - 1) : 1);
       });
@@ -1051,6 +1051,7 @@
     }
     if (menu.open) menu.close();
     contarLectura(n.id);
+    medir('lectura', n.id);
     ficha.classList.remove('saliendo');
     fichaCuerpo.innerHTML = fichaHTML(n);
     if (!ficha.open) {
@@ -1091,9 +1092,46 @@
     avisar(g ? (estado.lector ? 'Guardada en tu cuenta' : 'Guardada en este dispositivo') : 'Quitada de guardadas');
   }
 
+  // ---------- Estadísticas (sin cookies) ----------
+  // Avisa al servidor de una entrada, una lectura o un compartir. Solo suma contadores del día:
+  // no guarda nada en tu navegador ni quién eres. Cada noticia cuenta una vez por visita.
+  const medidas = new Set();
+  function medir(tipo, id) {
+    if (navigator.webdriver || location.hostname !== 'pulso.com.es') return;
+    if (tipo === 'lectura') { if (medidas.has(id)) return; medidas.add(id); }
+    const datos = { tipo, id };
+    if (tipo === 'pagina') {
+      datos.origen = origenVisita();
+      datos.disp = matchMedia('(pointer: coarse)').matches ? 'movil' : 'ordenador';
+    }
+    try { navigator.sendBeacon('/api/visita', JSON.stringify(datos)); } catch (e) { /* no es imprescindible */ }
+  }
+  // De dónde llega: ?ref= en los enlaces que publicamos nosotros, o la página anterior
+  function origenVisita() {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      params.delete('ref');
+      const resto = params.toString();
+      try { history.replaceState(null, '', location.pathname + (resto ? `?${resto}` : '') + location.hash); } catch (e) {}
+      return { bsky: 'bluesky', x: 'x' }[ref] || clasificar(ref);
+    }
+    let host = '';
+    try { host = new URL(document.referrer).hostname; } catch (e) { return 'directo'; }
+    return clasificar(host);
+  }
+  function clasificar(host) {
+    host = host.replace(/^www\./, '');
+    if (!host || /(^|\.)pulso(medio)?\.(com\.)?es$/.test(host)) return 'directo';
+    const conocidos = [['bluesky', /bsky\.app|bsky\.social/], ['x', /^(t\.co|x\.com|twitter\.com)$/], ['google', /google\./],
+      ['instagram', /instagram\./], ['tiktok', /tiktok\./], ['whatsapp', /whatsapp\./], ['facebook', /facebook\.|fb\./], ['telegram', /t\.me|telegram\./]];
+    return (conocidos.find(([, re]) => re.test(host)) || ['otros'])[0];
+  }
+
   async function compartir(id) {
     const n = buscar(id);
     if (!n) return;
+    medir('compartir', id);
     const url = `${location.href.split('#')[0]}#${id}`;
     // En el móvil abre el menú nativo de compartir (WhatsApp, Instagram…)
     if (navigator.share) {
@@ -1831,6 +1869,7 @@
 
   setInterval(comprobarNovedades, CADA_CUANTO);
   setInterval(() => { if (estado.datos) pintarCabecera(); }, 60 * 1000);
+  medir('pagina');
   cargar();
   arrancarCuenta();
 }

@@ -21,7 +21,7 @@ export async function onRequestGet({ env }) {
     entrada(`${sitio}/hemeroteca`, results[0]?.publicar_en, 'daily'),
     ...[...dias].map(([d, mod]) => entrada(`${sitio}/hemeroteca/${d}`, mod)),
     ...results.map((r) => entrada(`${sitio}/noticia/${r.id}`, Math.min(Math.max(r.publicar_en, r.actualizada || 0), ahora))),
-    ...['aviso-legal.html', 'privacidad.html', 'cookies.html'].map((p) => entrada(`${sitio}/${p}`))
+    ...['aviso-legal', 'privacidad', 'cookies'].map((p) => entrada(`${sitio}/${p}`))
   ];
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

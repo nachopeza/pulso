@@ -1,0 +1,7 @@
+# pulso: los buscadores pueden leer toda la web menos el panel y la API
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://pulso.com.es/sitemap.xml

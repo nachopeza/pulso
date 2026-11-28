@@ -11,12 +11,17 @@
 # Seguridad básica
 # - HSTS: el navegador solo entra por HTTPS durante un año (todo pulso va cifrado)
 # - Permissions-Policy: la web no usa cámara, micrófono ni ubicación; así nadie puede pedirlos desde aquí
+# - CSP básica compatible con Google AdSense: sin plugins, sin <base> ajenos, formularios solo a pulso,
+#   nadie puede enmarcar pulso y todo por HTTPS. (El panel, más abajo, tiene una CSP mucho más estricta.)
+# - COOP: aísla la pestaña de pulso de otras ventanas, pero deja abrir los anuncios en ventana nueva
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Content-Security-Policy: object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
 
 # La tipografía no cambia nunca: caché de un año
 /fonts/*

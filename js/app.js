@@ -25,6 +25,8 @@
   const ZONA = 'Europe/Madrid';
   const CADA_CUANTO = 5 * 60 * 1000;      // cada 5 minutos mira si hay noticias nuevas
   const PUBLI_CADA = 6;                   // en la lista, un espacio publicitario cada 6 noticias
+  const PUBLI_FLASH = 8;                  // en el modo Flash, una tarjeta de publicidad cada 8 noticias
+  const ADSENSE = 'ca-pub-1521987978164089';  // cuenta de Google AdSense de pulso (también en ads.txt)
   // Redes donde publicamos los titulares. Pon aquí la dirección de cada perfil cuando exista.
   const REDES = [
     { nombre: 'Bluesky', usuario: '@pulsomedio', url: 'https://bsky.app/profile/pulsomedio.bsky.social',
@@ -35,6 +37,7 @@
   // Páginas legales que todo medio en España debe tener (aviso legal, privacidad, cookies)
   // y una vía de contacto. Pon la dirección cuando existan; mientras estén vacías no se muestran.
   const LEGAL = [
+    { nombre: 'Hemeroteca', url: '/hemeroteca' },
     { nombre: 'Aviso legal', url: 'aviso-legal.html' },
     { nombre: 'Privacidad', url: 'privacidad.html' },
     { nombre: 'Cookies', url: 'cookies.html' },
@@ -61,7 +64,7 @@
   // Solo aceptamos enlaces http(s). Cualquier otra cosa (javascript:, data:…) se descarta.
   const enlace = (u) => (/^https?:\/\//i.test(u || '') ? esc(u) : '');
   // Enlaces de la propia web (páginas legales) y de correo: solo para lo que escribimos nosotros en LEGAL
-  const enlacePropio = (u) => (/^(mailto:[^\s"<>]+|[\w-]+\.html)$/i.test(u || '') ? esc(u) : '');
+  const enlacePropio = (u) => (/^(mailto:[^\s"<>]+|[\w-]+\.html|\/[a-z-]+)$/i.test(u || '') ? esc(u) : '');
   // Imágenes: enlace https o ruta propia tipo img/foto.jpg
   const rutaImg = (u) => (/^https:\/\//i.test(u || '') || /^[\w\-./]+$/.test(u || '') ? esc(u) : '');
   const cat = (n) => (CATS[n.categoria] ? n.categoria : 'espana');
@@ -347,7 +350,13 @@
         </div>
       </footer>
     </section>`;
-    return portada + lista.map((n, i) => cartaHTML(n, i, lista.length)).join('') + vacio + final + (lista.length ? pie : '');
+    // Una tarjeta de publicidad cada PUBLI_FLASH noticias (nunca detrás de la última)
+    const publi = () => {
+      const p = publiHTML('flash');
+      return p ? `<section class="slide slide-publi" aria-label="Publicidad"><div class="carta carta-publi">${p}</div></section>` : '';
+    };
+    return portada + lista.map((n, i) => cartaHTML(n, i, lista.length)
+      + ((i + 1) % PUBLI_FLASH === 0 && i < lista.length - 1 ? publi() : '')).join('') + vacio + final + (lista.length ? pie : '');
   }
 
   // Metadatos de una noticia: número de fuentes y de titulares comparados
@@ -439,9 +448,11 @@
     </section>`;
   }
 
-  // Publicidad: los banners se gestionan en el panel (Publicidad). De momento solo se ven en
-  // el ordenador (el CSS los oculta en pantallas pequeñas). Si hay varios para el mismo hueco,
-  // sale uno al azar. Siempre llevan la etiqueta «Publicidad»: la ley pide que se distinga.
+  // Publicidad: los banners se gestionan en el panel (Publicidad), en tres huecos: portada,
+  // secciones y modo Flash. Si hay varios para el mismo hueco, sale uno al azar.
+  // Siempre llevan la etiqueta «Publicidad»: la ley pide que se distinga.
+  // Los de Google AdSense no ocupan sitio hasta que Google rellena el hueco (ver estilos.css):
+  // así nunca se queda una caja vacía si no hay anuncio o si no has dado permiso.
   const enlaceBanner = (u) => (/^(https:\/\/\S+|mailto:\S+)$/i.test(u || '') ? esc(u) : '');
   function publiHTML(hueco) {
     const posibles = (estado.datos?.banners || []).filter((b) => b.hueco === hueco);
@@ -449,6 +460,14 @@
     const b = posibles[Math.floor(Math.random() * posibles.length)];
     const url = enlaceBanner(b.enlace);
     const fuera = url.startsWith('https') ? ' target="_blank" rel="sponsored noopener"' : '';
+    if (b.tipo === 'adsense') {
+      if (!/^\d{6,20}$/.test(b.slot || '')) return '';
+      const formato = hueco === 'flash' ? 'rectangle' : 'horizontal';
+      return `<aside class="publi publi-ads" aria-label="Publicidad">
+        <span class="publi-etq">Publicidad</span>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE}" data-ad-slot="${esc(b.slot)}" data-ad-format="${formato}" data-full-width-responsive="true"></ins>
+      </aside>`;
+    }
     if (b.tipo === 'imagen' && rutaImg(b.imagen) && url) {
       return `<aside class="publi publi-img" aria-label="Publicidad">
         <span class="publi-etq">Publicidad${b.anunciante ? ` · ${esc(b.anunciante)}` : ''}</span>
@@ -497,7 +516,8 @@
   // porque en el móvil se lee en modo Flash y el pie casi no se ve
   const legalHTML = (clase) => {
     const legales = LEGAL.filter((x) => enlacePropio(x.url));
-    return legales.length ? `<p class="${clase}">${legales.map((x) => `<a href="${enlacePropio(x.url)}">${esc(x.nombre)}</a>`).join('')}</p>` : '';
+    // «Configurar cookies» vuelve a abrir el aviso de privacidad de Google para cambiar lo que elegiste
+    return legales.length ? `<p class="${clase}">${legales.map((x) => `<a href="${enlacePropio(x.url)}">${esc(x.nombre)}</a>`).join('')}<a href="cookies.html#configurar" data-config-cookies>Configurar cookies</a></p>` : '';
   };
 
 
@@ -782,6 +802,16 @@
     if (estado.modo === 'flash') { ajustarCartas(); observarSlides(); }
     encajarPalabras();
     logo.reiniciar();
+    activarAnuncios();
+  }
+
+  // Pide a Google un anuncio para cada hueco de AdSense nuevo que haya en pantalla.
+  // El script de Google (adsbygoogle.js) va en index.html y él mismo muestra el aviso de cookies.
+  function activarAnuncios() {
+    main.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])').forEach((ins) => {
+      if (!ins.offsetWidth) return;   // sin ancho Google da error: se pedirá en el siguiente repintado
+      try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { /* bloqueador de anuncios: no pasa nada */ }
+    });
   }
 
   // Cambiar de sección o de modo con una transición suave (si el navegador la tiene)
@@ -1242,7 +1272,13 @@
     if (!t) return;
     const d = t.dataset;
 
-    if (t.id === 'btn-flash' || t.id === 'btn-lista') {
+    if ('configCookies' in d) {
+      // Si el aviso de Google está cargado, se abre aquí mismo; si no, se va a la página de cookies
+      if (window.googlefc?.callbackQueue) {
+        e.preventDefault();
+        window.googlefc.callbackQueue.push(window.googlefc.showRevocationMessage);
+      }
+    } else if (t.id === 'btn-flash' || t.id === 'btn-lista') {
       ponerModo(t.id === 'btn-flash' ? 'flash' : 'lista');
     } else if (d.ponerModo) {
       cerrarMenu();
@@ -1657,7 +1693,7 @@
             <button type="button" class="btn lleno" data-filtro="guardadas">${ICONO_GUARDAR}<span>Tus guardadas (${n})</span></button>
             <button type="button" class="btn" data-salir>Cerrar sesión</button>
           </div>
-          <p class="cuenta-nota">Es gratis y sin publicidad. No mandamos correos salvo los enlaces para entrar.</p>
+          <p class="cuenta-nota">Es gratis. No mandamos correos salvo los enlaces para entrar.</p>
           <p class="cuenta-nota"><button type="button" class="enlace-txt" data-borrar-cuenta>Borrar mi cuenta</button> (se borran tu email y tus guardadas).</p>
         </div>`;
     }

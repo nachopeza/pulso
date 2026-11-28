@@ -98,6 +98,7 @@
     : `<span class="mini" data-cat="${esc(n.categoria)}"></span>`);
   function chip(n) {
     let t = SITUACION[n.situacion] || n.situacion;
+    if (n.situacion === 'visible' && n.enPortada === false) t = 'En la hemeroteca';
     if (n.situacion === 'programada') t = hoyMadrid() === new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(n.publicar_en) ? `Sale a las ${hora(n.publicar_en)}` : `Sale ${fecha(n.publicar_en)}`;
     return `<span class="situ situ-${esc(n.situacion)}">${esc(t)}</span>`;
   }
@@ -681,7 +682,8 @@
     else if (sit === 'nueva') estadoTxt = 'Todavía no se ha guardado.';
     else if (sit === 'borrador') estadoTxt = 'Nadie la ve hasta que se publique.';
     else estadoTxt = 'No se ve en la web.';
-    if (n.retirar_en && sit === 'visible') estadoTxt += ` Se retira el ${fecha(n.retirar_en)}.`;
+    if (sit === 'visible' && n.enPortada === false) estadoTxt += ' Ya no está en portada, pero se sigue leyendo en la hemeroteca y en su enlace.';
+    else if (n.retirar_en && sit === 'visible') estadoTxt += ` Sale de portada el ${fecha(n.retirar_en)} (sigue en la hemeroteca).`;
 
     const pub = puedePublicar();
     lat.innerHTML = `
@@ -746,7 +748,7 @@
         const cuando = new Date($('#cuando').value).getTime();
         if (!cuando) avisar('Elige día y hora', true);
         else await hacer('programar', { cuando }, `Programada para el ${fecha(cuando)}`);
-      } else if (a === 'retirar' && !confirm('La noticia dejará de verse en la web. ¿Seguro?')) { /* nada */ }
+      } else if (a === 'retirar' && !confirm('La noticia dejará de verse en la web, también en la hemeroteca y en su enlace. Úsalo solo para errores o problemas legales. ¿Seguro?')) { /* nada */ }
       else if (a === 'descartar' && !confirm('¿Descartar este borrador?')) { /* nada */ }
       else await hacer(a, {}, mensajes[a]);
       b.disabled = false;
@@ -873,24 +875,26 @@
   }
 
   // ---------- 7 bis. Publicidad: banners ----------
-  // Dos huecos: «portada» (a mitad de la portada) y «secciones» (cada 6 noticias dentro de una sección).
-  // Dos tipos: «de pulso» (texto con el diseño de la casa) o «imagen» (el banner que mande un anunciante).
-  // De momento solo se ven en el ordenador.
+  // Tres huecos: «portada» (a mitad de la portada), «secciones» (cada 6 noticias dentro de una sección)
+  // y «flash» (una tarjeta cada 8 noticias en el modo Flash del móvil).
+  // Tres tipos: «de pulso» (texto con el diseño de la casa), «imagen» (el banner que mande un anunciante)
+  // y «adsense» (un bloque de anuncios de Google: solo hace falta el número del bloque, «data-ad-slot»).
   const BANNER_CASA = {
     activo: true, hueco: 'portada', tipo: 'casa', anunciante: '',
     titulo: 'Tu marca, delante de quien se informa cada día',
-    texto: 'pulso llega a gente de 16 a 30 años que quiere estar al día sin perder la tarde. Publicidad clara, sin cookies y sin seguir a nadie.',
+    texto: 'pulso llega a gente de 16 a 30 años que quiere estar al día sin perder la tarde. Publicidad clara, bien señalada y sin molestar.',
     boton: 'Anúnciate en pulso', enlace: 'mailto:hola@pulso.com.es?subject=Publicidad%20en%20pulso', imagen: '', alt: ''
   };
   async function vistaPublicidad() {
     const pub = puedePublicar();
     let { valor: lista } = await api('admin/ajustes/banners');
     lista = lista || [];
-    const HUECOS = { portada: 'Portada (a mitad)', secciones: 'Dentro de las secciones' };
+    const HUECOS = { portada: 'Portada (a mitad)', secciones: 'Dentro de las secciones', flash: 'Modo Flash (móvil, cada 8 noticias)' };
+    const TIPOS = { casa: 'Texto con el diseño de pulso', imagen: 'Imagen del anunciante', adsense: 'Google AdSense' };
     function pintar() {
       vista.innerHTML = `
         <div class="cabeza">
-          <div><h1>Publicidad</h1><p>Los banners de la web. De momento <b>solo se ven en el ordenador</b> y siempre llevan la etiqueta «Publicidad».</p></div>
+          <div><h1>Publicidad</h1><p>Los banners de la web, en el ordenador y en el móvil. Siempre llevan la etiqueta «Publicidad». Si hay varios en el mismo hueco, sale uno al azar.</p></div>
           ${pub ? '<button class="btn" type="button" id="nuevo-banner">Añadir banner</button>' : ''}
         </div>
         ${lista.length ? '' : `<div class="bloque"><p><b>No hay banners.</b> Puedes empezar con el de la casa, «Anúnciate en pulso», para que las empresas sepan que pueden anunciarse.</p>
@@ -898,13 +902,16 @@
         <form id="f-banners"><fieldset ${pub ? '' : 'disabled'} style="border:0;padding:0;margin:0">
         ${lista.map((b, i) => `<section class="bloque banner-ed" data-i="${i}">
           <div class="banner-cab">
-            <h2>Banner ${i + 1}${b.anunciante ? ` · ${esc(b.anunciante)}` : b.tipo === 'casa' ? ' · de pulso' : ''}</h2>
+            <h2>Banner ${i + 1}${b.tipo === 'adsense' ? ' · Google AdSense' : b.anunciante ? ` · ${esc(b.anunciante)}` : b.tipo === 'casa' ? ' · de pulso' : ''}</h2>
             <label class="banner-activo"><span>${b.activo ? 'Se ve en la web' : 'Apagado'}</span><span class="interruptor"><input type="checkbox" role="switch" data-k="activo" aria-label="Activo" ${b.activo ? 'checked' : ''}></span></label>
           </div>
           <div class="dos">
             <div class="campo"><label>Dónde</label><select data-k="hueco">${Object.entries(HUECOS).map(([k, t]) => `<option value="${k}" ${b.hueco === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-            <div class="campo"><label>Tipo</label><select data-k="tipo"><option value="casa" ${b.tipo === 'casa' ? 'selected' : ''}>Texto con el diseño de pulso</option><option value="imagen" ${b.tipo === 'imagen' ? 'selected' : ''}>Imagen del anunciante</option></select></div>
+            <div class="campo"><label>Tipo</label><select data-k="tipo">${Object.entries(TIPOS).map(([k, t]) => `<option value="${k}" ${b.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
           </div>
+          ${b.tipo === 'adsense' ? `
+          <div class="campo"><label>Número del bloque de anuncios (data-ad-slot)</label><input type="text" data-k="slot" inputmode="numeric" maxlength="20" value="${esc(b.slot)}" placeholder="Por ejemplo 1234567890">
+            <p class="nota">En AdSense: Anuncios → Por bloque de anuncios → Anuncios de display → Adaptable. Copia solo el número de <code>data-ad-slot</code>. Los anuncios salen cuando Google apruebe la web.</p></div>` : `
           <div class="dos">
             <div class="campo"><label>Anunciante (se ve junto a «Publicidad»)</label><input type="text" data-k="anunciante" maxlength="60" value="${esc(b.anunciante)}" placeholder="Vacío si es de pulso"></div>
             <div class="campo"><label>Enlace (https:// o mailto:)</label><input type="text" data-k="enlace" maxlength="500" value="${esc(b.enlace)}"></div>
@@ -916,7 +923,7 @@
           <div class="campo"><label>Qué pone la imagen (texto alternativo)</label><input type="text" data-k="alt" maxlength="200" value="${esc(b.alt)}"></div>` : `
           <div class="campo"><label>Titular</label><input type="text" data-k="titulo" maxlength="90" value="${esc(b.titulo)}"></div>
           <div class="campo"><label>Texto</label><textarea data-k="texto" maxlength="220" rows="2">${esc(b.texto)}</textarea></div>
-          <div class="campo"><label>Botón</label><input type="text" data-k="boton" maxlength="30" value="${esc(b.boton)}"></div>`}
+          <div class="campo"><label>Botón</label><input type="text" data-k="boton" maxlength="30" value="${esc(b.boton)}"></div>`}`}
           <button class="btn btn-fino" type="button" data-quitar="${i}">Quitar este banner</button>
         </section>`).join('')}
         ${lista.length ? '<button class="btn btn-principal" type="submit">Guardar publicidad</button>' : ''}

@@ -214,16 +214,23 @@ export function crearId(titular) {
 
 // ---------- Leer y guardar noticias ----------
 
+// VISIBLE: lo que está en la portada ahora. «retirar_en» (lo pone el agente al sustituir o al quitar
+// algo de portada) solo la saca de la portada: la noticia sigue existiendo.
 export const VISIBLE = `estado = 'publicada' AND publicar_en <= ?1 AND (retirar_en IS NULL OR retirar_en > ?1)`;
+// PUBLICADA: todo lo publicado alguna vez, aunque ya no esté en portada (hemeroteca, enlaces compartidos,
+// comentarios, guardadas). Solo desaparece si alguien la retira a mano en el panel (estado 'retirada').
+export const PUBLICADA = `estado = 'publicada' AND publicar_en <= ?1`;
 
 // Fila de la base de datos → objeto para el panel
 export function filaPanel(f, ahora = Date.now()) {
-  const visible = f.estado === 'publicada' && f.publicar_en <= ahora && (!f.retirar_en || f.retirar_en > ahora);
+  // «visible» = se puede leer en la web (en portada o en la hemeroteca). enPortada dice si sigue en portada.
+  const visible = f.estado === 'publicada' && f.publicar_en <= ahora;
+  const enPortada = visible && (!f.retirar_en || f.retirar_en > ahora);
   let situacion = f.estado;
   if (visible) situacion = 'visible';
-  else if (f.estado === 'publicada') situacion = f.publicar_en > ahora ? 'programada' : 'retirada';
+  else if (f.estado === 'publicada') situacion = 'programada';
   return {
-    id: f.id, estado: f.estado, situacion, visible,
+    id: f.id, estado: f.estado, situacion, visible, enPortada,
     publicar_en: f.publicar_en, retirar_en: f.retirar_en,
     revisada: !!f.revisada, propuesta: !!f.propuesta, destacado: !!f.destacado, fijada: !!f.fijada,
     orden: f.orden, importancia: f.importancia ?? 3, categoria: f.categoria, titular: f.titular, edicion: f.edicion,

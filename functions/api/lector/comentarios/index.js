@@ -1,6 +1,6 @@
 // POST /api/lector/comentarios { noticia, texto, nombre? } → publicar un comentario (sale al momento)
 // La primera vez hay que elegir un nombre público; el email nunca se enseña.
-import { json, fallo, leerJSON, VISIBLE, estadoComentarios } from '../../../../servidor/comun.js';
+import { json, fallo, leerJSON, PUBLICADA, estadoComentarios } from '../../../../servidor/comun.js';
 
 const POR_HORA = 10;
 
@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env, data }) {
   if (texto.length < 2) return fallo('Escribe algo antes de publicar.');
   if (texto.length > 800) return fallo(`Es un poco largo: ${texto.length} caracteres (máximo 800).`);
   const ahora = Date.now();
-  if (!(await env.DB.prepare(`SELECT 1 FROM noticias WHERE id = ?2 AND ${VISIBLE}`).bind(ahora, id).first())) return fallo('Esa noticia no existe.', 404);
+  if (!(await env.DB.prepare(`SELECT 1 FROM noticias WHERE id = ?2 AND ${PUBLICADA}`).bind(ahora, id).first())) return fallo('Esa noticia no existe.', 404);
 
   let nombre = data.lector.nombre;
   if (!nombre) {

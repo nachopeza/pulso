@@ -2,7 +2,7 @@
 // Las redes (X, Bluesky, WhatsApp…) leen estas etiquetas para pintar la tarjeta del enlace
 // con el titular, la entradilla y la foto de ESA noticia. Las personas que pulsan el enlace
 // van directas a la noticia dentro de la web (/#<id>).
-import { VISIBLE } from '../../servidor/comun.js';
+import { PUBLICADA } from '../../servidor/comun.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -10,7 +10,7 @@ export async function onRequestGet({ env, params }) {
   const id = String(params.id || '');
   const sitio = env.SITIO || 'https://pulso.com.es';
   const f = /^[a-z0-9-]{3,70}$/.test(id)
-    ? await env.DB.prepare(`SELECT id, titular, datos FROM noticias WHERE id = ?2 AND ${VISIBLE}`).bind(Date.now(), id).first()
+    ? await env.DB.prepare(`SELECT id, titular, datos FROM noticias WHERE id = ?2 AND ${PUBLICADA}`).bind(Date.now(), id).first()
     : null;
   if (!f) return Response.redirect(`${sitio}/`, 302);
 
@@ -23,7 +23,7 @@ export async function onRequestGet({ env, params }) {
 <meta charset="utf-8">
 <title>${esc(f.titular)} · pulso</title>
 <meta name="description" content="${esc(d.entradilla || '')}">
-<link rel="canonical" href="${esc(destino)}">
+<link rel="canonical" href="${esc(`${sitio}/noticia/${f.id}`)}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="pulso">
 <meta property="og:title" content="${esc(f.titular)}">

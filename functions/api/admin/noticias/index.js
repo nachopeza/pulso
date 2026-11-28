@@ -12,11 +12,11 @@ export async function onRequestGet({ request, env }) {
   const v = (x) => { valores.push(x); return `?${valores.length}`; };
 
   switch (p.get('situacion')) {
-    case 'visible': donde.push(`estado = 'publicada' AND publicar_en <= ${v(ahora)} AND (retirar_en IS NULL OR retirar_en > ${v(ahora)})`); break;
+    case 'visible': donde.push(`estado = 'publicada' AND publicar_en <= ${v(ahora)}`); break;
     case 'programada': donde.push(`estado = 'publicada' AND publicar_en > ${v(ahora)}`); break;
     case 'pendiente': donde.push(`revisada = 0 AND estado IN ('borrador', 'publicada')`); break;
     case 'borrador': donde.push(`estado = 'borrador'`); break;
-    case 'retirada': donde.push(`(estado = 'retirada' OR (estado = 'publicada' AND retirar_en <= ${v(ahora)}))`); break;
+    case 'retirada': donde.push(`estado = 'retirada'`); break;
     case 'descartada': donde.push(`estado = 'descartada'`); break;
     default: donde.push(`estado != 'descartada'`);
   }

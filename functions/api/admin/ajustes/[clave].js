@@ -47,8 +47,9 @@ const LIMPIAR = {
       const x = {
         id: /^[\w-]{4,40}$/.test(b?.id || '') ? b.id : aleatorio(6),
         activo: b?.activo === true,
-        hueco: ['portada', 'secciones'].includes(b?.hueco) ? b.hueco : 'portada',
-        tipo: b?.tipo === 'imagen' ? 'imagen' : 'casa',
+        hueco: ['portada', 'secciones', 'flash'].includes(b?.hueco) ? b.hueco : 'portada',
+        tipo: ['imagen', 'adsense'].includes(b?.tipo) ? b.tipo : 'casa',
+        slot: txt(b?.slot, 20),
         anunciante: txt(b?.anunciante, 60),
         titulo: txt(b?.titulo, 90),
         texto: txt(b?.texto, 220),
@@ -59,6 +60,7 @@ const LIMPIAR = {
       };
       const n = `Banner ${i + 1}`;
       if (x.enlace && !/^(https:\/\/\S+|mailto:[^\s@]+@[^\s@]+\.\S+)$/i.test(x.enlace)) errores.push(`${n}: el enlace tiene que empezar por https:// o mailto:`);
+      if (x.tipo === 'adsense' && !/^\d{6,20}$/.test(x.slot)) errores.push(`${n}: pon el número del bloque de AdSense (solo cifras, el de data-ad-slot).`);
       if (x.tipo === 'casa' && !x.titulo) errores.push(`${n}: falta el titular.`);
       if (x.tipo === 'imagen') {
         if (!/^(\/fotos\/|https:\/\/)\S+$/i.test(x.imagen)) errores.push(`${n}: sube una imagen.`);

@@ -1,7 +1,7 @@
 // GET  /api/lector/guardadas → las noticias guardadas completas (aunque ya no estén en portada)
 // POST /api/lector/guardadas { anadir: [ids], quitar: [ids] } → { guardadas: [ids] }
 // Al entrar, la web manda aquí lo que se había guardado en el dispositivo sin cuenta.
-import { json, fallo, leerJSON, VISIBLE, isoMadrid } from '../../../servidor/comun.js';
+import { json, fallo, leerJSON, PUBLICADA, isoMadrid } from '../../../servidor/comun.js';
 
 const MAXIMO = 500;
 const ids = (v) => (Array.isArray(v) ? v : []).filter((x) => typeof x === 'string' && /^[a-z0-9-]{1,120}$/.test(x)).slice(0, MAXIMO);
@@ -10,7 +10,7 @@ export async function onRequestGet({ env, data }) {
   if (!data.lector) return fallo('Entra en tu cuenta para ver tus guardadas.', 401);
   const { results } = await env.DB.prepare(
     `SELECT n.* FROM guardadas g JOIN noticias n ON n.id = g.noticia
-     WHERE g.email = ?2 AND ${VISIBLE}
+     WHERE g.email = ?2 AND ${PUBLICADA}
      ORDER BY g.creada DESC LIMIT ${MAXIMO}`
   ).bind(Date.now(), data.lector.email).all();
   const noticias = results.map((f) => {

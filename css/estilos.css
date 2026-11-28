@@ -676,23 +676,39 @@ main.flash .slide { scroll-margin-top: var(--cab); }
 .rio .mini { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--suave); margin-bottom: 2px; }
 .rio .mini::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--c); }
 
-/* Publicidad (banners del panel). De momento solo en el ordenador. Siempre con la etiqueta «Publicidad». */
-.publi { grid-column: 1 / -1; display: none; position: relative; }
-@media (min-width: 900px) { .publi { display: grid; } }
-.publi-etq { font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; }
-/* Banner «de la casa»: bloque de tinta con el amarillo de pulso */
-.publi-casa { grid-template-columns: 1fr auto; align-items: center; gap: 28px; padding: 34px 36px 30px; border-radius: var(--r-l); background: var(--oscuro); color: #fff; border: 1px solid var(--linea); }
+/* Publicidad (banners del panel), en el ordenador y en el móvil.
+   Discreta a propósito: una franja con fondo de superficie, línea fina y la etiqueta «Publicidad»
+   en pequeño. Nunca usa los colores de sección ni el amarillo de golpe, para no confundirse con una noticia. */
+.publi { grid-column: 1 / -1; display: grid; gap: 8px; position: relative; padding: 14px 0; border-block: 1px solid var(--linea); }
+.publi-etq { font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--suave); }
+/* Banner «de la casa»: texto con la tipografía de pulso, sin bloque oscuro */
+.publi-casa { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 22px; }
+.publi-casa .publi-etq { grid-column: 1 / -1; }
 /* El titular acaba en el punto amarillo de pulso, como el logo */
-.publi-tit::after { content: ""; display: inline-block; width: 0.28em; height: 0.28em; margin-left: 0.1em; border-radius: 50%; background: var(--marca); }
-.publi-casa .publi-etq { position: absolute; top: 12px; left: 36px; color: rgb(255 255 255 / 0.55); }
-.publi-tit { font-size: clamp(22px, 2.2vw, 28px); font-weight: 850; font-stretch: 112%; letter-spacing: -0.02em; line-height: 1.1; text-wrap: balance; }
-.publi-txt p + p { margin-top: 8px; font-size: 15.5px; line-height: 1.5; color: rgb(255 255 255 / 0.75); max-width: 62ch; }
-.publi-btn { background: var(--marca); color: var(--oscuro); border-color: var(--marca); text-decoration: none; }
-.publi-btn:hover { filter: brightness(1.05); }
-/* Banner de imagen (de un anunciante) */
-.publi-img { gap: 6px; }
-.publi-img .publi-etq { color: var(--suave); }
-.publi-img img { display: block; width: 100%; height: auto; max-height: 250px; object-fit: cover; border-radius: var(--r-m); }
+.publi-tit::after { content: ""; display: inline-block; width: 0.26em; height: 0.26em; margin-left: 0.1em; border-radius: 50%; background: var(--marca); }
+.publi-tit { font-size: clamp(17px, 1.6vw, 20px); font-weight: 800; font-stretch: 110%; letter-spacing: -0.015em; line-height: 1.15; text-wrap: balance; }
+.publi-txt p + p { margin-top: 4px; font-size: 14.5px; line-height: 1.45; color: var(--suave); max-width: 64ch; }
+.publi-btn { text-decoration: none; white-space: nowrap; }
+@media (max-width: 599px) {
+  .publi-casa { grid-template-columns: 1fr; row-gap: 10px; }
+  .publi-btn { justify-self: start; }
+}
+/* Banner de imagen (de un anunciante): bajito, para no comerse la portada */
+.publi-img img { display: block; width: 100%; height: auto; max-height: 180px; object-fit: cover; border-radius: var(--r-m); }
+/* Google AdSense: no ocupa NADA hasta que Google rellena el hueco. Si no hay anuncio, no hay caja vacía.
+   (Se queda con ancho para que Google pueda medirlo; solo se aplasta la altura.) */
+.publi-ads:not(:has(ins[data-ad-status="filled"])) { height: 0; padding: 0; border: 0; overflow: hidden; }
+.publi-ads ins { min-height: 50px; }
+.publi-ads ins[data-ad-status="unfilled"] { display: none !important; }
+
+/* Tarjeta de publicidad del modo Flash: superficie neutra, como la portada y el final */
+.carta-publi { background: var(--sup); color: var(--tinta); grid-template-rows: 1fr; align-content: center; }
+.carta-publi .publi { border: 0; padding: 0; align-content: center; }
+.carta-publi .publi-casa { grid-template-columns: 1fr; row-gap: 14px; }
+.carta-publi .publi-tit { font-size: clamp(24px, 6vw, 32px); }
+.carta-publi .publi-img img { max-height: 60svh; object-fit: contain; }
+/* Si Google no ha puesto anuncio, la tarjeta no existe: el dedo pasa de largo */
+.slide-publi:has(.publi-ads):not(:has(ins[data-ad-status="filled"])) { height: 0; padding: 0; overflow: hidden; scroll-snap-align: none; }
 
 .pie { border-top: 3px solid var(--tinta); padding-top: 26px; margin-top: 12px; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 5fr); gap: 28px; font-size: 15px; color: var(--suave); }
 .pie h2 { font-size: 15px; font-weight: 800; color: var(--tinta); margin-bottom: 10px; }

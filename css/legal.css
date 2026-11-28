@@ -144,3 +144,59 @@ a:focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; border-r
   color: var(--suave);
 }
 .pie a[aria-current="page"] { color: var(--tinta); font-weight: 600; }
+
+/* ---------- Páginas del servidor: noticia suelta y hemeroteca ---------- */
+[data-cat=elecciones] { --c: #ffd400; }
+[data-cat=espana]     { --c: #ffb08a; }
+[data-cat=mundo]      { --c: #94d9ff; }
+[data-cat=economia]   { --c: #c8ef95; }
+[data-cat=tecnologia] { --c: #d3c4ff; }
+[data-cat=clima]      { --c: #86e8d2; }
+[data-cat=cultura]    { --c: #ffd59a; }
+[data-cat=deportes]   { --c: #b9ecff; }
+
+.cab-nav { display: flex; gap: 18px; align-items: center; }
+.cab-nav a { color: var(--suave); font-size: 15px; }
+
+/* Etiqueta de sección: el color de la sección, como en la portada */
+.art-etq { margin: 0 0 10px; font-size: 13.5px; font-weight: 700; }
+.art-etq a { display: inline-block; padding: 3px 9px; border-radius: 6px; background: var(--c, var(--sup)); color: #141414; text-decoration: none; }
+.art h1 { font-size: clamp(30px, 6.4vw, 46px); }
+.entradilla { font-size: 20px; line-height: 1.5; font-weight: 500; margin: 0 0 22px; }
+.art-foto { margin: 0 0 22px; }
+.art-foto img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; background: var(--sup); }
+.art-foto figcaption { font-size: 13px; color: var(--suave); margin-top: 6px; }
+.art-foto figcaption a { color: inherit; }
+.puntos li { margin-bottom: 10px; }
+.porque { background: var(--sup); border-radius: 12px; padding: 14px 18px; }
+.titulares { list-style: none; padding: 0; }
+.titulares li { padding: 10px 0; border-bottom: 1px solid var(--linea); }
+.titulares .medio { font-weight: 700; }
+.titulares q { font-style: italic; }
+.firma { color: var(--suave); font-size: 15px; margin-top: 28px; }
+.art-acciones { margin: 18px 0 0; }
+.btn { display: inline-block; padding: 11px 18px; border-radius: 999px; border: 1px solid var(--linea); background: var(--sup); color: var(--tinta); font-weight: 650; font-size: 15px; text-decoration: none; }
+.btn:hover { border-color: var(--tinta); }
+
+/* Listas de titulares (hemeroteca y «Más noticias de ese día») */
+.hem-lista { list-style: none; padding: 0; margin: 0; }
+.hem-lista li { padding: 12px 0; border-bottom: 1px solid var(--linea); margin: 0; }
+.hem-lista a { font-weight: 700; font-size: 18px; line-height: 1.3; text-decoration: none; }
+.hem-lista a:hover { text-decoration: underline; text-decoration-color: var(--marca); }
+.hem-lista p { margin: 4px 0 0; color: var(--suave); font-size: 15.5px; line-height: 1.45; }
+.mini { display: block; font-size: 12.5px; font-weight: 700; color: var(--suave); margin-bottom: 2px; }
+.hem-seccion h2 { display: flex; align-items: center; gap: 8px; }
+.hem-seccion h2::before { content: ""; width: 12px; height: 12px; border-radius: 3px; background: var(--c); }
+.hem-dias { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.hem-dias li { margin: 0; }
+.hem-dias a { display: grid; padding: 10px 12px; border-radius: 12px; background: var(--sup); text-decoration: none; }
+.hem-dias a:hover { outline: 2px solid var(--marca); }
+.hem-dias b { text-transform: capitalize; }
+.hem-dias span { font-size: 13.5px; color: var(--suave); }
+.hem-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--linea); font-size: 15px; }
+
+/* Publicidad: discreta, con la etiqueta «Publicidad», y sin caja vacía si Google no pone anuncio */
+.publi { display: grid; gap: 8px; margin: 32px 0; padding: 14px 0; border-block: 1px solid var(--linea); }
+.publi-etq { font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--suave); }
+.publi-ads:not(:has(ins[data-ad-status="filled"])) { height: 0; margin: 0; padding: 0; border: 0; overflow: hidden; }
+.publi-ads ins[data-ad-status="unfilled"] { display: none !important; }

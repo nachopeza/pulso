@@ -895,10 +895,10 @@
       vista.innerHTML = `
         <div class="cabeza">
           <div><h1>Publicidad</h1><p>Los banners de la web, en el ordenador y en el móvil. Siempre llevan la etiqueta «Publicidad». Si hay varios en el mismo hueco, sale uno al azar.</p></div>
-          ${pub ? '<button class="btn" type="button" id="nuevo-banner">Añadir banner</button>' : ''}
+          ${pub ? '<div class="acciones"><button class="btn btn-principal" type="button" id="nuevo-adsense">Añadir anuncio de Google AdSense</button><button class="btn" type="button" id="nuevo-banner">Añadir banner propio</button></div>' : ''}
         </div>
         ${lista.length ? '' : `<div class="bloque"><p><b>No hay banners.</b> Puedes empezar con el de la casa, «Anúnciate en pulso», para que las empresas sepan que pueden anunciarse.</p>
-          ${pub ? '<p style="margin-top:12px"><button class="btn btn-principal" type="button" id="poner-casa">Poner el banner «Anúnciate en pulso»</button></p>' : ''}</div>`}
+          ${pub ? '<p style="margin-top:12px"><button class="btn" type="button" id="poner-casa">Poner el banner «Anúnciate en pulso»</button></p>' : ''}</div>`}
         <form id="f-banners"><fieldset ${pub ? '' : 'disabled'} style="border:0;padding:0;margin:0">
         ${lista.map((b, i) => `<section class="bloque banner-ed" data-i="${i}">
           <div class="banner-cab">
@@ -910,8 +910,8 @@
             <div class="campo"><label>Tipo</label><select data-k="tipo">${Object.entries(TIPOS).map(([k, t]) => `<option value="${k}" ${b.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
           </div>
           ${b.tipo === 'adsense' ? `
-          <div class="campo"><label>Número del bloque de anuncios (data-ad-slot)</label><input type="text" data-k="slot" inputmode="numeric" maxlength="20" value="${esc(b.slot)}" placeholder="Por ejemplo 1234567890">
-            <p class="nota">En AdSense: Anuncios → Por bloque de anuncios → Anuncios de display → Adaptable. Copia solo el número de <code>data-ad-slot</code>. Los anuncios salen cuando Google apruebe la web.</p></div>` : `
+          <div class="campo"><label>Número del bloque de anuncios (data-ad-slot)</label><input type="text" data-k="slot" value="${esc(b.slot)}" placeholder="Pega aquí el código que te da AdSense (o solo el número)">
+            <p class="nota">Puedes pegar el código entero que te da AdSense: nos quedamos solo con el número del bloque. Los anuncios salen cuando Google apruebe la web; mientras, el hueco no ocupa sitio.</p></div>` : `
           <div class="dos">
             <div class="campo"><label>Anunciante (se ve junto a «Publicidad»)</label><input type="text" data-k="anunciante" maxlength="60" value="${esc(b.anunciante)}" placeholder="Vacío si es de pulso"></div>
             <div class="campo"><label>Enlace (https:// o mailto:)</label><input type="text" data-k="enlace" maxlength="500" value="${esc(b.enlace)}"></div>
@@ -934,6 +934,8 @@
       $$('.banner-ed').forEach((sec) => {
         const b = lista[Number(sec.dataset.i)];
         sec.querySelectorAll('[data-k]').forEach((x) => { b[x.dataset.k] = x.type === 'checkbox' ? x.checked : x.value.trim(); });
+        // Si han pegado el código entero de AdSense, nos quedamos con el número de data-ad-slot
+        if (b.slot) b.slot = (b.slot.match(/data-ad-slot\s*=\s*["']?(\d{6,20})/) || b.slot.match(/^\s*(\d{6,20})\s*$/) || [, b.slot])[1];
       });
     }
     async function guardar(mensaje) {
@@ -947,6 +949,7 @@
     pintar();
     vista.onclick = async (e) => {
       if (e.target.id === 'poner-casa') { lista = [{ ...BANNER_CASA }]; await guardar('Banner «Anúnciate en pulso» puesto'); }
+      else if (e.target.id === 'nuevo-adsense') { leer(); lista.push({ activo: true, hueco: 'portada', tipo: 'adsense', slot: '', anunciante: '', titulo: '', texto: '', boton: '', enlace: '', imagen: '', alt: '' }); pintar(); $$('.banner-ed').at(-1)?.scrollIntoView({ behavior: 'smooth' }); $$('[data-k="slot"]').at(-1)?.focus(); }
       else if (e.target.id === 'nuevo-banner') { leer(); lista.push({ ...BANNER_CASA, activo: false, titulo: '', texto: '', boton: '', enlace: '' }); pintar(); }
       else if (e.target.dataset.quitar) { leer(); lista.splice(Number(e.target.dataset.quitar), 1); pintar(); avisar('Quitado. Pulsa «Guardar publicidad» para que cuente.'); }
     };

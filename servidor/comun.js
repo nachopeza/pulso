@@ -40,6 +40,58 @@ export function ordenarPortada(filas, ahora = Date.now()) {
     (a.orden ?? Infinity) - (b.orden ?? Infinity) || puntuacion(b, ahora) - puntuacion(a, ahora));
 }
 
+// La portada definitiva, igual para la web y para el panel. Quién va arriba del todo:
+//   1. la noticia de la «Última hora», si hay una activa y lleva noticia;
+//   2. si se ha ordenado a mano, la primera de ese orden (manda el editor);
+//   3. si no, la destacada (la más reciente de las marcadas);
+//   4. y después, el orden automático.
+// Devuelve la lista ya ordenada y cuál cuenta como destacada (la que abre la portada).
+export function montarPortada(filas, ahora = Date.now(), ultimaHora = null) {
+  const aMano = filas.some((f) => f.orden != null);
+  let lista = ordenarPortada(filas, ahora);
+  const subir = (id) => {
+    const i = lista.findIndex((f) => f.id === id);
+    if (i > 0) lista = [lista[i], ...lista.slice(0, i), ...lista.slice(i + 1)];
+  };
+  if (!aMano) subir(filas.find((f) => f.destacado)?.id);
+  if (ultimaHora?.id) subir(ultimaHora.id);
+  return { lista, destacada: lista[0]?.id, aMano };
+}
+
+// «Última hora» (se pone en el panel, en Portada, o la manda el agente): un aviso rojo arriba
+// del todo durante unas horas. { texto, detalle: [líneas], id?: noticia, desde, hasta } (horas en ms)
+export async function leerUltimaHora(env, ahora = Date.now()) {
+  const f = await env.DB.prepare("SELECT valor FROM ajustes WHERE clave = 'ultimahora'").first();
+  const u = f?.valor ? JSON.parse(f.valor) : null;
+  return u && u.hasta > ahora ? u : null;
+}
+// Comprueba lo que llega del panel o del agente. «horas» = cuánto tiempo se ve (máximo 48).
+export function limpiarUltimaHora(v, ahora = Date.now()) {
+  const txt = (x, max) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
+  const detalle = (Array.isArray(v?.detalle) ? v.detalle : String(v?.detalle || '').split('\n'))
+    .map((x) => txt(String(x), 120)).filter(Boolean).slice(0, 5);
+  const horas = Number(v?.horas);
+  const u = { texto: txt(v?.texto, 140), detalle, id: txt(v?.id, 70), desde: ahora,
+    hasta: ahora + (horas > 0 ? Math.min(horas, 48) : 3) * HORA };
+  const errores = [];
+  if (!u.texto) errores.push('La última hora necesita un titular.');
+  if (u.id && !/^[a-z0-9-]{3,70}$/.test(u.id)) errores.push('La noticia enlazada no es válida.');
+  return { valor: u, errores };
+}
+// Guarda (o quita, con null) la última hora. Si algo no vale, lanza un error con el motivo.
+export async function guardarUltimaHora(env, v, autor) {
+  let valor = null;
+  if (v) {
+    const { valor: u, errores } = limpiarUltimaHora(v);
+    if (errores.length) throw new Error(errores.join(' '));
+    valor = JSON.stringify(u);
+  }
+  await env.DB.prepare(
+    `INSERT INTO ajustes (clave, valor, autor, actualizado) VALUES ('ultimahora', ?, ?, ?)
+     ON CONFLICT (clave) DO UPDATE SET valor = excluded.valor, autor = excluded.autor, actualizado = excluded.actualizado`
+  ).bind(valor, autor, Date.now()).run();
+}
+
 // ---------- Respuestas ----------
 
 export function json(datos, estado = 200, cabeceras = {}) {

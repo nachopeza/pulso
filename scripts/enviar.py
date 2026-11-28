@@ -2,6 +2,7 @@
 
 Uso:  python3 scripts/enviar.py edicion.json
       python3 scripts/enviar.py escaleta.json     (si el archivo trae "piezas", es una escaleta)
+      python3 scripts/enviar.py ultimahora.json   (si trae "ultimaHora", pone o quita la «Última hora»)
 
 Necesita la variable de entorno PULSO_AGENTE_KEY (la clave del agente).
 PULSO_URL cambia la web de destino (por defecto https://pulso.com.es; en local http://localhost:8788).
@@ -30,7 +31,11 @@ except Exception as e:  # JSON roto: mejor saberlo antes de enviar
     sys.exit(1)
 
 es_escaleta = isinstance(edicion, dict) and "piezas" in edicion
-ruta = "/api/agente/escaleta" if es_escaleta else "/api/agente/edicion"
+es_ultima = isinstance(edicion, dict) and "ultimaHora" in edicion
+ruta = "/api/agente/ultimahora" if es_ultima else "/api/agente/escaleta" if es_escaleta else "/api/agente/edicion"
+if es_ultima:
+    # {"ultimaHora": {...}} la pone (o la cambia); {"ultimaHora": null} la quita
+    edicion = edicion["ultimaHora"] or {"quitar": True}
 if os.environ.get("PULSO_URL"):
     destinos = [os.environ["PULSO_URL"].rstrip("/")]
 else:

@@ -829,13 +829,14 @@
     const pub = puedePublicar();
     vista.innerHTML = `
       <div class="cabeza">
-        <div><h1>Portada</h1><p>Lo que ven ahora los lectores, en este orden. La destacada va siempre primero.</p></div>
+        <div><h1>Portada</h1><p>Lo que ven ahora los lectores, en este orden. Arriba del todo va la de la última hora; si no hay, la que pongas primera (o, en orden automático, la destacada).</p></div>
         ${pub ? '<button class="btn btn-principal" type="button" id="guardar-orden" disabled>Guardar orden</button>' : ''}
       </div>
       <p class="nota" style="margin-bottom:14px">${d.aMano
         ? 'Ahora manda el <b>orden que fijaste a mano</b>, hasta la próxima edición del agente.'
         : 'Orden <b>automático</b>: cada noticia pesa según su importancia y va bajando con las horas; si se actualiza, vuelve a subir. Si lo cambias a mano, manda tu orden hasta la próxima edición.'}
         ${d.aMano && pub ? ' <button class="btn btn-fino" type="button" id="orden-auto">Volver al orden automático</button>' : ''}</p>
+      <section class="bloque" style="margin-bottom:22px" id="b-ultima"></section>
       <ul class="lista" id="orden"></ul>
       <section class="bloque" style="margin-top:28px" id="b-cita"></section>`;
     function pintar() {
@@ -871,7 +872,60 @@
       try { await api('admin/portada', { metodo: 'PUT', cuerpo: { orden: 'automatico' } }); avisar('Vuelve el orden automático'); await vistaPortada(); }
       catch (err) { avisar(err.message, true); }
     });
+    pintarUltimaHora($('#b-ultima'), d, pub);
     await pintarCita($('#b-cita'), pub);
+  }
+
+  // «Última hora»: el aviso negro y amarillo de arriba del todo (en Flash, la primera tarjeta).
+  // Sale al momento, se va sola cuando pasan las horas elegidas y su noticia sube la primera.
+  // Para ir cambiando los resultados, edítala y guarda otra vez: a los lectores se les cambia sola.
+  function pintarUltimaHora(caja, d, pub) {
+    const u = d.ultimaHora;
+    const v = u || { texto: '', detalle: [], id: '' };
+    const quedan = u ? Math.max(1, Math.round((u.hasta - Date.now()) / 60000)) : 0;
+    const quedanTxt = quedan >= 90 ? `${Math.round(quedan / 60)} h` : `${quedan} min`;
+    const opciones = `<option value="">Ninguna (solo el aviso)</option>${d.noticias.map((n) =>
+      `<option value="${esc(n.id)}" ${v.id === n.id ? 'selected' : ''}>${esc(n.titular.slice(0, 90))}</option>`).join('')}`;
+    const horas = [[1, '1 hora'], [2, '2 horas'], [3, '3 horas'], [6, '6 horas'], [12, '12 horas'], [24, '24 horas']];
+    caja.innerHTML = `
+      <h2>Última hora</h2>
+      <p class="nota" style="margin-bottom:14px">${u
+        ? `Ahora está <b>activa</b>: se quita sola en ${quedanTxt}. Si la cambias y guardas, a los lectores se les actualiza sola en un minuto (para ir dando resultados).`
+        : 'Ahora <b>no hay ninguna</b>. Para lo que no puede esperar: sale al momento arriba del todo (en el móvil, la primera tarjeta) y se va sola.'}</p>
+      <form id="f-ultima">
+        <fieldset ${pub ? '' : 'disabled'} style="border:0;padding:0;margin:0">
+        <div class="campo"><label for="u-texto">Titular</label><input type="text" id="u-texto" maxlength="140" value="${esc(v.texto)}" placeholder="El PP gana las elecciones y necesitaría a Vox para gobernar"></div>
+        <div class="campo"><label for="u-detalle">Datos <span class="ayuda">una línea por dato, hasta 5 (por ejemplo, los escaños)</span></label>
+          <textarea id="u-detalle" rows="4" placeholder="PP: 140 escaños
+PSOE: 110
+Vox: 45
+Escrutado: 98 %">${esc((v.detalle || []).join('\n'))}</textarea></div>
+        <div class="dos">
+          <div class="campo"><label for="u-id">Noticia que se abre <span class="ayuda">sube la primera mientras dure</span></label><select id="u-id">${opciones}</select></div>
+          <div class="campo"><label for="u-horas">Se ve durante</label><select id="u-horas">${horas.map(([h, t]) =>
+            `<option value="${h}" ${h === (u ? 0 : 3) ? 'selected' : ''}>${t}</option>`).join('')}${u ? `<option value="" selected>Lo que le queda (${quedanTxt})</option>` : ''}</select></div>
+        </div>
+        <button class="btn btn-principal" type="submit">${u ? 'Guardar cambios' : 'Publicar última hora'}</button>
+        ${u ? '<button class="btn" type="button" id="quitar-ultima">Quitarla ya</button>' : ''}
+        </fieldset>
+      </form>`;
+    $('#f-ultima').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const h = $('#u-horas').value;
+      const ultimaHora = {
+        texto: $('#u-texto').value.trim(),
+        detalle: $('#u-detalle').value.split('\n').map((x) => x.trim()).filter(Boolean),
+        id: $('#u-id').value,
+        horas: h ? Number(h) : quedan / 60
+      };
+      try { await api('admin/portada', { metodo: 'PUT', cuerpo: { ultimaHora } }); avisar(u ? 'Última hora actualizada' : 'Última hora publicada'); await vistaPortada(); }
+      catch (err) { avisar(err.message, true); }
+    });
+    $('#quitar-ultima')?.addEventListener('click', async () => {
+      if (!confirm('¿Quitar la última hora de la web?')) return;
+      try { await api('admin/portada', { metodo: 'PUT', cuerpo: { ultimaHora: null } }); avisar('Última hora quitada'); await vistaPortada(); }
+      catch (err) { avisar(err.message, true); }
+    });
   }
 
   // ---------- 7 bis. Publicidad: banners ----------

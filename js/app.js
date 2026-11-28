@@ -156,11 +156,11 @@
   const menu = $('#menu');
   const aviso = $('#aviso');
 
-  // Todas las noticias: la destacada primero y después en el orden que manda el servidor
-  // (importancia y edad, o el fijado a mano en el panel); si no hay orden, de más nueva a más antigua
+  // Todas las noticias en el orden que manda el servidor (él ya decide quién abre: la última hora,
+  // tu orden a mano del panel o la destacada). Sin servidor (archivo local): la destacada y por fecha.
   const ordenadas = () => [...(estado.datos?.noticias || [])].sort((a, b) =>
-    (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0)
-    || (a.orden ?? Infinity) - (b.orden ?? Infinity)
+    (a.orden ?? Infinity) - (b.orden ?? Infinity)
+    || (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0)
     || new Date(b.fecha) - new Date(a.fecha));
   // Las de la sección elegida
   function visibles() {
@@ -355,7 +355,7 @@
       const p = publiHTML('flash');
       return p ? `<section class="slide slide-publi" aria-label="Publicidad"><div class="carta carta-publi">${p}</div></section>` : '';
     };
-    return portada + lista.map((n, i) => cartaHTML(n, i, lista.length)
+    return ultimaHoraHTML(true) + portada + lista.map((n, i) => cartaHTML(n, i, lista.length)
       + ((i + 1) % PUBLI_FLASH === 0 && i < lista.length - 1 ? publi() : '')).join('') + vacio + final + (lista.length ? pie : '');
   }
 
@@ -435,6 +435,23 @@
   }
 
   // Cinta de "Última hora": los titulares más recientes pasando de lado
+  // ÚLTIMA HORA: el aviso rojo de arriba del todo (se pone en el panel, en Portada, o lo manda
+  // el agente). Dura unas horas y se va solo. En Flash es la primera tarjeta; en Lista, lo primero.
+  // «detalle» son líneas cortas (por ejemplo, los escaños de cada partido).
+  function ultimaHoraHTML(enFlash) {
+    const u = estado.datos?.ultimaHora;
+    if (!u || estado.cat !== 'todo' || Date.parse(u.hasta) < Date.now()) return '';
+    const n = u.id ? buscar(u.id) : null;
+    const lineas = (u.detalle || []).map((x) => `<li>${esc(x)}</li>`).join('');
+    const contenido = `<p class="uh-etiqueta"><span class="vivo" aria-hidden="true"></span>Última hora<time datetime="${esc(u.desde)}">${hora(u.desde)}</time></p>
+        <h2 class="uh-titular">${esc(u.texto)}</h2>
+        ${lineas ? `<ul class="uh-detalle">${lineas}</ul>` : ''}
+        ${n ? `<a class="btn uh-leer" href="#${esc(n.id)}">Leer la noticia</a>` : ''}`;
+    return enFlash
+      ? `<section class="slide" aria-label="Última hora"><div class="carta ultima-hora">${contenido}<p class="pista">${ICONO_ABAJO}Desliza para el resto</p></div></section>`
+      : `<section class="ultima-hora" aria-label="Última hora">${contenido}</section>`;
+  }
+
   function cintaHTML() {
     const items = recientes().slice(0, 6).map((n) =>
       `<a href="#${esc(n.id)}" data-cat="${cat(n)}"><i aria-hidden="true"></i>${esc(n.titular)}</a>`).join('');
@@ -560,6 +577,7 @@
       bloqueHTML(k, ns, c && k === c.seccion ? extraCita : '') + (i === 1 ? publiHTML('portada') : '')).join('');
 
     return `<div class="lista">
+      ${ultimaHoraHTML(false)}
       ${cintaHTML()}
       ${diaHTML()}
       ${apertura ? `<div class="apertura">${tarjetaHTML(apertura, true)}${rioHTML()}</div>` : ''}
@@ -1339,7 +1357,7 @@
       main.scrollTo({ top: 0, behavior: suave });
     } else if ('actualizar' in d) {
       aviso.classList.remove('ver');
-      cargar();
+      cargar().then(() => { if (estado.datos?.ultimaHora && estado.cat === 'todo') main.scrollTo({ top: 0, behavior: suave }); });
     } else if ('reintentar' in d) {
       cargar();
     } else if (t.id === 'logo') {
@@ -1412,13 +1430,90 @@
 
   // Cada 5 minutos comprueba si el agente ha subido noticias nuevas.
   // No repinta solo (perderías por dónde ibas): te avisa y tú decides.
+  // Excepción: la «Última hora» sí se cambia sola (resultados que van llegando), sin mover la página.
   async function comprobarNovedades() {
     if (document.hidden || !estado.datos) return;
     try {
       const nuevo = await pedirNoticias();
-      if (nuevo.actualizado && nuevo.actualizado !== estado.datos.actualizado) avisar('Hay noticias nuevas', 'Actualizar');
+      const antes = JSON.stringify(estado.datos.ultimaHora || null);
+      const cambiaUH = JSON.stringify(nuevo.ultimaHora || null) !== antes;
+      // Lo que hace falta repintar: noticias nuevas o actualizadas (la última hora va aparte)
+      const firma = (d) => (d.noticias || []).map((n) => n.id + (n.actualizada || '')).join() + JSON.stringify(d.momentos || null);
+      const cambiaResto = firma(nuevo) !== firma(estado.datos) || (!cambiaUH && nuevo.actualizado !== estado.datos.actualizado);
+      if (cambiaUH) {
+        const habia = !!estado.datos.ultimaHora;
+        estado.datos.ultimaHora = nuevo.ultimaHora;
+        // Si ya se veía, se cambia solo su contenido; si es nueva (o se ha quitado), te avisamos
+        const cajas = document.querySelectorAll('.ultima-hora');
+        if (habia && nuevo.ultimaHora && cajas.length) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = ultimaHoraHTML(estado.modo === 'flash');
+          const nueva = tmp.querySelector('.ultima-hora');
+          cajas.forEach((c) => { c.innerHTML = nueva.innerHTML; c.classList.remove('uh-cambia'); void c.offsetWidth; c.classList.add('uh-cambia'); });
+        } else if (nuevo.ultimaHora) {
+          avisar('Última hora', 'Ver');
+          return;
+        }
+      }
+      if (cambiaResto) avisar('Hay noticias nuevas', 'Actualizar');
+      else estado.datos.actualizado = nuevo.actualizado;
     } catch (e) { /* sin conexión: ya lo intentaremos luego */ }
   }
+  // Con una última hora activa se mira cada minuto; si no, cada 5
+  let ultimaComprobacion = Date.now();
+  setInterval(() => {
+    const cada = estado.datos?.ultimaHora ? 60 * 1000 : CADA_CUANTO;
+    if (Date.now() - ultimaComprobacion < cada - 1000) return;
+    ultimaComprobacion = Date.now();
+    comprobarNovedades();
+  }, 60 * 1000);
+
+  // ---------- 10 bis. Tirar hacia abajo para actualizar ----------
+  // Arriba del todo, si arrastras el dedo hacia abajo aparece una flecha; al soltar pasada la
+  // marca, se piden las noticias otra vez. (El navegador no lo hace solo porque la página
+  // se desliza dentro de <main>, no en la ventana.)
+  const tirar = document.createElement('div');
+  tirar.className = 'tirar';
+  tirar.setAttribute('aria-hidden', 'true');
+  tirar.innerHTML = svg('<path d="M12 5v14M6 13l6 6 6-6"/>');
+  document.body.append(tirar);
+  const MARCA = 70;
+  let tirarDesde = null;
+  let tirado = 0;
+  let recargando = false;
+  main.addEventListener('touchstart', (e) => {
+    if (recargando || main.scrollTop > 0 || e.touches.length > 1 || ficha.open || menu.open) { tirarDesde = null; return; }
+    tirarDesde = e.touches[0].clientY;
+    tirado = 0;
+  }, { passive: true });
+  main.addEventListener('touchmove', (e) => {
+    if (tirarDesde == null) return;
+    if (main.scrollTop > 0) { tirarDesde = null; tirar.style.cssText = ''; return; }
+    tirado = Math.max(0, (e.touches[0].clientY - tirarDesde) * 0.5);
+    if (!tirado) { tirar.style.cssText = ''; return; }
+    const d = Math.min(tirado, MARCA * 1.4);
+    tirar.style.opacity = Math.min(1, d / MARCA);
+    tirar.style.translate = `-50% ${d}px`;
+    tirar.style.rotate = tirado >= MARCA ? '180deg' : '0deg';
+    tirar.classList.toggle('listo', tirado >= MARCA);
+  }, { passive: true });
+  main.addEventListener('touchend', async () => {
+    if (tirarDesde == null) return;
+    tirarDesde = null;
+    if (tirado < MARCA) { tirar.style.cssText = ''; tirar.classList.remove('listo'); return; }
+    recargando = true;
+    tirar.classList.add('cargando');
+    tirar.style.rotate = '';
+    tirar.style.translate = `-50% ${MARCA}px`;
+    const antes = estado.datos?.actualizado;
+    await cargar();
+    ultimaComprobacion = Date.now();
+    aviso.classList.remove('ver');
+    avisar(estado.datos?.actualizado !== antes ? 'Noticias actualizadas' : 'Ya estás al día');
+    tirar.classList.remove('cargando', 'listo');
+    tirar.style.cssText = '';
+    recargando = false;
+  });
 
   // ---------- 11. Idiomas (traductor de Google) ----------
   // pulso se escribe en castellano. Para leerlo en catalán, euskera o gallego usamos,
@@ -1903,7 +1998,6 @@
     } catch (e) { /* sin servidor (archivo local): la web funciona sin cuentas */ }
   }
 
-  setInterval(comprobarNovedades, CADA_CUANTO);
   setInterval(() => { if (estado.datos) pintarCabecera(); }, 60 * 1000);
   medir('pagina');
   cargar();

@@ -1166,3 +1166,53 @@ body { top: 0 !important; }
   :root { --cristal: light-dark(rgb(255 255 255 / 0.9), rgb(28 29 33 / 0.9)); }
 }
 
+
+/* ---------- Última hora ----------
+   El aviso de arriba del todo cuando pasa algo que no puede esperar (resultados, etc.).
+   Negro con el amarillo de pulso (nada de rojo: es el color de un partido). En Flash es la
+   primera tarjeta; en Lista, una banda ancha encima de todo. Se pone en el panel → Portada. */
+.ultima-hora {
+  --uh-fondo: #141414;
+  background: var(--uh-fondo);
+  color: #f3f3f0;
+  border: 2px solid var(--marca);
+  border-radius: var(--r-l);
+}
+section.ultima-hora { display: grid; gap: 10px; padding: clamp(18px, 3vw, 28px); margin-bottom: 4px; }
+.carta.ultima-hora { grid-template-rows: auto auto minmax(0, 1fr) auto auto; align-content: start; gap: 16px; }
+.uh-etiqueta {
+  display: inline-flex; align-items: center; gap: 10px; justify-self: start;
+  background: var(--marca); color: var(--oscuro);
+  font-weight: 800; font-size: 14px; font-stretch: 110%; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 6px 12px; border-radius: var(--r-s);
+}
+.uh-etiqueta .vivo { background: var(--oscuro); box-shadow: none; }
+.uh-etiqueta time { font-weight: 600; opacity: 0.75; text-transform: none; letter-spacing: 0; }
+.uh-titular { font-size: clamp(26px, 4.4vw, 44px); line-height: 1.05; font-weight: 800; font-stretch: var(--ancha); text-wrap: balance; margin: 0; }
+.uh-detalle { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: clamp(16px, 2vw, 19px); font-weight: 600; }
+.uh-detalle li { display: flex; gap: 10px; align-items: baseline; }
+.uh-detalle li::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--marca); flex: none; translate: 0 -2px; }
+.carta.ultima-hora .uh-detalle { align-self: start; overflow: hidden; }
+.uh-leer { justify-self: start; background: var(--marca); color: var(--oscuro); border-color: var(--marca); text-decoration: none; }
+.carta.ultima-hora .pista { color: rgb(243 243 240 / 0.7); }
+/* Cuando llegan datos nuevos (resultados), un destello amarillo para que se note */
+.ultima-hora.uh-cambia { animation: uh-cambia 1.2s var(--salida); }
+@keyframes uh-cambia { from { box-shadow: 0 0 0 6px rgb(255 212 0 / 0.55); } to { box-shadow: 0 0 0 0 rgb(255 212 0 / 0); } }
+
+/* ---------- Tirar hacia abajo para actualizar ---------- */
+.tirar {
+  position: fixed; top: calc(var(--cab, 64px) - 44px); left: 50%; translate: -50% 0; z-index: 9;
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--cristal); border: 1px solid var(--cristal-borde); box-shadow: var(--cristal-brillo), 0 4px 14px rgb(0 0 0 / 0.12);
+  -webkit-backdrop-filter: var(--desenfoque); backdrop-filter: var(--desenfoque);
+  color: var(--tinta); opacity: 0; pointer-events: none;
+  transition: rotate 0.25s var(--salida), background 0.2s;
+}
+.tirar svg { width: 20px; height: 20px; }
+.tirar.listo { background: var(--marca); color: var(--oscuro); }
+.tirar.cargando { opacity: 1; transition: translate 0.3s var(--salida); }
+.tirar.cargando svg { animation: tirar-gira 0.8s linear infinite; }
+@keyframes tirar-gira { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .ultima-hora.uh-cambia, .tirar.cargando svg { animation: none; }
+}

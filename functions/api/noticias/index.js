@@ -1,6 +1,6 @@
 // GET /api/noticias → lo que ve el lector, con el mismo formato que tenía data/noticias.json.
 // Las programadas aparecen solas al llegar su hora: no hace falta que nada "las publique".
-import { json, VISIBLE, PORTADA_HORAS, isoMadrid, ordenarPortada, diaMadrid } from '../../../servidor/comun.js';
+import { json, VISIBLE, PORTADA_HORAS, isoMadrid, montarPortada, leerUltimaHora, diaMadrid } from '../../../servidor/comun.js';
 
 export async function onRequestGet({ env }) {
   const ahora = Date.now();
@@ -16,10 +16,15 @@ export async function onRequestGet({ env }) {
     ).bind(ahora).all());
   }
 
-  // Solo una destacada: la más reciente de las marcadas
-  const destacada = filas.find((f) => f.destacado)?.id;
-  // El orden lo decide la importancia y la edad (ver ordenarPortada): cambia a lo largo del día
-  const noticias = ordenarPortada(filas, ahora).map((f, i) => {
+  // Última hora activa: si enlaza una noticia que no está en la lista (más de 48 h), se añade
+  const ultimaHora = await leerUltimaHora(env, ahora);
+  if (ultimaHora?.id && !filas.some((f) => f.id === ultimaHora.id)) {
+    const extra = await env.DB.prepare(`SELECT * FROM noticias WHERE ${VISIBLE} AND id = ?2`).bind(ahora, ultimaHora.id).first();
+    if (extra) filas.push(extra);
+  }
+  // Orden: última hora, después tu orden a mano o la destacada, y el automático (ver montarPortada)
+  const { lista, destacada } = montarPortada(filas, ahora, ultimaHora);
+  const noticias = lista.map((f, i) => {
     const d = JSON.parse(f.datos);
     return { ...d, id: f.id, categoria: f.categoria, destacado: f.id === destacada, orden: i + 1,
       fecha: d.fecha || isoMadrid(f.publicar_en) };
@@ -55,7 +60,7 @@ export async function onRequestGet({ env }) {
   if (lectura?.desde && Date.parse(lectura.desde) > ahora) lectura = null;
 
   // "Actualizado": lo último que ha cambiado de lo que se ve
-  const ultima = Math.max(0, mom?.desde || 0, mom?.actualizado || 0,
+  const ultima = Math.max(0, mom?.desde || 0, mom?.actualizado || 0, ultimaHora?.desde || 0,
     ...filas.map((f) => Math.max(f.publicar_en, Math.min(f.actualizada, ahora))));
 
   return json({
@@ -65,6 +70,8 @@ export async function onRequestGet({ env }) {
     banners,
     lectura: lectura ? { gratis: lectura.gratis, dias: lectura.dias } : null,
     momentos,
+    ultimaHora: ultimaHora ? { texto: ultimaHora.texto, detalle: ultimaHora.detalle, id: ultimaHora.id,
+      desde: isoMadrid(ultimaHora.desde), hasta: isoMadrid(ultimaHora.hasta) } : null,
     noticias
   }, 200, { 'Cache-Control': 'no-cache' });
 }

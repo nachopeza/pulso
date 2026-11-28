@@ -91,6 +91,30 @@ No pongas `fecha`: la pone el panel al publicar.
 - **Fotos:** solo con licencia libre (Wikimedia Commons) o propias. Nunca fotos de otros medios ni de agencias. Si no hay una foto adecuada, `null`: la web pone el nombre de la sección en letra gigante. Si la noticia ganaría mucho con imagen (importancia 4 o 5, o destacada), añade además `"montaje": "idea en una frase"` (qué montaje gráfico harías: elementos, sin fotos de otros medios); Nacho lo ve en el email y en el panel y decide si lo hace. No pidas montaje en más de 3 noticias por edición.
 - **Lenguaje claro**, frases cortas, sin jerga. Se explica lo que no es obvio.
 
+## Última hora (solo cuando no puede esperar)
+
+Para algo que tiene que salir **ya**, sin esperar a ninguna edición (los resultados de unas elecciones, una noticia enorme), existe la **Última hora**: un aviso negro y amarillo arriba del todo de la portada (en el móvil, la primera tarjeta). Úsala **solo si el encargo lo pide** o si es algo de primera magnitud. Escribe `ultimahora.json`:
+
+```json
+{
+  "ultimaHora": {
+    "texto": "Titular corto, con el dato principal",
+    "detalle": ["PP: 000 escaños", "PSOE: 000", "Escrutado: 00 %"],
+    "id": "id-de-una-noticia-ya-publicada",
+    "horas": 6
+  }
+}
+```
+
+y envíalo con `python3 scripts/enviar.py ultimahora.json`. Sale al instante.
+
+- `detalle`: hasta 5 líneas cortas (datos, no frases largas). Es opcional.
+- `id`: opcional. Si lo pones, esa noticia sube la primera mientras dure la última hora y el aviso lleva a ella. Tiene que estar **ya publicada** (si es de la edición especial, espera a que salga).
+- `horas`: cuánto se ve (de 1 a 48; 3 si no lo pones). Después se quita sola.
+- **Para ir actualizando** (por ejemplo, el escrutinio), vuelve a enviarla con los datos nuevos: sustituye a la anterior y los lectores la ven cambiar sola en un minuto.
+- Para quitarla antes: `{"ultimaHora": null}`.
+- Los datos, **siempre de fuente oficial** (resultados del Ministerio del Interior) y diciendo el % escrutado.
+
 ## Fotos de Wikimedia Commons
 
 **Busca siempre con el script**, no con curl ni con Python a mano: Commons rechaza (error 403 o respuesta vacía) a quien no se identifica, y desde tu entorno a veces no responde. El script pregunta a pulso, que busca por ti, y si no puede va a Commons identificándose:
